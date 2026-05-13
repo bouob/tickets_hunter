@@ -100,6 +100,7 @@ const dark_mode_toggle = document.querySelector('#dark_mode_toggle');
 const theme_status = document.querySelector('#theme_status');
 
 var settings = null;
+var maxbot_running = false;
 
 maxbot_load_api();
 
@@ -432,6 +433,10 @@ function message_old(msg)
 
 function maxbot_launch()
 {
+    if (maxbot_running) {
+        maxbot_stop_api();
+        return;
+    }
     run_message("啟動 MaxBot 主程式中...");
     save_changes_to_dict(true);
     maxbot_save_api(maxbot_run_api);
@@ -446,6 +451,7 @@ function maxbot_run_api()
     .done(function(data) {
         run_message("啟動指令已發送，請稍候瀏覽器視窗開啟...");
         console.log("[MaxBot] Launch API response:", data);
+        update_run_button_state(true);
     })
     .fail(function(xhr, status, error) {
         run_message("啟動失敗：無法連線到後端服務 (" + status + ")");
@@ -457,22 +463,42 @@ function maxbot_run_api()
     });
 }
 
-function maxbot_shutdown_api()
+function maxbot_stop_api()
 {
-    let api_url = "/shutdown";
+    let api_url = "/stop";
     $.get( api_url, function() {
         //alert( "success" );
     })
     .done(function(data) {
-        //alert( "second success" );
-        window.close();
+        run_message("結束搶票指令已發送。");
+        update_run_button_state(false);
+        console.log("[MaxBot] Stop API response:", data);
     })
-    .fail(function() {
-        //alert( "error" );
+    .fail(function(xhr, status, error) {
+        run_message("結束搶票失敗：無法連線到後端服務 (" + status + ")");
+        console.error("[MaxBot] Stop API error:", status, error);
+        console.error("[MaxBot] Response content:", xhr.responseText);
     })
     .always(function() {
         //alert( "finished" );
     });
+}
+
+function maxbot_shutdown_api()
+{
+    maxbot_stop_api();
+}
+
+function update_run_button_state(is_running)
+{
+    maxbot_running = !!is_running;
+    if (maxbot_running) {
+        $("#run_btn").text("結束搶票").removeClass("btn-primary").addClass("btn-danger");
+        $("#exit_btn").addClass("disappear");
+    } else {
+        $("#run_btn").text("搶票").removeClass("btn-danger").addClass("btn-primary");
+        $("#exit_btn").addClass("disappear");
+    }
 }
 
 function save_changes_to_dict(silent_flag)
@@ -788,16 +814,23 @@ function maxbot_status_api()
     })
     .done(function(data) {
         //alert( "second success" );
-        let status_text = "已暫停";
+        update_run_button_state(data.running);
+
+        let status_text = "未啟動";
         let status_class = "badge text-bg-danger";
-        if(data.status) {
+        if(data.running && data.status) {
             status_text="已啟動";
             status_class = "badge text-bg-success";
             $("#pause_btn").removeClass("disappear");
             $("#resume_btn").addClass("disappear");
-        } else {
+        } else if (data.running && data.paused) {
+            status_text="已暫停";
+            status_class = "badge text-bg-warning";
             $("#pause_btn").addClass("disappear");
             $("#resume_btn").removeClass("disappear");
+        } else {
+            $("#pause_btn").addClass("disappear");
+            $("#resume_btn").addClass("disappear");
         }
         $("#last_url").text(data.last_url);
         $("#maxbot_status").html(status_text).prop( "class", status_class);

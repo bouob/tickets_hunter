@@ -5,6 +5,7 @@ import base64
 import json
 import os
 import platform
+import signal
 import subprocess
 import sys
 import threading
@@ -14,6 +15,7 @@ from datetime import datetime
 
 import tornado
 from tornado.web import Application
+from tornado.web import RedirectHandler
 from tornado.web import StaticFileHandler
 
 import requests
@@ -68,6 +70,8 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER = "NonBrowser"
 CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 
 CONST_WEBDRIVER_TYPE_NODRIVER = "nodriver"
+
+MAXBOT_PROCESS = None
 
 CONST_SUPPORTED_SITES = ["https://kktix.com"
     ,"https://tixcraft.com (拓元)"
@@ -340,7 +344,12 @@ def maxbot_resume():
          util.force_remove_file(idle_filepath)
 
 def launch_maxbot():
+    global MAXBOT_PROCESS
     global launch_counter
+    if is_maxbot_running():
+        print("run button pressed, but maxbot is already running.")
+        return
+
     if "launch_counter" in globals():
         launch_counter += 1
     else:
@@ -349,6 +358,8 @@ def launch_maxbot():
     config_filepath, config_dict = load_json()
 
     script_name = "nodriver_tixcraft"
+    app_root = util.get_app_root()
+    cmd_array = [sys.executable, script_name + ".py", "--input", CONST_MAXBOT_CONFIG_FILE]
 
     window_size = config_dict["advanced"]["window_size"]
     if len(window_size) > 0:
@@ -361,8 +372,52 @@ def launch_maxbot():
                 launch_counter = 0
             window_size = window_size + "," + str(launch_counter)
             #print("window_size:", window_size)
+        cmd_array.append("--window_size=" + window_size)
 
-    threading.Thread(target=util.launch_maxbot, args=(script_name,"","","","",window_size,)).start()
+    print("execute in shell mode.")
+    print("try", sys.executable)
+    popen_kwargs = {"cwd": app_root}
+    if platform.system() != "Windows":
+        popen_kwargs["start_new_session"] = True
+    MAXBOT_PROCESS = subprocess.Popen(cmd_array, **popen_kwargs)
+
+def is_maxbot_running():
+    global MAXBOT_PROCESS
+    if MAXBOT_PROCESS is None:
+        return False
+    if MAXBOT_PROCESS.poll() is None:
+        return True
+    MAXBOT_PROCESS = None
+    return False
+
+def stop_maxbot():
+    global MAXBOT_PROCESS
+    if not is_maxbot_running():
+        return False
+
+    print("stop maxbot requested.")
+    try:
+        if platform.system() == "Windows":
+            MAXBOT_PROCESS.terminate()
+        else:
+            os.killpg(os.getpgid(MAXBOT_PROCESS.pid), signal.SIGTERM)
+        try:
+            MAXBOT_PROCESS.wait(timeout=8)
+        except subprocess.TimeoutExpired:
+            if platform.system() == "Windows":
+                MAXBOT_PROCESS.kill()
+            else:
+                os.killpg(os.getpgid(MAXBOT_PROCESS.pid), signal.SIGKILL)
+            MAXBOT_PROCESS.wait(timeout=3)
+    except Exception as exc:
+        print(f"[WARNING] Failed to stop maxbot: {exc}")
+        return False
+    finally:
+        MAXBOT_PROCESS = None
+
+    maxbot_resume()
+    print("maxbot stopped.")
+    return True
 
 def change_maxbot_status_by_keyword():
     config_filepath, config_dict = load_json()
@@ -416,10 +471,9 @@ def clean_tmp_file():
                 print(f"[WARNING] Failed to remove {item}: {e}")
 
 class NoCacheStaticFileHandler(StaticFileHandler):
-    """Custom StaticFileHandler that prevents caching of settings.html"""
+    """Custom StaticFileHandler that prevents stale UI assets."""
     def set_extra_headers(self, path):
-        # Disable caching only for settings.html to prevent stale UI issues
-        if path == 'settings.html':
+        if path in ('settings.html', 'settings.js', 'help-content.js'):
             self.set_header('Cache-Control', 'no-cache, no-store, must-revalidate')
             self.set_header('Pragma', 'no-cache')
             self.set_header('Expires', '0')
@@ -456,13 +510,14 @@ class ShutdownHandler(tornado.web.RequestHandler):
 
 class StatusHandler(tornado.web.RequestHandler):
     def get(self):
+        is_running = is_maxbot_running()
         is_paused = False
         app_root = util.get_app_root()
         idle_filepath = os.path.join(app_root, CONST_MAXBOT_INT28_FILE)
         if os.path.exists(idle_filepath):
             is_paused = True
         url = read_last_url_from_file()
-        self.write({"status": not is_paused, "last_url": url})
+        self.write({"status": is_running and not is_paused, "running": is_running, "paused": is_paused, "last_url": url})
 
 class PauseHandler(tornado.web.RequestHandler):
     def get(self):
@@ -478,7 +533,12 @@ class RunHandler(tornado.web.RequestHandler):
     def get(self):
         print('run button pressed.')
         launch_maxbot()
-        self.write({"run": True})
+        self.write({"run": True, "running": is_maxbot_running()})
+
+class StopHandler(tornado.web.RequestHandler):
+    def get(self):
+        stopped = stop_maxbot()
+        self.write({"stop": stopped, "running": is_maxbot_running()})
 
 class LoadJsonHandler(tornado.web.RequestHandler):
     def get(self):
@@ -519,6 +579,13 @@ class SaveJsonHandler(tornado.web.RequestHandler):
             app_root = util.get_app_root()
             config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
             config_dict = _body
+            old_config_dict = None
+            if os.path.exists(config_filepath):
+                try:
+                    with open(config_filepath, encoding='utf-8') as json_data:
+                        old_config_dict = json.load(json_data)
+                except Exception as exc:
+                    print(f"[WARNING] Failed to read existing settings before save: {exc}")
 
             if config_dict["kktix"]["max_dwell_time"] > 0:
                 if config_dict["kktix"]["max_dwell_time"] < 15:
@@ -535,6 +602,8 @@ class SaveJsonHandler(tornado.web.RequestHandler):
                 config_dict["webdriver_type"] = CONST_WEBDRIVER_TYPE_NODRIVER
 
             util.save_json(config_dict, config_filepath)
+            if old_config_dict != config_dict:
+                print(f"settings.json updated: {config_filepath}")
 
         if not is_pass_check:
             self.set_status(401)
@@ -781,6 +850,7 @@ async def main_server():
         pass
 
     app = Application([
+        ("/", RedirectHandler, {"url": "/settings.html"}),
         ("/version", VersionHandler),
         ("/shutdown", ShutdownHandler),
         ("/sendkey", SendkeyHandler),
@@ -790,6 +860,7 @@ async def main_server():
         ("/pause", PauseHandler),
         ("/resume", ResumeHandler),
         ("/run", RunHandler),
+        ("/stop", StopHandler),
         
         # json api
         ("/load", LoadJsonHandler),
