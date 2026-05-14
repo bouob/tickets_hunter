@@ -92,6 +92,7 @@ def _ensure_state():
         "livemap_last_attempt": None,
         "played_sound_ticket": False,
         "last_homepage_redirect_time": 0,
+        "vaildate_submitted_url": None,
     }
     for key, default in defaults.items():
         _state.setdefault(key, default)
@@ -151,7 +152,8 @@ async def register_ibon_alert_handler(tab, config_dict):
         _state["alert_handler_registered"] = True
         debug.log("[IBON ALERT] Global alert handler registered")
     except Exception as handler_exc:
-        debug.log(f"[IBON ALERT] Failed to register alert handler: {handler_exc}")
+        debug.log(f"[IBON ALERT][DEGRADED] Failed to register alert handler: {handler_exc}")
+        debug.log("[IBON ALERT][DEGRADED] ibon homepage alerts will NOT be auto-dismissed until next retry")
 
 
 async def dismiss_pending_ibon_dialog(tab, config_dict):

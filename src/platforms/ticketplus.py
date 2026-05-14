@@ -1233,7 +1233,9 @@ async def nodriver_ticketplus_accept_order_fail(tab, debug=None):
     for Vuetify dialogs vary across versions, so text matching is more robust.
 
     Returns:
-        bool: True if a failure popup was detected (whether dismissed or not).
+        True  -- failure popup detected (and dismissed if possible)
+        False -- no failure popup found
+        None  -- evaluate failed; popup state unknown (caller should skip order submission)
     """
     try:
         js_result = await tab.evaluate('''
@@ -1272,20 +1274,19 @@ async def nodriver_ticketplus_accept_order_fail(tab, debug=None):
             })();
         ''')
 
-        result = util.parse_nodriver_result(js_result)
-
-        if isinstance(result, dict) and result.get('foundFailure'):
+        if isinstance(js_result, dict) and js_result.get('foundFailure'):
             if debug is not None:
-                debug.log(f"[ORDER FAIL] Detected popup: {result.get('dialogText', '')}")
-                if result.get('buttonClicked'):
+                debug.log(f"[ORDER FAIL] Detected popup: {js_result.get('dialogText', '')}")
+                if js_result.get('buttonClicked'):
                     debug.log("[ORDER FAIL] Dismissed via dialog button")
                 else:
                     debug.log("[ORDER FAIL] Dismiss button not found in dialog")
             return True
+        return False
     except Exception as exc:
         if debug is not None:
-            debug.log(f"[ORDER FAIL] Detection exception: {exc}")
-    return False
+            debug.log(f"[ORDER FAIL][DEGRADED] evaluate failed, popup state unknown: {exc}")
+        return None
 
 
 async def nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_debug=False):
@@ -1795,7 +1796,7 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
             is_button_pressed = await nodriver_ticketplus_accept_realname_card(tab)
             is_order_fail_handled = await nodriver_ticketplus_accept_order_fail(tab, debug)
 
-            if is_order_fail_handled:
+            if is_order_fail_handled is True:
                 debug.log("[ORDER FAIL] Reloading page to refresh ticket availability")
                 try:
                     await tab.reload()
@@ -1803,6 +1804,9 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
                 except Exception as reload_exc:
                     debug.log(f"[ORDER FAIL] Reload failed: {reload_exc}")
                 _state["order_page_visited"] = False
+                return _get_status()
+            elif is_order_fail_handled is None:
+                debug.log("[ORDER FAIL][DEGRADED] Detection unavailable, skipping order submission this cycle")
                 return _get_status()
 
             await nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser)
