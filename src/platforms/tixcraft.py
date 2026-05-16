@@ -2305,6 +2305,10 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
     current_url, _ = await nodriver_current_url(tab)
     ticket_number = str(config_dict["ticket_number"])
     ticket_state_key = f"ticket_assigned_{current_url}_{ticket_number}"
+    submit_until = _state.get("captcha_submit_until", 0)
+    if submit_until > time.time():
+        debug.log("[TIXCRAFT OCR] Submit in progress, waiting for navigation")
+        return
 
     if ticket_state_key in _state and _state[ticket_state_key]:
         debug.log(f"Ticket number already set ({ticket_number}), skipping")
@@ -2416,9 +2420,14 @@ async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False
                         # 提交前確認票券數量是否已設定
                         ticket_number_ok = await tab.evaluate('''
                             (function() {
-                                const select = document.querySelector('.mobile-select') ||
-                                              document.querySelector('select[id*="TicketForm_ticketPrice_"]');
-                                return select && select.value !== "0" && select.value !== "";
+                                if (window.location.href.includes('ticketmaster')) return true;
+                                const selects = Array.from(document.querySelectorAll(
+                                    '.mobile-select, select[id*="TicketForm_ticketPrice_"]'
+                                ));
+                                return selects.some(select =>
+                                    select && !select.disabled &&
+                                    select.value !== "0" && select.value !== ""
+                                );
                             })();
                         ''')
                         ticket_number_ok = util.parse_nodriver_result(ticket_number_ok)
@@ -2429,10 +2438,28 @@ async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False
                             ticket_number = str(config_dict.get("ticket_number", 2))
                             await tab.evaluate(f'''
                                 (function() {{
-                                    const select = document.querySelector('.mobile-select') ||
-                                                  document.querySelector('select[id*="TicketForm_ticketPrice_"]');
+                                    const selects = Array.from(document.querySelectorAll(
+                                        '.mobile-select, select[id*="TicketForm_ticketPrice_"]'
+                                    )).filter(select => select && !select.disabled);
+                                    const select = selects.find(select =>
+                                        Array.from(select.options).some(opt =>
+                                            opt.value === "{ticket_number}" && !opt.disabled
+                                        )
+                                    ) || selects.find(select =>
+                                        Array.from(select.options).some(opt =>
+                                            parseInt(opt.value) > 0 && !opt.disabled
+                                        )
+                                    );
                                     if (select) {{
-                                        select.value = "{ticket_number}";
+                                        const targetOption = Array.from(select.options).find(opt =>
+                                            opt.value === "{ticket_number}" && !opt.disabled
+                                        ) || Array.from(select.options).find(opt =>
+                                            parseInt(opt.value) > 0 && !opt.disabled
+                                        );
+                                        if (targetOption) {{
+                                            select.value = targetOption.value;
+                                            select.selectedIndex = targetOption.index;
+                                        }}
                                         select.dispatchEvent(new Event('change', {{bubbles: true}}));
                                     }}
                                 }})();
@@ -2444,18 +2471,24 @@ async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False
                         # 最終確認所有欄位都已填寫
                         form_ready = await tab.evaluate('''
                             (function() {
-                                const select = document.querySelector('.mobile-select') ||
-                                              document.querySelector('select[id*="TicketForm_ticketPrice_"]');
+                                const selects = Array.from(document.querySelectorAll(
+                                    '.mobile-select, select[id*="TicketForm_ticketPrice_"]'
+                                ));
                                 const verify = document.querySelector('#TicketForm_verifyCode');
                                 const agree = document.querySelector('#TicketForm_agree');
 
                                 // Ticketmaster check-captcha page has no ticket selector
                                 // Ticket number is already set on previous page
                                 const isTicketmaster = window.location.href.includes('ticketmaster');
-                                const ticketOk = isTicketmaster ? true : (select && select.value !== "0" && select.value !== "");
+                                const selectedTicket = selects.find(select =>
+                                    select && !select.disabled &&
+                                    select.value !== "0" && select.value !== ""
+                                );
+                                const ticketOk = isTicketmaster ? true : !!selectedTicket;
 
                                 return {
                                     ticket: ticketOk,
+                                    ticket_select: selectedTicket ? (selectedTicket.id || selectedTicket.name || selectedTicket.className || "") : "",
                                     verify: verify && verify.value.length === 4,
                                     agree: agree && agree.checked,
                                     ready: ticketOk &&
@@ -2472,8 +2505,9 @@ async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False
                             await tab.send(cdp.input_.dispatch_key_event("keyUp", code="Enter", key="Enter", text="\r", windows_virtual_key_code=13))
                             is_verifyCode_editing = False
                             is_form_submitted = True
+                            _state["captcha_submit_until"] = time.time() + 1.5
                         else:
-                            debug.log(f"[TIXCRAFT CAPTCHA] Form not ready - Ticket:{form_ready.get('ticket')} Captcha:{form_ready.get('verify')} Agreement:{form_ready.get('agree')}")
+                            debug.log(f"[TIXCRAFT CAPTCHA] Form not ready - Ticket:{form_ready.get('ticket')} Select:{form_ready.get('ticket_select')} Captcha:{form_ready.get('verify')} Agreement:{form_ready.get('agree')}")
                     else:
                         # 選取輸入框內容並顯示提示
                         await tab.evaluate('''
@@ -2878,6 +2912,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
 
         if is_captcha_error:
             _state["captcha_alert_detected"] = True
+            _state["captcha_submit_until"] = 0
             debug.log(f"[GLOBAL ALERT] Captcha error detected, flagging for retry")
 
         # Issue #188: Detect sold out alerts to add cooldown delay
@@ -2926,6 +2961,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
             "alert_handler_registered": False,
             "captcha_alert_detected": False,
             "ocr_completed_url": "",
+            "captcha_submit_until": 0,
             "last_homepage_redirect_time": 0,
             "sold_out_cooldown_until": 0,
             "printed_completed": False,
