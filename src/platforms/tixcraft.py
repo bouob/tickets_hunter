@@ -2436,6 +2436,7 @@ async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False
                             debug.log("[TIXCRAFT CAPTCHA] Warning: Ticket number not set, resetting...")
                             # Reset ticket number
                             ticket_number = str(config_dict.get("ticket_number", 2))
+                            ticket_number_js = json.dumps(ticket_number)
                             await tab.evaluate(f'''
                                 (function() {{
                                     const selects = Array.from(document.querySelectorAll(
@@ -2443,7 +2444,7 @@ async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False
                                     )).filter(select => select && !select.disabled);
                                     const select = selects.find(select =>
                                         Array.from(select.options).some(opt =>
-                                            opt.value === "{ticket_number}" && !opt.disabled
+                                            opt.value === {ticket_number_js} && !opt.disabled
                                         )
                                     ) || selects.find(select =>
                                         Array.from(select.options).some(opt =>
@@ -2452,7 +2453,7 @@ async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False
                                     );
                                     if (select) {{
                                         const targetOption = Array.from(select.options).find(opt =>
-                                            opt.value === "{ticket_number}" && !opt.disabled
+                                            opt.value === {ticket_number_js} && !opt.disabled
                                         ) || Array.from(select.options).find(opt =>
                                             parseInt(opt.value) > 0 && !opt.disabled
                                         );
