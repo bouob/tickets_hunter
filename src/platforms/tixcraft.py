@@ -3201,7 +3201,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
     # - /activity/game/{event_id} (event date listing page from /activity/detail redirect)
     is_ticketmaster_date_page = (
         'ticketmaster' in url and
-        (('/artist/' in url and len(url.split('/'))==6) or
+        (('/artist/' in url and len(url.rstrip('/').split('/'))==6) or
          ('/activity/game/' in url))
     )
 

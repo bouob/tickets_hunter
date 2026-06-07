@@ -2136,7 +2136,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
             is_event_page = False
             if '/events/' in url:
                 # ex: https://xxx.kktix.cc/events/xxx-copy-1
-                if len(url.split('/'))<=5:
+                if len(url.rstrip('/').split('/'))<=5:
                     is_event_page = True
 
             if is_event_page:

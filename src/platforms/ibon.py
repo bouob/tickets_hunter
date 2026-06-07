@@ -3993,7 +3993,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
         #https://ticket.ibon.com.tw/ActivityInfo/Details/0000?pattern=entertainment
         if '/activityinfo/details/' in url.lower():
             is_event_page = False
-            if len(url.split('/'))==6:
+            if len(url.rstrip('/').split('/'))==6:
                 is_event_page = True
 
             if is_event_page:
@@ -4060,13 +4060,13 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
         if '/UTK02/UTK0201_' in url.upper():
             if '.aspx?' in url.lower():
                 if 'PERFORMANCE_ID=' in url.upper():
-                    if len(url.split('/'))==6:
+                    if len(url.rstrip('/').split('/'))==6:
                         is_event_page = True
 
         if '/UTK02/UTK0202_' in url.upper():
             if '.aspx?' in url.lower():
                 if 'PERFORMANCE_ID=' in url.upper():
-                    if len(url.split('/'))==6:
+                    if len(url.rstrip('/').split('/'))==6:
                         is_event_page = True
 
         if is_event_page:
@@ -4627,13 +4627,13 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
         if '/UTK02/UTK0201_' in url.upper():
             if '.aspx?' in url.lower():
                 if 'PERFORMANCE_ID=' in url.upper():
-                    if len(url.split('/'))==6:
+                    if len(url.rstrip('/').split('/'))==6:
                         is_event_page = True
 
         if '/UTK02/UTK0202_' in url.upper():
             if '.aspx?' in url.lower():
                 if 'PERFORMANCE_ID=' in url.upper():
-                    if len(url.split('/'))==6:
+                    if len(url.rstrip('/').split('/'))==6:
                         is_event_page = True
 
         if is_event_page:
@@ -4774,7 +4774,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
         is_event_page = False
         if '/UTK02/UTK020' in url.upper():
             if '.aspx' in url.lower():
-                if len(url.split('/'))==6:
+                if len(url.rstrip('/').split('/'))==6:
                     is_event_page = True
 
         # ignore "pay money" step.

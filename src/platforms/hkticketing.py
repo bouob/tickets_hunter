@@ -2681,7 +2681,7 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
             debug.log("[HKTICKETING] Modal dialog popup, skip...")
         else:
             is_event_page = False
-            if len(url.split('/')) == 5:
+            if len(url.rstrip('/').split('/')) == 5:
                 is_event_page = True
 
             if is_event_page:

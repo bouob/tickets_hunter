@@ -1694,7 +1694,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
     # Product page (UTK0201_.aspx?product_id=)
     if 'utk0201_.aspx?product_id=' in url.lower():
-        is_event_page = len(url.split('/')) == 6
+        is_event_page = len(url.rstrip('/').split('/')) == 6
 
         if is_event_page:
             # Check realname dialog
@@ -1753,7 +1753,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
     # Date selection page (UTK0201_00.aspx?product_id=)
     if 'utk0201_00.aspx?product_id=' in url.lower():
-        is_event_page = len(url.split('/')) == 6
+        is_event_page = len(url.rstrip('/').split('/')) == 6
 
         if is_event_page and config_dict["date_auto_select"]["enable"]:
             await nodriver_kham_product(tab, domain_name, config_dict)

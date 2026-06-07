@@ -1749,7 +1749,7 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
     # https://ticketplus.com.tw/activity/XXX
     if '/activity/' in url.lower():
         is_event_page = False
-        if len(url.split('/'))==5:
+        if len(url.rstrip('/').split('/'))==5:
             is_event_page = True
 
         if is_event_page:
@@ -1768,7 +1768,7 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
     # https://ticketplus.com.tw/order/XXX/OOO
     if '/order/' in url.lower():
         is_event_page = False
-        if len(url.split('/'))==6:
+        if len(url.rstrip('/').split('/'))==6:
             is_event_page = True
 
         if is_event_page:
@@ -1821,7 +1821,7 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
     # https://ticketplus.com.tw/confirmseat/xx/oo
     if '/confirm/' in url.lower() or '/confirmseat/' in url.lower():
         is_event_page = False
-        if len(url.split('/'))==6:
+        if len(url.rstrip('/').split('/'))==6:
             is_event_page = True
 
         if is_event_page:
