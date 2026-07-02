@@ -53,6 +53,15 @@ def _get_status():
     }
 
 
+def _ticketplus_path_segment_count(url):
+    """Path segment count with the trailing slash normalized away.
+
+    The site 302-redirects activity URLs to a trailing-slash form (#308),
+    which would inflate split('/') by one and break page-type routing.
+    """
+    return len(url.rstrip('/').split('/'))
+
+
 async def nodriver_ticketplus_detect_layout_style(tab, config_dict=None):
     """Detect TicketPlus page layout style.
 
@@ -1749,7 +1758,7 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
     # https://ticketplus.com.tw/activity/XXX
     if '/activity/' in url.lower():
         is_event_page = False
-        if len(url.split('/'))==5:
+        if _ticketplus_path_segment_count(url)==5:
             is_event_page = True
 
         if is_event_page:
@@ -1768,7 +1777,7 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
     # https://ticketplus.com.tw/order/XXX/OOO
     if '/order/' in url.lower():
         is_event_page = False
-        if len(url.split('/'))==6:
+        if _ticketplus_path_segment_count(url)==6:
             is_event_page = True
 
         if is_event_page:
@@ -1821,7 +1830,7 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
     # https://ticketplus.com.tw/confirmseat/xx/oo
     if '/confirm/' in url.lower() or '/confirmseat/' in url.lower():
         is_event_page = False
-        if len(url.split('/'))==6:
+        if _ticketplus_path_segment_count(url)==6:
             is_event_page = True
 
         if is_event_page:

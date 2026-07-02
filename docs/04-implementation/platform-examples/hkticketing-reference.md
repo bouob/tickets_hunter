@@ -396,7 +396,7 @@ async def nodriver_hkticketing_type02_confirm_order(tab, config_dict):
 
 ## 相關文件
 
-- 📋 [Stage 11: 排隊處理機制](../../03-mechanisms/11-queue-handling.md) - 排隊偵測詳解
+- 📋 [Stage 11: 排隊與付款機制](../../03-mechanisms/11-queue-payment.md) - 排隊偵測詳解
 - 📋 [Stage 4: 日期選擇機制](../../03-mechanisms/04-date-selection.md) - 日期選擇邏輯
 - 🏗️ [程式碼結構分析](../../02-development/structure.md) - HKTicketing 函數索引
 - 📖 [12-Stage 標準](../../02-development/ticket_automation_standard.md) - 完整流程規範

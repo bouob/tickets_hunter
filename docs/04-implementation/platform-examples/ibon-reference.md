@@ -606,10 +606,10 @@ remote_object = await tab.send(
 
 ## 相關文件
 
-- 📋 [Stage 4: 日期選擇機制](../../02-mechanisms/04-date-selection.md) - DOMSnapshot 應用
-- 📋 [Stage 7: 驗證碼處理機制](../../02-mechanisms/07-captcha-handling.md) - Shadow DOM 驗證碼
-- 📋 [CDP 協議參考](../../03-api-reference/cdp_protocol_reference.md) - DOMSnapshot 完整 API
-- 🐛 [除錯方法論](../../04-testing-debugging/debugging_methodology.md) - Shadow DOM 除錯
+- 📋 [Stage 4: 日期選擇機制](../../03-mechanisms/04-date-selection.md) - DOMSnapshot 應用
+- 📋 [Stage 7: 驗證碼處理機制](../../03-mechanisms/07-captcha-handling.md) - Shadow DOM 驗證碼
+- 📋 [CDP 協議參考](../../06-api-reference/cdp_protocol_reference.md) - DOMSnapshot 完整 API
+- 🐛 [除錯方法論](../../internal/testing-debugging/debugging_methodology.md) - Shadow DOM 除錯
 - 🏗️ [程式碼結構分析](../../02-development/structure.md) - iBon 函數索引
 
 ---

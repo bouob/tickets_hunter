@@ -323,7 +323,7 @@ function applyOrRestore(selector, property, englishValue) {
 function renderReadmePane() {
     const englishHtml = `
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>Version</strong>: Tickets Hunter (2026.06.11) | <strong>Technical support</strong>: Claude Code AI-assisted development</p>
+  <p class="mb-0"><strong>Version</strong>: Tickets Hunter (2026.07.02) | <strong>Technical support</strong>: Claude Code AI-assisted development</p>
 </div>
 
 <div class="accordion mb-3" id="devStatusAccordion">
@@ -591,6 +591,9 @@ function renderVerificationTabTranslations() {
     }
     applyOrRestore('#detected-question-alert p.mb-2', 'innerHTML', '<strong>Question:</strong>');
     applyOrRestore('#detected-question-alert small.text-muted', 'innerHTML', `${INFO_ICON_SVG}Tip: if auto-answer fails, search above and then copy the result into the custom answer dictionary field.`);
+
+    applyOrRestore('#question-instance-row > label', 'textContent', 'Answer target instance');
+    applyOrRestore('#question-instance-row .form-text', 'textContent', 'Defaults to the active tab; pick another running instance to monitor its pending question.');
 }
 
 function renderAutofillTabTranslations() {
@@ -659,7 +662,9 @@ function renderAutofillTabTranslations() {
 }
 
 function renderRuntimeTabTranslations() {
-    const runtimeRows = document.querySelectorAll('#runtime-tab-pane > .row');
+    // Exclude the dynamically-added instances panel so the positional labels
+    // below still map to the status / url / system-time rows.
+    const runtimeRows = document.querySelectorAll('#runtime-tab-pane > .row:not(#instances_panel)');
     if (runtimeRows.length >= 3) {
         if (currentLanguage === 'en') {
             applyNodeValue('runtime-label-0', runtimeRows[0].querySelector('label.col-sm-2'), 'textContent', 'Runtime status');
@@ -723,10 +728,31 @@ function renderRuntimeTabTranslations() {
     <li>Second-based keywords are useful for periodic control within every minute</li>
   </ul>
 </div>`);
+
+    // Instances dashboard (Phase 3) static labels.
+    applyOrRestore('#instances_panel > label', 'textContent', 'Running instances');
+    applyOrRestore('#pause_all_btn', 'textContent', 'Pause all');
+    applyOrRestore('#instances_panel .text-muted.small', 'textContent', 'Refreshes every 2s; offline = no heartbeat for 30s');
+    applyOrRestore('#instances_panel thead th:nth-child(1)', 'textContent', 'Instance');
+    applyOrRestore('#instances_panel thead th:nth-child(2)', 'textContent', 'Liveness');
+    applyOrRestore('#instances_panel thead th:nth-child(3)', 'textContent', 'State');
+    applyOrRestore('#instances_panel thead th:nth-child(4)', 'textContent', 'Current URL');
+}
+
+function renderProfileBarTranslations() {
+    // Top-of-page profile bar + the "add profile" modal (outside the tabs).
+    applyOrRestore('#profile_bar > span.text-muted', 'textContent', 'Profiles:');
+    applyOrRestore('#profile_add_btn', 'textContent', '+ Add');
+    applyOrRestore('#profile_add_btn', 'title', 'Add an instance profile (choose a platform)');
+    applyOrRestore('#profile_modal .modal-title', 'textContent', 'Add instance profile');
+    applyOrRestore('#profile_modal .modal-body > p.text-muted', 'textContent', 'Choosing a platform creates a new profile from the current settings (homepage auto-filled). Each profile can launch as its own instance.');
+    applyOrRestore('#profile_custom_name', 'placeholder', 'Custom name (letters, digits, underscore, hyphen)');
+    applyOrRestore('#profile_modal .input-group button', 'textContent', 'Create blank');
 }
 
 function renderStaticTranslations() {
     renderPageChrome();
+    renderProfileBarTranslations();
     renderReadmePane();
     renderBasicTabTranslations();
     renderAdvancedTabTranslations();
@@ -743,6 +769,8 @@ function applyLanguage(language) {
         language_selector.value = currentLanguage;
     }
     renderStaticTranslations();
+    // Warning badges are dynamic; re-render them in the new language.
+    if (typeof update_multi_open_warnings === 'function') update_multi_open_warnings(last_profile_details);
     updateThemeStatus(document.documentElement.getAttribute('data-bs-theme') || 'light');
 
     if (currentHelpField) {
@@ -770,12 +798,207 @@ function uiText(key, extra = '') {
         'test_failed': { 'zh-TW': `測試失敗：${extra}`, en: `Test failed: ${extra}` },
         'copy_failed': { 'zh-TW': `無法自動複製問題。請手動複製：\n\n${extra}`, en: `Unable to copy automatically. Please copy this manually:\n\n${extra}` },
         'copied_notice': { 'zh-TW': `問題已複製！請貼上到 ${extra}`, en: `Prompt copied. Paste it into ${extra}` },
+        'dup_run_confirm': { 'zh-TW': '此設定檔已有執行中的實例。同帳號同活動多開可能被平台踢掉登入狀態 (session)。仍要再開一個實例嗎？', en: 'This profile already has a running instance. Opening another with the same account on the same event may get your session kicked by the platform. Open another instance anyway?' },
+        'instance_alive': { 'zh-TW': '存活', en: 'Alive' },
+        'instance_offline': { 'zh-TW': '離線', en: 'Offline' },
+        'instance_paused': { 'zh-TW': '暫停', en: 'Paused' },
+        'instance_running': { 'zh-TW': '運行中', en: 'Running' },
+        'btn_pause': { 'zh-TW': '暫停', en: 'Pause' },
+        'btn_resume': { 'zh-TW': '繼續', en: 'Resume' },
+        'btn_stop': { 'zh-TW': '停止', en: 'Stop' },
+        'stop_confirm': { 'zh-TW': `停止會關閉實例「${extra}」的瀏覽器並結束行程，無法復原。確定要停止嗎？`, en: `Stopping closes the browser for instance "${extra}" and ends its process. This cannot be undone. Stop it?` },
+        'risk_kktix': { 'zh-TW': 'KKTIX 多開風險：可能打亂排隊順序甚至被導入假排隊', en: 'KKTIX multi-open risk: may disrupt your queue order or trap you in a fake queue' },
+        'risk_tixcraft': { 'zh-TW': '拓元/遠大多開風險：同帳號同活動會被踢 session', en: 'Tixcraft family multi-open risk: same account on the same event gets session-kicked' },
+        'risk_ibon': { 'zh-TW': 'iBon 多開風險：Queue-it 排隊序可能受影響', en: 'iBon multi-open risk: Queue-it ordering may be affected' },
+        'question_target_active': { 'zh-TW': '（目前分頁）', en: '(active tab)' },
     };
 
     return messages[key]?.[currentLanguage] || messages[key]?.['zh-TW'] || '';
 }
 
-maxbot_load_api();
+// ===== Instance profiles (multi-instance) =====
+// Each profile = one full settings json under profiles/<name>.json.
+// "default" maps to settings.json. The active profile is kept in
+// localStorage only (no schema change in settings.json).
+
+const PROFILE_PLATFORMS = [
+    { slug: 'tixcraft',     label: 'Tixcraft 拓元',    homepage: 'https://tixcraft.com' },
+    { slug: 'kktix',        label: 'KKTIX',            homepage: 'https://kktix.com' },
+    { slug: 'ibon',         label: 'iBon',             homepage: 'https://ticket.ibon.com.tw' },
+    { slug: 'famiticket',   label: 'FamiTicket 全網',  homepage: 'https://www.famiticket.com.tw' },
+    { slug: 'kham',         label: 'Kham 寬宏',        homepage: 'https://kham.com.tw' },
+    { slug: 'ticket',       label: '年代售票',          homepage: 'https://ticket.com.tw' },
+    { slug: 'udn',          label: 'UDN 售票網',        homepage: 'https://tickets.udnfunlife.com' },
+    { slug: 'ticketplus',   label: 'TicketPlus 遠大',  homepage: 'https://ticketplus.com.tw' },
+    { slug: 'funone',       label: 'FunOne',           homepage: 'https://tickets.funone.io' },
+    { slug: 'fansigo',      label: 'FANSI GO',         homepage: 'https://go.fansi.me' },
+    { slug: 'cityline',     label: 'Cityline',         homepage: 'https://www.cityline.com' },
+    { slug: 'urbtix',       label: 'Urbtix',           homepage: 'https://ticket.urbtix.hk' },
+    { slug: 'hkticketing',  label: 'HKTicketing',      homepage: 'https://hotshow.hkticketing.com/' },
+    { slug: 'ticketmaster', label: 'TicketMaster SG',  homepage: 'https://www.ticketmaster.sg' },
+];
+
+const PROFILE_STORAGE_KEY = 'maxbot_current_profile';
+let current_profile = localStorage.getItem(PROFILE_STORAGE_KEY) || 'default';
+
+function profile_query() {
+    return (current_profile && current_profile !== 'default')
+        ? '?profile=' + encodeURIComponent(current_profile) : '';
+}
+
+function refresh_profile_tabs(callback) {
+    $.get('/profiles').done(function(data) {
+        const profiles = (data && data.profiles) ? data.profiles : ['default'];
+        const details = (data && data.details) ? data.details : profiles.map(function(n) { return { name: n, homepage: '' }; });
+        if (!profiles.includes(current_profile)) {
+            current_profile = 'default';
+            localStorage.setItem(PROFILE_STORAGE_KEY, current_profile);
+        }
+        const container = $('#profile_tabs');
+        container.empty();
+        details.forEach(function(d) {
+            const name = d.name;
+            const li = $('<li class="nav-item"></li>');
+            const btn = $('<button type="button" class="nav-link py-1 px-3"></button>').text(name);
+            if (d.homepage) btn.attr('title', d.homepage);
+            if (name === current_profile) btn.addClass('active');
+            btn.on('click', function() { switch_profile(name); });
+            if (name !== 'default') {
+                const close = $('<span class="ms-2" style="cursor:pointer;" title="刪除此設定檔">&times;</span>');
+                close.on('click', function(ev) {
+                    ev.stopPropagation();
+                    delete_profile(name);
+                });
+                btn.append(close);
+            }
+            li.append(btn);
+            container.append(li);
+        });
+        update_multi_open_warnings(details);
+        if (callback) callback(profiles);
+    }).fail(function() {
+        // Profile API unavailable (old backend): hide the bar, keep legacy behavior.
+        $('#profile_bar').addClass('d-none');
+        if (callback) callback(['default']);
+    });
+}
+
+function switch_profile(name) {
+    if (name === current_profile) return;
+    current_profile = name;
+    localStorage.setItem(PROFILE_STORAGE_KEY, name);
+    // Reset question alert so the new tab's pending question shows immediately
+    if (typeof lastDetectedQuestion !== 'undefined') lastDetectedQuestion = '';
+    refresh_profile_tabs();
+    maxbot_load_api();
+}
+
+// Multi-open risk per platform: show a badge when >=2 profiles target the same
+// risk-bearing platform. Matched by homepage substring so renamed/custom
+// profiles still count. Text flows through uiText() for i18n.
+const PROFILE_MULTI_OPEN_RISKS = [
+    { match: 'kktix.c',      key: 'risk_kktix' },
+    { match: 'tixcraft.com', key: 'risk_tixcraft' },
+    { match: 'ticketmaster', key: 'risk_tixcraft' },
+    { match: 'ibon',         key: 'risk_ibon' },
+];
+
+// Cache the last profile details so a language switch can re-render the
+// (dynamic) warning badges, which renderStaticTranslations does not cover.
+let last_profile_details = [];
+
+function update_multi_open_warnings(details) {
+    last_profile_details = details || [];
+    const container = $('#profile_warnings');
+    container.empty();
+    const shown = new Set();
+    PROFILE_MULTI_OPEN_RISKS.forEach(function(risk) {
+        const count = (details || []).filter(function(d) {
+            return (d.homepage || '').indexOf(risk.match) >= 0;
+        }).length;
+        if (count >= 2 && !shown.has(risk.key)) {
+            shown.add(risk.key);
+            const text = uiText(risk.key);
+            $('<span class="badge text-bg-warning"></span>').text(text).attr('title', text).appendTo(container);
+        }
+    });
+}
+
+function show_profile_modal() {
+    const container = $('#profile_platform_buttons');
+    container.empty();
+    PROFILE_PLATFORMS.forEach(function(p) {
+        const btn = $('<button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2"></button>').text(p.label);
+        btn.on('click', function() { create_profile_for_platform(p.slug, p.homepage); });
+        container.append(btn);
+    });
+    $('#profile_modal_error').addClass('d-none');
+    $('#profile_custom_name').val('');
+    $('#profile_modal').modal('show');
+}
+
+function profile_modal_error(msg) {
+    $('#profile_modal_error').removeClass('d-none').text(msg);
+}
+
+function create_profile_for_platform(slug, homepage) {
+    $.get('/profiles').done(function(data) {
+        const existing = (data && data.profiles) ? data.profiles : [];
+        let name = slug;
+        let n = 2;
+        while (existing.includes(name)) { name = slug + '-' + n; n++; }
+        create_profile(name, homepage);
+    });
+}
+
+function create_profile_custom() {
+    const name = ($('#profile_custom_name').val() || '').trim();
+    if (!/^[A-Za-z0-9_-]{1,32}$/.test(name) || name === 'default') {
+        profile_modal_error('名稱限英數、底線、連字號（最長 32 字元），且不可為 default');
+        return;
+    }
+    create_profile(name, '');
+}
+
+function create_profile(name, homepage) {
+    // Clone current form settings as the base config for the new profile.
+    const cfg = settings ? JSON.parse(JSON.stringify(settings)) : null;
+    if (cfg && homepage) cfg.homepage = homepage;
+    $.ajax({
+        url: '/profiles',
+        method: 'POST',
+        data: JSON.stringify({ name: name, config: cfg })
+    }).done(function() {
+        $('#profile_modal').modal('hide');
+        current_profile = name;
+        localStorage.setItem(PROFILE_STORAGE_KEY, name);
+        refresh_profile_tabs();
+        maxbot_load_api();
+    }).fail(function(xhr) {
+        let msg = '建立失敗';
+        try { msg = JSON.parse(xhr.responseText).error || msg; } catch (e) {}
+        profile_modal_error(msg);
+    });
+}
+
+function delete_profile(name) {
+    if (!window.confirm('刪除設定檔「' + name + '」？運行中的實例不會被停止，但設定將無法再熱更新。')) return;
+    $.ajax({
+        url: '/profiles?profile=' + encodeURIComponent(name),
+        method: 'DELETE'
+    }).done(function() {
+        if (current_profile === name) {
+            current_profile = 'default';
+            localStorage.setItem(PROFILE_STORAGE_KEY, current_profile);
+            maxbot_load_api();
+        }
+        refresh_profile_tabs();
+    });
+}
+
+refresh_profile_tabs(function() {
+    maxbot_load_api();
+});
 
 // Keyword conversion functions (aligned with util.py logic)
 function format_keyword_for_display(keyword_string) {
@@ -1077,7 +1300,7 @@ function load_settins_to_form(settings)
 
 function maxbot_load_api()
 {
-    let api_url = "/load";
+    let api_url = "/load" + profile_query();
     $.get( api_url, function() {
         //alert( "success" );
     })
@@ -1097,6 +1320,10 @@ function maxbot_load_api()
 
 function maxbot_reset_api()
 {
+    if (current_profile !== 'default') {
+        message('重設僅支援 default 設定檔；其他設定檔請直接刪除後重建。');
+        return;
+    }
     let api_url = "/reset";
     $.get( api_url, function() {
         //alert( "success" );
@@ -1136,16 +1363,47 @@ function message_old(msg)
         }, 3000);
 }
 
+function next_instance_id(base, rows)
+{
+    // Lowest free numbered id for a duplicate launch: base-2, base-3, ...
+    const existing = new Set((rows || []).map(function(it){ return it.id; }));
+    let n = 2;
+    while (existing.has(base + '-' + n)) n++;
+    return base + '-' + n;
+}
+
 function maxbot_launch()
+{
+    // Warn when this profile already has a live instance (same-account session
+    // kick risk). If confirmed, launch a second instance under a numbered id.
+    $.get('/instances').done(function(data) {
+        const rows = (data && data.instances) ? data.instances : [];
+        const alive = rows.some(function(it){ return it.id === current_profile && it.alive; });
+        if (alive) {
+            if (!window.confirm(uiText('dup_run_confirm'))) return;
+            do_launch(next_instance_id(current_profile, rows));
+        } else {
+            do_launch('');
+        }
+    }).fail(function() {
+        // /instances unavailable (older backend): fall back to a plain launch.
+        do_launch('');
+    });
+}
+
+function do_launch(instance_override)
 {
     run_message(uiText('launching'));
     if (!save_changes_to_dict(true)) return;
-    maxbot_save_api(maxbot_run_api);
+    maxbot_save_api(function(){ maxbot_run_api(instance_override); });
 }
 
-function maxbot_run_api()
+function maxbot_run_api(instance_override)
 {
-    let api_url = "/run";
+    let api_url = "/run" + profile_query();
+    if (instance_override) {
+        api_url += (profile_query() ? '&' : '?') + 'instance=' + encodeURIComponent(instance_override);
+    }
     $.get( api_url, function() {
         //alert( "success" );
     })
@@ -1331,7 +1589,7 @@ function save_changes_to_dict(silent_flag)
 
 function maxbot_save_api(callback)
 {
-    let api_url = "/save";
+    let api_url = "/save" + profile_query();
     if(settings) {
         $.post( api_url, JSON.stringify(settings), function() {
             //alert( "success" );
@@ -1354,7 +1612,7 @@ function maxbot_save_api(callback)
 
 function maxbot_pause_api()
 {
-    let api_url = "/pause";
+    let api_url = "/pause" + profile_query();
     if(settings) {
         $.get( api_url, function() {
             //alert( "success" );
@@ -1373,7 +1631,7 @@ function maxbot_pause_api()
 
 function maxbot_resume_api()
 {
-    let api_url = "/resume";
+    let api_url = "/resume" + profile_query();
     if(settings) {
         $.get( api_url, function() {
             //alert( "success" );
@@ -1529,7 +1787,8 @@ function check_unsaved_fields()
 
 function maxbot_status_api()
 {
-    let api_url = "/status";
+    // Status / pause / resume all follow the currently selected profile tab
+    let api_url = "/status" + profile_query();
     $.get( api_url, function() {
         //alert( "success" );
     })
@@ -1587,6 +1846,84 @@ var status_interval= setInterval(() => {
     maxbot_status_api();
     update_system_time();
 }, 500);
+
+// ===== Instance dashboard (Phase 3 multi-instance overview) =====
+// Polls /instances and renders one row per instance (every profile plus any
+// CLI --instance run). Per-row pause/resume and "pause all" reuse the
+// existing /pause /resume endpoints with ?profile=<id>.
+function instance_query(id) {
+    return (id && id !== 'default') ? '?profile=' + encodeURIComponent(id) : '';
+}
+
+function render_instances(rows) {
+    const tbody = $('#instances_tbody');
+    tbody.empty();
+    rows.forEach(function(it) {
+        const tr = $('<tr></tr>');
+        tr.append($('<td></td>').text(it.id));
+        const live_badge = it.alive
+            ? $('<span class="badge text-bg-success"></span>').text(uiText('instance_alive'))
+            : $('<span class="badge text-bg-secondary"></span>').text(uiText('instance_offline'));
+        tr.append($('<td></td>').append(live_badge));
+        const state_badge = it.paused
+            ? $('<span class="badge text-bg-danger"></span>').text(uiText('instance_paused'))
+            : $('<span class="badge text-bg-success"></span>').text(uiText('instance_running'));
+        tr.append($('<td></td>').append(state_badge));
+        const url = it.last_url || '';
+        tr.append($('<td class="text-truncate" style="max-width:240px;"></td>').text(url).attr('title', url));
+        const action_td = $('<td class="text-end"></td>');
+        const action_btn = it.paused
+            ? $('<button type="button" class="btn btn-sm btn-outline-success"></button>').text(uiText('btn_resume')).on('click', function(){ instance_resume(it.id); })
+            : $('<button type="button" class="btn btn-sm btn-outline-danger"></button>').text(uiText('btn_pause')).on('click', function(){ instance_pause(it.id); });
+        action_td.append(action_btn);
+        // Stop is only meaningful for a live process; offline rows have nothing to stop.
+        if (it.alive) {
+            const stop_btn = $('<button type="button" class="btn btn-sm btn-outline-secondary ms-1"></button>').text(uiText('btn_stop')).on('click', function(){ instance_stop(it.id); });
+            action_td.append(stop_btn);
+        }
+        tr.append(action_td);
+        tbody.append(tr);
+    });
+}
+
+function instances_dashboard_api() {
+    $.get('/instances').done(function(data) {
+        const rows = (data && data.instances) ? data.instances : [];
+        render_instances(rows);
+        refresh_question_instance_options(rows);
+    }).fail(function() {
+        // Older backend without /instances: hide the panel, keep single-instance UI.
+        $('#instances_panel').addClass('d-none');
+    });
+}
+
+function instance_pause(id) {
+    $.get('/pause' + instance_query(id)).always(instances_dashboard_api);
+}
+
+function instance_resume(id) {
+    $.get('/resume' + instance_query(id)).always(instances_dashboard_api);
+}
+
+function instance_stop(id) {
+    // Irreversible (closes the browser, ends the process) -> require confirmation.
+    if (!window.confirm(uiText('stop_confirm', id))) return;
+    $.get('/stop' + instance_query(id)).always(instances_dashboard_api);
+}
+
+function pause_all_instances() {
+    // Mirror the planned semantics: build a pause flag for every alive,
+    // non-paused instance individually (no global pause file).
+    $.get('/instances').done(function(data) {
+        const rows = (data && data.instances) ? data.instances : [];
+        rows.filter(function(it){ return it.alive && !it.paused; })
+            .forEach(function(it){ $.get('/pause' + instance_query(it.id)); });
+        setTimeout(instances_dashboard_api, 300);
+    });
+}
+
+var instances_interval = setInterval(instances_dashboard_api, 2000);
+instances_dashboard_api();
 
 maxbot_version_api();
 
@@ -1771,13 +2108,50 @@ language_selector?.addEventListener('change', function() {
 
 let questionCheckInterval = null;
 let lastDetectedQuestion = '';
+// '' = follow the active profile tab; otherwise monitor this specific instance.
+let question_target_instance = '';
+
+function on_question_instance_change() {
+    const sel = document.getElementById('question-instance-select');
+    question_target_instance = sel ? sel.value : '';
+    lastDetectedQuestion = '';  // force re-render for the newly chosen target
+    checkDetectedQuestion();
+}
+
+// Populate the answer-panel instance picker from the /instances poll, keeping
+// the current selection stable across refreshes.
+function refresh_question_instance_options(rows) {
+    const sel = document.getElementById('question-instance-select');
+    if (!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = '';
+    const opt_default = document.createElement('option');
+    opt_default.value = '';
+    opt_default.textContent = uiText('question_target_active');
+    sel.appendChild(opt_default);
+    (rows || []).forEach(function(it) {
+        const opt = document.createElement('option');
+        opt.value = it.id;
+        opt.textContent = it.id + (it.alive ? '' : ' (' + uiText('instance_offline') + ')');
+        sel.appendChild(opt);
+    });
+    const ids = (rows || []).map(function(it){ return it.id; });
+    if (prev && ids.indexOf(prev) >= 0) {
+        sel.value = prev;
+    } else if (prev) {
+        // Selected instance vanished -> fall back to the active tab.
+        sel.value = '';
+        question_target_instance = '';
+    }
+}
 
 /**
  * Check if MAXBOT_QUESTION.txt exists and display the question
  */
 async function checkDetectedQuestion() {
     try {
-        const response = await fetch('/question');
+        const target_query = question_target_instance ? instance_query(question_target_instance) : profile_query();
+        const response = await fetch('/question' + target_query);
         const data = await response.json();
 
         const alertElement = document.getElementById('detected-question-alert');

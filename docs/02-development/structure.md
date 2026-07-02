@@ -673,7 +673,6 @@ OCR 與驗證碼
 檔案 I/O
 ├── save_json
 ├── write_string_to_file
-├── save_url_to_file
 └── force_remove_file
 
 系統工具
@@ -681,9 +680,12 @@ OCR 與驗證碼
 ├── is_connectable
 ├── is_arm
 ├── get_app_root
+├── set_instance_id                       # 多開：設定本行程 instance id
+├── get_instance_id
+├── get_instance_state_path               # 多開：解析 per-instance 狀態檔路徑
 ├── t_or_f
 ├── get_brave_bin_path
-├── launch_maxbot
+├── launch_maxbot                         # 支援 instance= 參數（多開序號實例）
 ├── parse_nodriver_result
 └── get_token
 
@@ -703,6 +705,7 @@ iBon Livemap
 
 **機制索引**：
 - 設定熱重載（hot-reload）：`reload_config`（nodriver_tixcraft.py），詳見 [14-hot-reload.md](../03-mechanisms/14-hot-reload.md)
+- 多開實例（multi-instance）：`set_instance_id` / `get_instance_state_path`（util.py）、`InstancesHandler` / `list_instance_ids` / `get_instance_status` / `launch_maxbot`（settings.py），詳見 [17-multi-instance.md](../03-mechanisms/17-multi-instance.md)
 - Cloudflare Turnstile：`detect_cloudflare_challenge` / `handle_cloudflare_challenge`（nodriver_common.py），詳見 [15-cloudflare-turnstile.md](../03-mechanisms/15-cloudflare-turnstile.md)
 
 ### 🛑 **暫停機制輔助函數** (ZenDriver 專用)

@@ -1,6 +1,6 @@
 **文件說明**：Tickets Hunter 公開技術文件導覽與索引
 
-**最後更新**：2026-03-09
+**最後更新**：2026-06-14
 
 ---
 
@@ -23,6 +23,7 @@ docs/
 ├── README.md                                          <- 文件導覽索引
 │
 ├── 01-getting-started/                                <- 新手入門
+│   ├── README.md                                      <- 入門索引
 │   ├── project_overview.md                            <- 專案架構與系統概覽
 │   └── setup.md                                       <- 安裝與環境設定
 │
@@ -31,8 +32,8 @@ docs/
 │   ├── structure.md                                   <- 程式架構與函數索引
 │   ├── development_guide.md                           <- 開發規範與檢查清單
 │   ├── coding_templates.md                            <- 程式寫法範本
-│   ├── documentation_workflow.md                      <- 文件維護流程
 │   ├── logic_flowcharts.md                            <- 邏輯判斷範本
+│   ├── sound_notification_system.md                   <- 音效通知系統
 │   └── ticket_seat_selection_algorithm.md             <- 座位選擇演算法
 │
 ├── 03-mechanisms/                                     <- 12 階段機制文件
@@ -48,7 +49,13 @@ docs/
 │   ├── 09-terms-agreement.md                          <- Stage 9: 條款同意
 │   ├── 10-order-submit.md                             <- Stage 10: 訂單送出
 │   ├── 11-queue-payment.md                            <- Stage 11: 排隊付款
-│   └── 12-error-handling.md                           <- Stage 12: 錯誤處理
+│   ├── 12-error-handling.md                           <- Stage 12: 錯誤處理
+│   ├── 13-active-polling-pattern.md                   <- 跨階段: 刷新等待機制
+│   ├── 14-hot-reload.md                               <- 跨階段: 即時設定修改
+│   ├── 15-cloudflare-turnstile.md                     <- 跨階段: Turnstile 偵測
+│   ├── 16-yii2-captcha-hash.md                        <- 跨階段: Yii2 驗證碼雜湊
+│   ├── 17-multi-instance.md                           <- 跨階段: 多開實例隔離
+│   └── 18-universal-ocr-model.md                      <- 跨階段: 通用 OCR 模型選擇
 │
 ├── 04-implementation/                                 <- 平台實作參考
 │   ├── README.md                                      <- 平台參考索引
@@ -62,13 +69,16 @@ docs/
 │   └── fr-to-code-mapping.md                          <- FR 到程式碼對照表
 │
 ├── 06-api-reference/                                  <- API 參考文件
+│   ├── README.md                                      <- API 文件索引
+│   ├── zendriver_api_guide.md                         <- Zendriver API 指南（主要參考）
 │   ├── cdp_protocol_reference.md                      <- CDP 完整參考
-│   ├── nodriver_api_guide.md                          <- NoDriver API 指南
-│   ├── nodriver_selector_analysis.md                  <- NoDriver Selector 分析
 │   ├── shadow_dom_pierce_guide.md                     <- Shadow DOM 穿透指南
-│   └── ddddocr_api_guide.md                           <- 驗證碼識別 API
+│   ├── ddddocr_api_guide.md                           <- 驗證碼識別 API
+│   ├── nodriver_api_guide.md                          <- NoDriver API 指南（已棄用）
+│   └── nodriver_selector_analysis.md                  <- NoDriver Selector 分析（已棄用）
 │
 └── 07-deployment/                                     <- 部署打包
+    ├── README.md                                      <- 部署索引
     └── pyinstaller_packaging_guide.md                 <- PyInstaller 打包指南
 ```
 
@@ -86,8 +96,8 @@ ticket_automation_standard.md -> structure.md -> development_guide.md -> API 指
 1. 閱讀 [ticket_automation_standard.md](02-development/ticket_automation_standard.md) 了解標準流程 (12 階段)
 2. 查看 [structure.md](02-development/structure.md) 參考現有平台實作 (含完成度評分)
 3. 查看對應的 [API 指南](06-api-reference/)：
+   - **Zendriver (主要參考)** → [zendriver_api_guide.md](06-api-reference/zendriver_api_guide.md)
    - **CDP 協議 (深入)** → [cdp_protocol_reference.md](06-api-reference/cdp_protocol_reference.md)
-   - NoDriver → [nodriver_api_guide.md](06-api-reference/nodriver_api_guide.md)
 4. 遵循 [development_guide.md](02-development/development_guide.md) 的規範
 5. 參考 [coding_templates.md](02-development/coding_templates.md) 的程式範本
 
@@ -111,9 +121,9 @@ ticket_automation_standard.md -> structure.md -> development_guide.md -> API 指
 |------|------|----------|
 | [ticket_automation_standard.md](02-development/ticket_automation_standard.md) | 標準功能定義 (12 階段) | 開發者 |
 | [structure.md](02-development/structure.md) | 程式架構索引與完成度評分 | 所有人 |
-| [cdp_protocol_reference.md](06-api-reference/cdp_protocol_reference.md) | CDP 協議完整參考 | ZenDriver 開發者 |
-| [nodriver_api_guide.md](06-api-reference/nodriver_api_guide.md) | NoDriver API 指南 | 除錯者 |
-| [nodriver_selector_analysis.md](06-api-reference/nodriver_selector_analysis.md) | NoDriver Selector 最佳實踐 | NoDriver 開發者 |
+| [zendriver_api_guide.md](06-api-reference/zendriver_api_guide.md) | Zendriver API 指南（主要參考） | 開發者 |
+| [cdp_protocol_reference.md](06-api-reference/cdp_protocol_reference.md) | CDP 協議完整參考 | Zendriver 開發者 |
+| [nodriver_api_guide.md](06-api-reference/nodriver_api_guide.md) | NoDriver API 指南（已棄用） | 遷移前參考 |
 
 ---
 
@@ -144,8 +154,8 @@ ticket_automation_standard.md -> structure.md -> development_guide.md -> API 指
 
 ## 文件維護
 
-關於如何維護這些文件，請參考 [documentation_workflow.md](02-development/documentation_workflow.md)。
+文件撰寫與程式碼同步規範見專案開發規則 `.claude/rules/documentation.md`；歷史版本的文件維護流程保留於 [internal/archived/documentation_workflow.md](internal/archived/documentation_workflow.md)。
 
 ---
 
-**最後更新：** 2026-03-09
+**最後更新：** 2026-06-14

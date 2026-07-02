@@ -21,7 +21,7 @@
 1. **定位問題**：查看 [`structure.md`](./structure.md) 中的函數索引找到相關函數
 2. **理解設計**：查閱 [`development_guide.md`](./development_guide.md) 中的設計原則
 3. **查看範本**：如需參考，查看 [`coding_templates.md`](./coding_templates.md) 中的相應範本
-4. **除錯指南**：參考 [`documentation_workflow.md`](./documentation_workflow.md) 中的除錯方法
+4. **除錯指南**：參考 [`debugging_methodology.md`](../internal/testing-debugging/debugging_methodology.md) 中的除錯方法
 
 ### 我想了解項目整體架構
 
@@ -54,14 +54,7 @@
 
 | 文件 | 用途 | 用於 |
 |------|------|------|
-| **documentation_workflow.md** | 文檔維護流程、更新機制、一致性檢查 | 維護 docs 檔案 |
 | **ticket_seat_selection_algorithm.md** | 座位選擇詳細算法 | TicketPlus 座位選擇 |
-
-### 結構分析
-
-| 文件 | 用途 | 何時查閱 |
-|------|------|----------|
-| **nodriver_comprehensive_structure_analysis.md** | NoDriver 版本各平台全面結構分析、最佳楷模平台識別 | 評估平台實作差距 |
 
 ### 跨階段機制（`docs/03-mechanisms/`）
 
@@ -70,11 +63,16 @@
 | [13-active-polling-pattern.md](../03-mechanisms/13-active-polling-pattern.md) | 刷新等待機制（Simple Wait / Active Polling） | 2025 |
 | [14-hot-reload.md](../03-mechanisms/14-hot-reload.md) | 設定檔 Hot Reload 即時修改 | 2026-02 |
 | [15-cloudflare-turnstile.md](../03-mechanisms/15-cloudflare-turnstile.md) | Cloudflare Turnstile 偵測與自動點擊 | 2026-02 |
+| [16-yii2-captcha-hash.md](../03-mechanisms/16-yii2-captcha-hash.md) | Yii2 Captcha Hash 預驗證 | 2026-04 |
+| [17-multi-instance.md](../03-mechanisms/17-multi-instance.md) | 多開實例隔離 | 2026-06 |
+| [18-universal-ocr-model.md](../03-mechanisms/18-universal-ocr-model.md) | 通用 OCR 模型選擇 | 2026-06 |
 
 ### 已歸檔資源
 
 | 位置 | 說明 |
 |------|------|
+| [internal/archived/documentation_workflow.md](../internal/archived/documentation_workflow.md) | 舊版文件維護流程（現行規範見 `.claude/rules/documentation.md`） |
+| [internal/archived/nodriver_comprehensive_structure_analysis.md](../internal/archived/nodriver_comprehensive_structure_analysis.md) | NoDriver 版本各平台結構分析（歷史參考） |
 
 ---
 
@@ -164,26 +162,10 @@
   - 12 階段完整功能定義
   - 函數命名與拆分原則
 
-### documentation_workflow.md
-- **內容**：文檔維護流程、更新機制、一致性檢查
-- **適合**：維護 docs 檔案的開發者
-- **關鍵章節**：
-  - 文檔維護流程
-  - 一致性檢查流程
-  - 各文件的修改建議
-
 ### ticket_seat_selection_algorithm.md
 - **內容**：座位選擇詳細算法、特殊平台考量
 - **適合**：實作座位選擇功能的開發者
 - **適用平台**：TicketPlus 等有複雜座位選擇的平台
-
-### nodriver_comprehensive_structure_analysis.md
-- **內容**：ZenDriver 版本各平台全面結構分析、最佳楷模平台識別、缺失功能對照表
-- **適合**：評估各平台實作完整度、識別待補齊功能
-- **關鍵章節**：
-  - 各平台實作狀況分析
-  - 最佳楷模平台推薦
-  - 缺失功能詳細對照表
 
 ---
 
@@ -246,7 +228,7 @@
 2. 其他文件中應提供指向源文件的連結
 3. 保持相互參考的一致性
 
-詳見 `documentation_workflow.md`
+詳見 `.claude/rules/documentation.md`
 
 ---
 
@@ -266,6 +248,6 @@ A: 查看 `structure.md` 的完整度評分表或 `coding_templates.md` 的實�
 
 ---
 
-**最後更新**：2026-03-05
-**版本**：2.2（更新機制文件導航，反映 2026 年新增的跨階段機制）
+**最後更新**：2026-06-14
+**版本**：2.3（修正 documentation_workflow / nodriver_comprehensive 鬼引用、補機制 16-17、歸檔文件移至已歸檔資源段）
 
