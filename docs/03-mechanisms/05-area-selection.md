@@ -1,7 +1,7 @@
 # 機制 05：區域選擇 (Stage 5)
 
 **文件說明**：詳細說明搶票系統的區域選擇機制、座位區域匹配與自動選擇策略
-**最後更新**：2026-06-10
+**最後更新**：2026-07-02
 
 ---
 
@@ -350,6 +350,22 @@ elif auto_select_mode == "from bottom to top":
 
 ---
 
+### 8. 重繪環境下的區域點擊（Cityline 模式，v1.4 新增）
+
+**適用場景**：頁面在選擇過程中持續重繪（售罄狀態非同步載入、主迴圈每輪重新點擊日期），配對階段抓到的 element handle 在點擊前就已失效（detached）。
+
+**問題**：失效 handle 的 `query_selector('input[type=radio]')` 回傳 None，radio 靜默沒點 → Stage 5 回傳 False → 日期↔區域無限迴圈（Issue #367 的「跳動」現象）。
+
+**解法**（`src/platforms/cityline.py`）：
+
+1. **乾淨匹配文字**：`_cityline_area_match_text()` 只抽取 `.price-degree`（區名）+ `.price-num`（價格）組成匹配字串，不用整列文字。整列含狀態字、剩餘座位、隱藏 i18n 等雜訊，短關鍵字（如 `"GA"`、`"799"`）會誤中雜訊而選錯區，且誤中方式因活動而異。
+2. **單次過濾**：`_cityline_collect_available_areas()` 一次把售罄與 `keyword_exclude` 濾掉，關鍵字匹配與條件回退共用同一份乾淨候選清單——被排除的區域不可能在回退時被自動選中。
+3. **live-DOM 重查點擊**：`_cityline_click_area_radio()` 在單次 `tab.evaluate` 內用乾淨文字對即時 DOM 重查該列並點擊 radio（原子操作，無 stale handle、無時間差）；失敗才回退到原 handle，找不到 radio 時明確記 log（不再靜默）。
+
+**與標準模式的關係**：Stage 5 主流程不變——共用 `util.is_row_match_keyword()` 匹配、條件回退機制、`util.get_target_item_from_matched_list()` 選擇——僅「匹配文字來源」與「點擊執行」兩步為平台特有處理。其他平台頁面在選擇期間穩定，直接點擊配對階段的 handle 即可；若日後有平台出現同類重繪競態，可複用此模式。
+
+---
+
 ## 平台實作差異
 
 | 平台 | 選擇器類型 | Shadow DOM | 特殊處理 | 函數名稱 | 完成度 |
@@ -360,6 +376,7 @@ elif auto_select_mode == "from bottom to top":
 | **TicketPlus** | Expansion panel | ❌ 無 | 需先展開 area 面板 | `nodriver_ticketplus_area_auto_select()` | 100% ✅ |
 | **KHAM** | Table rows | ❌ 無 | Table mode + Seat map 雙模式 | `nodriver_kham_area_auto_select()` | 100% ✅ |
 | **UDN** | Table rows | ❌ 無 | 複用 KHAM 邏輯 (`table.yd_ticketsTable`) | `nodriver_kham_area_auto_select()` | 100% ✅ |
+| **Cityline** | Radio list (`div.form-check`) | ❌ 無 | 乾淨匹配文字（`.price-degree`+`.price-num`）+ **live-DOM 重查點擊**（抗重繪，見片段 8） | `nodriver_cityline_area_auto_select()` | 100% ✅ |
 
 **主要程式碼位置**：
 - **TixCraft**: `src/platforms/tixcraft.py` (`nodriver_tixcraft_area_auto_select`, 主要參考範例) ⭐
@@ -367,6 +384,7 @@ elif auto_select_mode == "from bottom to top":
 - KKTIX: `src/platforms/kktix.py` (`nodriver_kktix_travel_price_list`, `nodriver_kktix_assign_ticket_number`)
 - iBon: `src/platforms/ibon.py` (`nodriver_ibon_area_auto_select`)
 - KHAM / UDN: `src/platforms/kham.py`
+- Cityline: `src/platforms/cityline.py` (`nodriver_cityline_area_auto_select`, `_cityline_area_match_text`, `_cityline_collect_available_areas`, `_cityline_click_area_radio`)
 
 ---
 
@@ -531,10 +549,10 @@ if is_need_refresh and matched_blocks is None:
 ## 相關文件
 
 - 📋 [Feature 003: Keyword Priority Fallback](../../specs/003-keyword-priority-fallback/implementation-guide.md) - 完整實作指南
-- 📊 [規格驗證矩陣](../04-validation/spec-validation-matrix.md) - FR-020, FR-021, FR-022
-- 🔧 [TixCraft 參考實作](../03-implementation/platform-examples/tixcraft-reference.md) - 主要參考範例
-- 🔧 [KKTIX 參考實作](../03-implementation/platform-examples/kktix-reference.md) - 價格表模式
-- 🔧 [iBon 參考實作](../03-implementation/platform-examples/ibon-reference.md) - Shadow DOM 範例
+- 📊 [規格驗證矩陣](../05-validation/spec-validation-matrix.md) - FR-020, FR-021, FR-022
+- 🔧 [TixCraft 參考實作](../04-implementation/platform-examples/tixcraft-reference.md) - 主要參考範例
+- 🔧 [KKTIX 參考實作](../04-implementation/platform-examples/kktix-reference.md) - 價格表模式
+- 🔧 [iBon 參考實作](../04-implementation/platform-examples/ibon-reference.md) - Shadow DOM 範例
 - 📖 [12-Stage 標準](../02-development/ticket_automation_standard.md) - 完整 12 階段流程
 - 🏗️ [程式碼結構分析](../02-development/structure.md) - 函數位置索引
 
@@ -547,10 +565,16 @@ if is_need_refresh and matched_blocks is None:
 | v1.0 | 2024 | 初版：基本區域選擇邏輯 |
 | v1.1 | 2025-10 | 新增 AND 邏輯支援 + keyword_exclude |
 | v1.2 | 2025-11 | Feature 003: Early Return + Conditional Fallback |
-| **v1.3** | **2025-12-18** | **util 共用函數重構** |
+| v1.3 | 2025-12-18 | util 共用函數重構 |
+| **v1.4** | **2026-07-02** | **Cityline 抗重繪模式（Issue #366/#367）** |
 
 **v1.3 重大變更**：
 - ✅ 新增 `util.parse_keyword_string_to_array()` 統一關鍵字解析
 - ✅ 新增 `util.get_target_index_by_mode()` 統一選擇模式索引計算
 - ✅ 新增 `util.get_debug_mode()` 安全讀取 debug 設定
 - ✅ 統一 UDN、iBon、FamiTicket 等 8 個重複選擇模式實作
+
+**v1.4 重大變更**：
+- ✅ Cityline 改用乾淨匹配文字（`.price-degree` + `.price-num`），短關鍵字不再誤中列內雜訊
+- ✅ Cityline 點擊改為 live-DOM 重查（單次 `tab.evaluate`），修復頁面重繪導致的 stale handle 靜默失敗
+- ✅ 新增片段 8「重繪環境下的區域點擊」，平台差異表補 Cityline 列

@@ -94,6 +94,14 @@
   <div class="container py-4">
   <div id="message"></div>
   <h2 id="page_title">Tickets Hunter <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-ticket-perforated" viewBox="0 0 16 16" style="vertical-align: -0.125em;"><path d="M4 4.85v.9h1v-.9zm7 0v.9h1v-.9zm-7 1.8v.9h1v-.9zm7 0v.9h1v-.9zm-7 1.8v.9h1v-.9zm7 0v.9h1v-.9zm-7 1.8v.9h1v-.9zm7 0v.9h1v-.9z"/><path d="M1.5 3A1.5 1.5 0 0 0 0 4.5V6a.5.5 0 0 0 .5.5 1.5 1.5 0 1 1 0 3 .5.5 0 0 0-.5.5v1.5A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5V10a.5.5 0 0 0-.5-.5 1.5 1.5 0 0 1 0-3A.5.5 0 0 0 16 6V4.5A1.5 1.5 0 0 0 14.5 3zM1 4.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v1.05a2.5 2.5 0 0 0 0 4.9v1.05a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-1.05a2.5 2.5 0 0 0 0-4.9z"/></svg> - 多平台搶票自動化系統</h2>
+  <!-- Instance profile bar: one pill per profile (= one bot instance config) -->
+  <div class="d-flex align-items-center flex-wrap mb-2" id="profile_bar">
+    <span class="me-2 text-muted small">實例設定檔：</span>
+    <ul class="nav nav-pills flex-nowrap" id="profile_tabs" style="overflow-x:auto;"></ul>
+    <button type="button" class="btn btn-sm btn-outline-success ms-2" id="profile_add_btn"
+            onclick="show_profile_modal()" title="新增實例設定檔（選擇平台）">＋ 新增</button>
+    <span id="profile_warnings" class="d-flex flex-wrap gap-1 ms-2"></span>
+  </div>
   <div class="row g-3">
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
@@ -152,7 +160,7 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2026.06.11) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2026.07.02) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <!-- 開發狀態提示（可展開） -->
@@ -739,6 +747,15 @@
           </div>
         </div>
 
+        <!-- Phase 3: choose which instance's pending question to monitor -->
+        <div class="row mb-3" id="question-instance-row">
+          <label for="question-instance-select" class="col-sm-2 col-form-label">答題對象實例</label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <select class="form-select form-select-sm" id="question-instance-select" onchange="on_question_instance_change()"></select>
+            <div class="form-text">預設跟著目前分頁；可改為監看其他執行中實例的待答問題。</div>
+          </div>
+        </div>
+
         <!-- 偵測到的驗證問題 (隱藏，檔案存在時才顯示) -->
         <div class="alert alert-warning alert-dismissible fade" id="detected-question-alert" role="alert" style="display: none;">
           <h5 class="alert-heading">
@@ -1071,6 +1088,25 @@
           </div>
         </div>
 
+        <!-- Phase 3: live overview of every instance (profiles + CLI runs) -->
+        <div class="row mb-3" id="instances_panel">
+          <label class="col-sm-2 col-form-label">執行中實例</label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <div class="d-flex align-items-center mb-2">
+              <button type="button" class="btn btn-sm btn-outline-warning" id="pause_all_btn" onclick="pause_all_instances()">全部暫停</button>
+              <span class="text-muted small ms-2">每 2 秒更新；離線 = 逾 30 秒無心跳</span>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr><th>實例</th><th>存活</th><th>狀態</th><th>執行網址</th><th></th></tr>
+                </thead>
+                <tbody id="instances_tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <div class="row mb-3">
           <label for="last_url" class="col-sm-2 col-form-label">執行網址</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
@@ -1187,6 +1223,28 @@
   </div>
   </div>
 
+<div class="modal" id="profile_modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title fs-5">新增實例設定檔</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-2">選擇平台後會以目前設定為底建立新設定檔（homepage 自動帶入），各設定檔可獨立啟動為一個搶票實例。</p>
+        <div id="profile_platform_buttons"></div>
+        <hr>
+        <div class="input-group input-group-sm">
+          <input type="text" class="form-control" id="profile_custom_name"
+                 placeholder="自訂名稱（英數、底線、連字號）" maxlength="32">
+          <button class="btn btn-outline-primary" type="button" onclick="create_profile_custom()">建立空白命名</button>
+        </div>
+        <div class="form-text text-warning d-none" id="profile_modal_error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="message_modal" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -1219,7 +1277,7 @@
   </div>
 </div>
 
-  <script src="help-content.js?v=2026061123"></script>
-  <script src="settings.js?v=2026061123"></script>
+  <script src="help-content.js?v=2026070215"></script>
+  <script src="settings.js?v=2026070215"></script>
 </body>
 </html>

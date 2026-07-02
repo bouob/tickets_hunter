@@ -192,7 +192,11 @@ async def nodriver_tixcraft_redirect(tab, url):
     game_name = ""
     url_split = url.split("/")
     if len(url_split) >= 6:
-        game_name = url_split[5]
+        # Strip URL fragment/query: tixcraft detail pages carry a tab anchor
+        # (e.g. .../activity/detail/26_fireball#intro). Without this the fragment
+        # leaks into game_name -> the buy-link selector never matches -> the bot
+        # never redirects to /activity/game/ and stalls on the detail page.
+        game_name = url_split[5].split("#")[0].split("?")[0]
     if len(game_name) > 0:
         if "/activity/detail/%s" % (game_name,) in url:
             # Issue #278: detail pages are server-side rendered. Until the sale
@@ -208,7 +212,7 @@ async def nodriver_tixcraft_redirect(tab, url):
                 has_buy_link = False
             if not has_buy_link:
                 return ret
-            entry_url = url.replace("/activity/detail/","/activity/game/")
+            entry_url = url.replace("/activity/detail/", "/activity/game/").split("#")[0]
             print("redirec to new url:", entry_url)
             try:
                 await tab.get(entry_url)
@@ -3076,7 +3080,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
     # Reference: KHAM platform implementation (Line 10681-10697)
     async def handle_global_alert(event):
         # Skip alert handling when bot is paused (let user handle manually)
-        if os.path.exists(CONST_MAXBOT_INT28_FILE):
+        if os.path.exists(util.get_instance_state_path(CONST_MAXBOT_INT28_FILE)):
             return
         # IMPORTANT: Use tab.target.url (cached) instead of nodriver_current_url (js_dumps)
         # When alert dialog is open, JavaScript execution is blocked, causing js_dumps to hang

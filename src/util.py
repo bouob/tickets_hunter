@@ -22,7 +22,7 @@ CONST_RANDOM = "random"
 # Keyword delimiter constants (Issue #23)
 CONST_KEYWORD_DELIMITER = ';'  # New delimiter (semicolon)
 
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
 
 def get_ip_address():
     gethostname = None
@@ -107,6 +107,34 @@ def get_app_root():
         # This ensures we always get the src/ directory regardless of cwd
         app_root = os.path.dirname(os.path.abspath(__file__))
     return app_root
+
+
+# ===== Multi-instance support =====
+# Each bot process owns an instance id (derived from its config filename).
+# State files (pause flag, last URL, online answer) resolve through
+# get_instance_state_path() so concurrent instances do not clobber each other.
+# The "default" instance keeps legacy root paths for backward compatibility.
+
+CONST_DEFAULT_INSTANCE_ID = "default"
+_instance_id = CONST_DEFAULT_INSTANCE_ID
+
+def set_instance_id(instance_id):
+    global _instance_id
+    if instance_id and re.match(r'^[A-Za-z0-9_-]{1,32}$', instance_id):
+        _instance_id = instance_id
+        return True
+    return False
+
+def get_instance_id():
+    return _instance_id
+
+def get_instance_state_path(filename):
+    app_root = get_app_root()
+    if _instance_id == CONST_DEFAULT_INSTANCE_ID:
+        return os.path.join(app_root, filename)
+    instance_dir = os.path.join(app_root, "instances", _instance_id)
+    os.makedirs(instance_dir, exist_ok=True)
+    return os.path.join(instance_dir, filename)
 
 
 def format_keyword_for_display(keyword_string):
@@ -245,35 +273,6 @@ def write_string_to_file(filename, data):
 
     if not outfile is None:
         outfile.write("%s" % data)
-
-def save_url_to_file(remote_url, CONST_MAXBOT_ANSWER_ONLINE_FILE, force_write = False, timeout=0.5):
-    html_text = ""
-    if len(remote_url) > 0:
-        html_result = None
-        try:
-            html_result = requests.get(remote_url , timeout=timeout, allow_redirects=False)
-        except Exception as exc:
-            html_result = None
-            #print(exc)
-        if not html_result is None:
-            status_code = html_result.status_code
-            #print("status_code:", status_code)
-            if status_code == 200:
-                html_text = html_result.text
-                #print("html_text:", html_text)
-
-    is_write_to_file = False
-    if force_write:
-        is_write_to_file = True
-    if len(html_text) > 0:
-        is_write_to_file = True
-
-    if is_write_to_file:
-        html_text = format_config_keyword_for_json(html_text)
-        working_dir = get_app_root()
-        target_path = os.path.join(working_dir, CONST_MAXBOT_ANSWER_ONLINE_FILE)
-        write_string_to_file(target_path, html_text)
-    return is_write_to_file
 
 
 def play_mp3_async(sound_filename):
@@ -1465,10 +1464,12 @@ def get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLI
             local_array = []
 
     # load from internet.
+    # Resolve per-instance path so concurrent instances read their own answers.
     user_guess_string = ""
-    if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
+    answer_file_path = get_instance_state_path(CONST_MAXBOT_ANSWER_ONLINE_FILE)
+    if os.path.exists(answer_file_path):
         try:
-            with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
+            with open(answer_file_path, "r") as text_file:
                 user_guess_string = text_file.readline()
         except Exception as e:
             pass
@@ -2077,10 +2078,13 @@ def kktix_get_event_code(url):
     #print('event_code:',event_code)
     return event_code
 
-def launch_maxbot(script_name="nodriver_tixcraft", filename="", homepage="", kktix_account = "", kktix_password="", window_size="", headless=""):
+def launch_maxbot(script_name="nodriver_tixcraft", filename="", homepage="", kktix_account = "", kktix_password="", window_size="", headless="", instance=""):
     cmd_argument = []
     if len(filename) > 0:
         cmd_argument.append('--input=' + filename)
+    if len(instance) > 0:
+        # Override instance id (e.g. second run of the same profile)
+        cmd_argument.append('--instance=' + instance)
     if len(homepage) > 0:
         cmd_argument.append('--homepage=' + homepage)
     if len(kktix_account) > 0:

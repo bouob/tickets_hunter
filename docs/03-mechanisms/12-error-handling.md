@@ -150,10 +150,12 @@ TixCraft 售完偵測使用非阻塞式冷卻機制：
 
 ## 暫停機制
 
-`check_and_handle_pause()`（`src/nodriver_common.py`）檢查 `MAXBOT_INT28_IDLE.txt` 檔案是否存在：
+`check_and_handle_pause()`（`src/nodriver_common.py`）檢查暫停檔是否存在：
+- 暫停檔路徑由 `util.get_instance_state_path()` 解析，**per-instance 隔離**：default 實例用根目錄 `MAXBOT_INT28_IDLE.txt`，具名實例用 `instances/<id>/MAXBOT_INT28_IDLE.txt`，暫停一個實例不會影響其他實例
 - 檔案存在 → 暫停所有自動化操作
-- 搭配 `sleep_with_pause_check()`、`evaluate_with_pause_check()` 等包裝函式（同檔）
+- 搭配 `sleep_with_pause_check()`、`asyncio_sleep_with_pause_check()` 等包裝函式（同檔）
 - 在排隊監控迴圈中也支援暫停
+- 詳見 [17-multi-instance.md](./17-multi-instance.md)
 
 ---
 

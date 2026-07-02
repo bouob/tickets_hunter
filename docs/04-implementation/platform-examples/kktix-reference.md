@@ -403,8 +403,8 @@ async def kktix_purchase_flow_example():
 
 ## 相關文件
 
-- 📋 [Stage 7: 驗證碼處理機制](../../02-mechanisms/07-captcha-handling.md) - 問答式驗證碼詳解
-- 📋 [Stage 5: 區域選擇機制](../../02-mechanisms/05-area-selection.md) - Early Return Pattern
+- 📋 [Stage 7: 驗證碼處理機制](../../03-mechanisms/07-captcha-handling.md) - 問答式驗證碼詳解
+- 📋 [Stage 5: 區域選擇機制](../../03-mechanisms/05-area-selection.md) - Early Return Pattern
 - 🏗️ [程式碼結構分析](../../02-development/structure.md) - KKTIX 函數索引
 - 📖 [12-Stage 標準](../../02-development/ticket_automation_standard.md) - 完整流程規範
 

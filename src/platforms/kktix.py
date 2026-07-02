@@ -1985,7 +1985,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
     # Global alert handler - auto-dismiss KKTIX sold-out alerts
     async def handle_kktix_alert(event):
         # Skip alert handling when bot is paused (let user handle manually)
-        if os.path.exists(CONST_MAXBOT_INT28_FILE):
+        if os.path.exists(util.get_instance_state_path(CONST_MAXBOT_INT28_FILE)):
             return
 
         debug.log(f"[KKTIX ALERT] Alert detected: '{event.message}'")

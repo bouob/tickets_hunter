@@ -443,9 +443,9 @@ for i, kw in enumerate(keyword_array):
 ## 相關文件
 
 - 📋 [Feature 003: Keyword Priority Fallback](../../specs/003-keyword-priority-fallback/implementation-guide.md) - 完整實作指南
-- 📊 [規格驗證矩陣](../04-validation/spec-validation-matrix.md) - FR-017, FR-018, FR-019
-- 🔧 [KKTIX 參考實作](../03-implementation/platform-examples/kktix-reference.md)
-- 🔧 [iBon 參考實作](../03-implementation/platform-examples/ibon-reference.md) - Shadow DOM 範例
+- 📊 [規格驗證矩陣](../05-validation/spec-validation-matrix.md) - FR-017, FR-018, FR-019
+- 🔧 [KKTIX 參考實作](../04-implementation/platform-examples/kktix-reference.md)
+- 🔧 [iBon 參考實作](../04-implementation/platform-examples/ibon-reference.md) - Shadow DOM 範例
 - 📖 [12-Stage 標準](../02-development/ticket_automation_standard.md) - 完整 12 階段流程
 - 🏗️ [程式碼結構分析](../02-development/structure.md) - 函數位置索引
 

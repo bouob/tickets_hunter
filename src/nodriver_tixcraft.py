@@ -54,6 +54,7 @@ from platforms.kham import *
 from platforms.hkticketing import *
 
 CONST_CITYLINE_SIGN_IN_URL = "https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2Fwww.cityline.com%2FEvents.html"
+CONST_CITYLINE_HK_SIGN_IN_URL = "https://www.cityline.com.hk/Login.html?targetUrl=%s"
 CONST_FAMI_SIGN_IN_URL = "https://www.famiticket.com.tw/Home/User/SignIn"
 CONST_HKTICKETING_SIGN_IN_URL = "https://premier.hkticketing.com/Secure/ShowLogin.aspx"
 CONST_HKTICKETING_TYPE02_SIGN_IN_URL = "https://hkt.hkticketing.com/hant/#/login"
@@ -107,7 +108,14 @@ async def nodriver_goto_homepage(driver, config_dict):
 
     if 'cityline.com' in homepage:
         if len(config_dict["accounts"]["cityline_account"])>0:
-            homepage = CONST_CITYLINE_SIGN_IN_URL
+            if 'cityline.com.hk' in homepage:
+                # HK events (shows.cityline.com.hk) live on the .com.hk realm and their
+                # venue (venue.cityline.com.hk) only honours a .com.hk session. Logging in
+                # on the global .com site would force a second login at the venue, so sign
+                # in directly on .com.hk and return to the original event page.
+                homepage = CONST_CITYLINE_HK_SIGN_IN_URL % urllib.parse.quote(config_dict["homepage"], safe='')
+            else:
+                homepage = CONST_CITYLINE_SIGN_IN_URL
 
     if 'hkticketing.com' in homepage:
         if len(config_dict["accounts"]["hkticketing_account"])>0:
@@ -586,10 +594,9 @@ async def check_refresh_datetime_gate(tab, config_dict, state):
 
     return True
 
-async def reload_config(config_dict, last_mtime):
-    app_root = util.get_app_root()
-    config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
-
+async def reload_config(config_dict, last_mtime, config_filepath):
+    # Watch the config file this instance was actually launched with
+    # (passing --input must not be overridden by edits to settings.json).
     if not os.path.exists(config_filepath):
         return config_dict, last_mtime
 
@@ -626,7 +633,7 @@ async def reload_config(config_dict, last_mtime):
                         if field in new_config["advanced"]:
                             config_dict["advanced"][field] = new_config["advanced"][field]
 
-                print("Configuration reloaded from settings.json")
+                print("Configuration reloaded from " + os.path.basename(config_filepath))
                 return config_dict, current_mtime
     except Exception as e:
         print(f"[WARNING] Failed to reload config: {e}")
@@ -634,16 +641,40 @@ async def reload_config(config_dict, last_mtime):
     return config_dict, last_mtime
 
 async def main(args):
+    # Derive instance id for multi-instance isolation:
+    # --instance > --input filename stem > "default".
+    # A config named settings.json always maps to "default" (legacy single-run).
+    instance_id = ""
+    if args and getattr(args, "instance", None):
+        instance_id = args.instance
+    elif args and getattr(args, "input", None):
+        instance_id = os.path.splitext(os.path.basename(args.input))[0]
+        if instance_id == "settings":
+            instance_id = ""
+    if instance_id:
+        if util.set_instance_id(instance_id):
+            print(f"[INSTANCE] Running as instance: {util.get_instance_id()}")
+        else:
+            print(f"[INSTANCE] Invalid instance id '{instance_id}' (allowed: [A-Za-z0-9_-], max 32 chars), fallback to default")
+
     config_dict = get_config_dict(args)
 
-    # Global timestamp: override builtins.print to prepend [HH:MM:SS]
-    if config_dict and config_dict.get("advanced", {}).get("show_timestamp", False):
-        import builtins
-        _original_print = builtins.print
-        def _timestamped_print(*args_p, **kwargs_p):
-            timestamp = datetime.now().strftime("[%H:%M:%S]")
-            _original_print(timestamp, *args_p, **kwargs_p)
-        builtins.print = _timestamped_print
+    # Global log prefix: override builtins.print to prepend an optional
+    # [HH:MM:SS] timestamp and an always-on [instance] tag. Multi-instance runs
+    # share one inherited stdout (-> one .temp/logs.txt), so the instance tag is
+    # what makes each line attributable. Single chokepoint: every print() and
+    # DebugLogger.log() flows through here.
+    _show_timestamp = bool(config_dict and config_dict.get("advanced", {}).get("show_timestamp", False))
+    _instance_tag = f"[{util.get_instance_id()}]"
+    import builtins
+    _original_print = builtins.print
+    def _prefixed_print(*args_p, **kwargs_p):
+        prefix_parts = []
+        if _show_timestamp:
+            prefix_parts.append(datetime.now().strftime("[%H:%M:%S]"))
+        prefix_parts.append(_instance_tag)
+        _original_print(*prefix_parts, *args_p, **kwargs_p)
+    builtins.print = _prefixed_print
 
     driver = None
     tab = None
@@ -666,12 +697,16 @@ async def main(args):
                 print(f"[MCP DEBUG] Browser started on actual port: {actual_port}")
                 print(f"[MCP DEBUG] Update .mcp.json with: --browserUrl http://127.0.0.1:{actual_port}")
                 # Write port to file for /mcpstart command auto-update
+                # Non-default instances write into instances/<id>/ to avoid clobbering
                 try:
-                    port_file = os.path.join(os.path.dirname(__file__), '..', '.temp', 'mcp_port.txt')
-                    os.makedirs(os.path.dirname(port_file), exist_ok=True)
+                    if util.get_instance_id() == "default":
+                        port_file = os.path.join(os.path.dirname(__file__), '..', '.temp', 'mcp_port.txt')
+                        os.makedirs(os.path.dirname(port_file), exist_ok=True)
+                    else:
+                        port_file = util.get_instance_state_path('mcp_port.txt')
                     with open(port_file, 'w') as f:
                         f.write(str(actual_port))
-                    print(f"[MCP DEBUG] Port saved to .temp/mcp_port.txt")
+                    print(f"[MCP DEBUG] Port saved to {port_file}")
                 except Exception as e:
                     print(f"[MCP DEBUG] Warning: Could not save port to file: {e}")
             initial_tab = driver.main_tab
@@ -715,6 +750,14 @@ async def main(args):
         debug.log(f"[OCR INIT] Failed to initialize OCR: {exc}")
 
     maxbot_last_reset_time = time.time()
+    # Phase 3: liveness heartbeat. Touch instances/<id>/heartbeat.txt every few
+    # seconds (default instance writes to the app root) so the settings
+    # dashboard can detect which instances are alive. Throttled because the
+    # main loop spins every 50ms.
+    heartbeat_interval_sec = 5
+    heartbeat_filename = "heartbeat.txt"
+    last_heartbeat_time = 0.0
+    last_empty_url_log = 0.0  # [URL DIAG] Step 0: throttle empty-url diagnostics
     is_quit_bot = False
     refresh_datetime_state = {
         "target_str": "",
@@ -723,9 +766,11 @@ async def main(args):
     }
     ticketplus_purchase_done = False  # Guard: stop polling after purchase completed
 
-    # Initialize config mtime
+    # Initialize config mtime (hot-reload watches the file actually loaded)
     app_root = util.get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
+    if args and getattr(args, "input", None):
+        config_filepath = args.input
     config_mtime = 0
     if os.path.exists(config_filepath):
         config_mtime = os.path.getmtime(config_filepath)
@@ -733,15 +778,31 @@ async def main(args):
     while True:
         await asyncio.sleep(0.05)
 
-        config_dict, config_mtime = await reload_config(config_dict, config_mtime)
+        config_dict, config_mtime = await reload_config(config_dict, config_mtime, config_filepath)
+
+        # Phase 3: refresh the liveness heartbeat (throttled to heartbeat_interval_sec).
+        heartbeat_now = time.time()
+        if heartbeat_now - last_heartbeat_time >= heartbeat_interval_sec:
+            last_heartbeat_time = heartbeat_now
+            try:
+                with open(util.get_instance_state_path(heartbeat_filename), "w") as heartbeat_file:
+                    heartbeat_file.write(str(int(heartbeat_now)))
+            except Exception:
+                pass
 
         # pass if driver not loaded.
         if driver is None:
             print("nodriver not accessible!")
             break
 
+        # Stop request: per-instance stop flag -> reuse the clean shutdown
+        # path below (driver.stop + break). Checked before the CDP round-trip
+        # so a stop is caught as early as possible.
+        if not is_quit_bot and await check_and_handle_quit(config_dict):
+            is_quit_bot = True
+
         if not is_quit_bot:
-            url, is_quit_bot = await nodriver_current_url(tab)
+            url, is_quit_bot = await nodriver_current_url(tab, config_dict)
             #print("url:", url)
 
         if is_quit_bot:
@@ -750,19 +811,35 @@ async def main(args):
                 driver = None
             except Exception as e:
                 pass
+            # Remove this instance's stop + heartbeat files so the dashboard
+            # shows offline on the next poll (no 30s heartbeat timeout wait).
+            util.force_remove_file(util.get_instance_state_path(CONST_MAXBOT_INT28_QUIT_FILE))
+            util.force_remove_file(util.get_instance_state_path(heartbeat_filename))
             break
 
         if url is None:
             continue
         else:
             if len(url) == 0:
+                # [URL DIAG] Step 0: empty url makes the loop skip all dispatch
+                # silently (this is the suspected on-sale-reload freeze point).
+                # Throttle so a sustained empty-url stretch logs ~every 2s.
+                now_mono = time.time()
+                if now_mono - last_empty_url_log >= 2.0:
+                    last_empty_url_log = now_mono
+                    target_url_now = getattr(getattr(tab, 'target', None), 'url', None)
+                    util.create_debug_logger(config_dict).log(
+                        f"[URL DIAG] empty url, skipping dispatch; target.url={target_url_now!r}"
+                    )
                 continue
 
         is_maxbot_paused = await check_and_handle_pause(config_dict)
 
         # Detect pause state change and show message immediately
+        # Label with instance id so mixed multi-instance logs stay readable
         if is_maxbot_paused and not last_paused_state:
-            print("BOT Paused.")
+            instance_suffix = "" if util.get_instance_id() == "default" else f" [{util.get_instance_id()}]"
+            print("BOT Paused." + instance_suffix)
         last_paused_state = is_maxbot_paused
 
         if len(url) > 0 :
@@ -788,7 +865,8 @@ async def main(args):
         # Cloudflare challenge detection (only on URL change to avoid performance hit)
         # After 3 consecutive failures on same URL, stop retrying to avoid infinite loop
         # Skip Cityline Login page: Turnstile there is part of the login form, not a block
-        if 'cityline.com/Login.html' in url:
+        # (covers both cityline.com and the venue cityline.com.hk login pages)
+        if is_cityline_login_page(url):
             cloudflare_checked = True
         if not cloudflare_checked and cloudflare_fail_count < 3:
             is_cloudflare = await detect_cloudflare_challenge(tab, show_debug=config_dict.get("advanced", {}).get("verbose", False))
@@ -904,6 +982,10 @@ def cli():
 
     parser.add_argument("--input",
         help="config file path",
+        type=str)
+
+    parser.add_argument("--instance",
+        help="instance name for multi-instance isolation (default: derived from --input filename)",
         type=str)
 
     parser.add_argument("--homepage",

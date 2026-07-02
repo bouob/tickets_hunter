@@ -346,7 +346,7 @@ for header in panel_headers:
 
 ## 相關文件
 
-- 📋 [Stage 11: 排隊處理機制](../../03-mechanisms/11-queue-handling.md) - 排隊偵測詳解
+- 📋 [Stage 11: 排隊與付款機制](../../03-mechanisms/11-queue-payment.md) - 排隊偵測詳解
 - 📋 [Stage 5: 區域選擇機制](../../03-mechanisms/05-area-selection.md) - 展開面板處理
 - 🏗️ [程式碼結構分析](../../02-development/structure.md) - TicketPlus 函數索引
 - 📖 [12-Stage 標準](../../02-development/ticket_automation_standard.md) - 完整流程規範

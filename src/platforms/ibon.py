@@ -120,7 +120,7 @@ async def register_ibon_alert_handler(tab, config_dict):
 
     async def handle_ibon_alert(event):
         # Skip alert handling when bot is paused (let user handle manually)
-        if os.path.exists(CONST_MAXBOT_INT28_FILE):
+        if os.path.exists(util.get_instance_state_path(CONST_MAXBOT_INT28_FILE)):
             return
 
         # On checkout page, only auto-dismiss known sold-out/failure alerts.
@@ -459,8 +459,15 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
         debug.log("[IBON DATE PIERCE] No valid buttons extracted")
         return False
 
-    # Step 6: Filter disabled buttons
-    enabled_buttons = [btn for btn in purchase_buttons if not btn['disabled']]
+    # Step 6: Filter disabled buttons + keyword_exclude (Stage 4: date selection)
+    enabled_buttons = []
+    for btn in purchase_buttons:
+        if btn['disabled']:
+            continue
+        if util.reset_row_text_if_match_keyword_exclude(config_dict, btn.get('date_context', '')):
+            debug.log(f"[IBON DATE PIERCE] Excluded by keyword_exclude: {btn.get('date_context', '')[:50]}")
+            continue
+        enabled_buttons.append(btn)
 
     debug.log(f"[IBON DATE PIERCE] {len(enabled_buttons)} enabled button(s)")
 
@@ -768,8 +775,15 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
         debug.log("[IBON DATE] No purchase buttons found in Shadow DOM")
         return False
 
-    # Step 5: Filter disabled buttons
-    enabled_buttons = [btn for btn in purchase_buttons if not btn['disabled']]
+    # Step 5: Filter disabled buttons + keyword_exclude (Stage 4: date selection)
+    enabled_buttons = []
+    for btn in purchase_buttons:
+        if btn['disabled']:
+            continue
+        if util.reset_row_text_if_match_keyword_exclude(config_dict, btn.get('date_context', '')):
+            debug.log(f"[IBON DATE] Excluded by keyword_exclude: {btn.get('date_context', '')[:50]}")
+            continue
+        enabled_buttons.append(btn)
 
     debug.log(f"[IBON DATE] Found {len(enabled_buttons)} enabled button(s)")
 

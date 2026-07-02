@@ -14,6 +14,9 @@ __pycache__/
 /src/MAXBOT_LAST_URL.txt
 /src/MAXBOT_INT28_IDLE.txt
 /src/MAXBOT_QUESTION.txt
+/src/heartbeat.txt
+/src/profiles/
+/src/instances/
 src/webdriver/*/data/settings.json
 src/webdriver/*/data/status.json
 

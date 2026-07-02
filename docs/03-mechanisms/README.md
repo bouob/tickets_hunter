@@ -28,7 +28,9 @@ docs/03-mechanisms/
 ├── 14-hot-reload.md             跨階段: 設定檔 Hot Reload 即時修改 ✅
 │
 ├── 15-cloudflare-turnstile.md   跨階段: Cloudflare Turnstile 偵測與自動點擊 ✅
-└── 16-yii2-captcha-hash.md      跨階段: Yii2 Captcha Hash 預驗證與 1-char 自動修正 ✅ NEW
+├── 16-yii2-captcha-hash.md      跨階段: Yii2 Captcha Hash 預驗證與 1-char 自動修正 ✅
+├── 17-multi-instance.md         跨階段: 多開實例隔離與儀表板 ✅
+└── 18-universal-ocr-model.md    跨階段: 通用/tixcraft_tm OCR 模型自動選擇 ✅ NEW
 
 ✅ = 已完成詳細文件化
 ```
@@ -210,7 +212,7 @@ docs/03-mechanisms/
 
 ### KKTIX 參考實作
 
-**文件**：[kktix-reference.md](../03-implementation/platform-examples/kktix-reference.md)
+**文件**：[kktix-reference.md](../04-implementation/platform-examples/kktix-reference.md)
 
 **平台特色**：
 - **問答式驗證碼**：最具挑戰性的驗證碼類型
@@ -227,7 +229,7 @@ docs/03-mechanisms/
 
 ### iBon 參考實作
 
-**文件**：[ibon-reference.md](../03-implementation/platform-examples/ibon-reference.md)
+**文件**：[ibon-reference.md](../04-implementation/platform-examples/ibon-reference.md)
 
 **平台特色**：
 - **closed Shadow DOM**：最具技術挑戰性的 DOM 結構
@@ -269,7 +271,7 @@ docs/03-mechanisms/
 1. [12-Stage 標準](../02-development/ticket_automation_standard.md) - 了解完整流程
 2. [Stage 4: 日期選擇](./04-date-selection.md) - 學習核心機制
 3. [Stage 5: 區域選擇](./05-area-selection.md) - 理解關鍵字匹配
-4. [KKTIX 參考實作](../03-implementation/platform-examples/kktix-reference.md) - 完整範例
+4. [KKTIX 參考實作](../04-implementation/platform-examples/kktix-reference.md) - 完整範例
 
 **開發新平台**：
 1. [12-Stage 標準](../02-development/ticket_automation_standard.md) - 確認功能需求
@@ -278,9 +280,9 @@ docs/03-mechanisms/
 4. [程式碼結構分析](../02-development/structure.md) - 函數索引
 
 **除錯問題**：
-1. [除錯方法論](../04-testing-debugging/debugging_methodology.md) - 系統化除錯
+1. [除錯方法論](../internal/testing-debugging/debugging_methodology.md) - 系統化除錯
 2. 相關機制文件 FAQ - 常見問題
-3. [疑難排解索引](../05-troubleshooting/README.md) - 已知問題解決方案
+3. [疑難排解索引](../internal/troubleshooting/README.md) - 已知問題解決方案
 
 ---
 
@@ -455,19 +457,20 @@ else:
 
 ### API 參考
 
-- 📋 [NoDriver API 指南](../03-api-reference/nodriver_api_guide.md) - NoDriver 完整參考
-- 📋 [CDP 協議參考](../03-api-reference/cdp_protocol_reference.md) - Chrome DevTools Protocol
-- 📋 [ddddocr API 指南](../03-api-reference/ddddocr_api_guide.md) - OCR 引擎
+- 📖 [Zendriver API 指南](../06-api-reference/zendriver_api_guide.md) - 瀏覽器自動化主要參考
+- 📋 [CDP 協議參考](../06-api-reference/cdp_protocol_reference.md) - Chrome DevTools Protocol
+- 📋 [ddddocr API 指南](../06-api-reference/ddddocr_api_guide.md) - OCR 引擎
+- 📋 [NoDriver API 指南（已棄用）](../06-api-reference/nodriver_api_guide.md) - 遷移前參考，勿直接照抄
 
 ### 測試與除錯
 
-- 🧪 [測試執行指南](../04-testing-debugging/testing_execution_guide.md) - 標準測試流程
-- 🐛 [除錯方法論](../04-testing-debugging/debugging_methodology.md) - 系統化除錯
+- 🧪 [測試執行指南](../internal/testing-debugging/testing_execution_guide.md) - 標準測試流程
+- 🐛 [除錯方法論](../internal/testing-debugging/debugging_methodology.md) - 系統化除錯
 
 ### 疑難排解
 
-- 🔧 [疑難排解索引](../05-troubleshooting/README.md) - 已知問題解決方案
-- 🔧 [iBon NoDriver 修復](../05-troubleshooting/ibon_nodriver_fixes_2025-10-03.md) - iBon 特定問題
+- 🔧 [疑難排解索引](../internal/troubleshooting/README.md) - 已知問題解決方案
+- 🔧 [iBon Cookie 疑難排解](../internal/troubleshooting/ibon_cookie_troubleshooting.md) - iBon 特定問題
 
 ---
 
@@ -481,6 +484,8 @@ else:
 | | | ✅ Stage 7: 驗證碼處理機制 |
 | | | ✅ KKTIX 參考實作 |
 | | | ✅ iBon 參考實作 |
+| v2.8 | 2026-06-14 | 新增通用 OCR 模型選擇機制文件（18-universal-ocr-model.md） |
+| v2.7 | 2026-06-13 | 新增多開實例機制文件（17-multi-instance.md） |
 | v2.6 | 2026-06-10 | 平台模組化重構後更新：移除行號引用，程式碼位置改為 `platforms/*.py` / `nodriver_common.py` |
 | v2.5 | 2026-04-07 | 新增 Yii2 Captcha Hash 預驗證機制文件 |
 | v2.4 | 2026-02-15 | 新增 Cloudflare Turnstile 偵測與自動點擊機制文件 |
@@ -536,5 +541,5 @@ else:
 
 ---
 
-**最後更新**：2026-06-10（v2.6）
+**最後更新**：2026-06-14（v2.8）
 **維護者**：Tickets Hunter 開發團隊
