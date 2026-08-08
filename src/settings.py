@@ -252,8 +252,6 @@ def get_default_config():
 
     config_dict["advanced"]["auto_reload_page_interval"] = 5
     config_dict["advanced"]["tixcraft_soft_block_delay"] = ""
-    config_dict["advanced"]["auto_reload_overheat_count"] = 4
-    config_dict["advanced"]["auto_reload_overheat_cd"] = 1.0
     config_dict["advanced"]["reset_browser_interval"] = 0
     config_dict["advanced"]["proxy_server_port"] = ""
     config_dict["advanced"]["window_size"] = "600,1024"
