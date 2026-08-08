@@ -82,7 +82,9 @@ async def nodriver_goto_homepage(driver, config_dict):
         except Exception as e:
             print(f"[ERROR] Failed to navigate to kktix homepage: {e}")
 
-        if len(config_dict["accounts"]["kktix_account"])>0:
+        # Shared with nodriver_kktix_signin and the guest redirect so all three
+        # agree on what counts as "configured" (issue #374).
+        if is_kktix_account_configured(config_dict):
             if not 'https://kktix.com/users/sign_in?' in homepage:
                 homepage = CONST_KKTIX_SIGN_IN_URL % (homepage)
 
@@ -346,8 +348,9 @@ async def nodrver_block_urls(tab, config_dict):
     - Block: Analytics/tracking requests initiated by others.min.js
 
     Strategy for TicketPlus:
-    - Allow: analytics beacons (Clarity, GA, GTM) so the server sees normal user behavior
-    - Blocking these signals causes server-side detection (empty DOM / honeypot data)
+    - Allow: Clarity beacons only, so the server sees normal user behavior
+    - Blocking *.clarity.ms/* causes server-side detection (honeypot fake sessionId);
+      verified 2026-04-01 (commit 1c7d1547). GA/GTM stay blocked and do NOT trigger it.
     """
     # Determine target platform from homepage URL
     homepage = config_dict.get("homepage", "")
@@ -355,8 +358,8 @@ async def nodrver_block_urls(tab, config_dict):
 
     NETWORK_BLOCKED_URLS = [
         # General tracking and analytics
-        # Note: TicketPlus-specific trackers (clarity.ms, google-analytics, googletagmanager)
-        # are excluded below to avoid server-side bot detection via missing beacons
+        # Note: for TicketPlus, only clarity.ms (+ hotjar) is excluded below to avoid
+        # server-side bot detection via missing beacons. GA/GTM remain blocked (not required).
         '*.appier.net/*',
         '*.c.appier.net/*',
         # Appier-owned QGraph/AIQUA marketing automation (push, in-web campaigns, behavior tracking)
@@ -364,6 +367,13 @@ async def nodrver_block_urls(tab, config_dict):
         '*api.quantumgraph.com/*',
         '*cdn.qgr.ph/*',
         '*.aiqua.io/*',
+        # ibon self-hosted DMP SDK. Uploads mem_id + sha256(email) + UA via
+        # sendBeacon/fetch/XHR once loaded. ticket.ibon.com.tw hardcodes the UAT
+        # host (whole domain returns 403, so the SDK is currently dead), but the
+        # collector at order-uat.../dmp/api/v1.0/events is live -- a one-line URL
+        # fix would silently resume the upload. Blocked preemptively; harmless
+        # because window.IbonDMP is an inline-defined stub (audit 2026-07-29).
+        '*tour-uat.ibon.com.tw/*',
         '*.cloudfront.com/*',
         '*.doubleclick.net/*',  # Covers securepubads.g.doubleclick.net
         '*.lndata.com/*',
@@ -829,7 +839,10 @@ async def main(args):
                     last_empty_url_log = now_mono
                     target_url_now = getattr(getattr(tab, 'target', None), 'url', None)
                     util.create_debug_logger(config_dict).log(
-                        f"[URL DIAG] empty url, skipping dispatch; target.url={target_url_now!r}"
+                        f"[URL DIAG] empty url, skipping dispatch; "
+                        f"target.url={target_url_now!r}; "
+                        f"silent_ws_errors={get_url_error_count()}; "
+                        f"js_timeouts={get_url_js_timeout_count()}"
                     )
                 continue
 

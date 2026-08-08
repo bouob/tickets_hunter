@@ -323,7 +323,7 @@ function applyOrRestore(selector, property, englishValue) {
 function renderReadmePane() {
     const englishHtml = `
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>Version</strong>: Tickets Hunter (2026.07.02) | <strong>Technical support</strong>: Claude Code AI-assisted development</p>
+  <p class="mb-0"><strong>Version</strong>: Tickets Hunter (2026.08.07) | <strong>Technical support</strong>: Claude Code AI-assisted development</p>
 </div>
 
 <div class="accordion mb-3" id="devStatusAccordion">
@@ -557,7 +557,7 @@ function renderAdvancedTabTranslations() {
 
     setNearestFormText('notification_message', 'This message will be sent to both Discord and Telegram when tickets are found. Leave it empty to keep the default message.');
     setNearestFormText('tixcraft_soft_block_delay', 'Applies only to the TixCraft, TeamEar, and Indievox soft-block white screen. Leave it empty to keep the default randomized delay.');
-    setNearestFormText('tixcraft_allow_less_tickets', 'Applies only to TixCraft, TeamEar, and Indievox. When enabled, Tickets Hunter buys the largest available count below your configured ticket count if the exact count is unavailable.');
+    setNearestFormText('tixcraft_allow_less_tickets', 'Applies to TixCraft, TeamEar, Indievox, and Ticketmaster. When enabled, Tickets Hunter buys the largest available count below your configured ticket count if the exact count is unavailable.');
     setNearestFormText('ocr_captcha_use_universal', 'When enabled, Tickets Hunter uses the self-trained OCR model instead of the upstream ddddocr model and beta configuration.');
     setNearestFormText('ocr_model_path', 'Path to the custom OCR model <strong>folder</strong>. The folder must contain <code>custom.onnx</code> and <code>charsets.json</code>. Relative paths are supported. If left empty, the built-in ddddocr model is used.');
 
@@ -1102,17 +1102,18 @@ function updatePlatformFields(url) {
     updateCitylineHintVisibility();
 }
 
+// Soft-block delay is the only field limited to the three TixCraft-proper hosts;
+// the custom delay is ignored on Ticketmaster (see _resolve_soft_block_wait_seconds).
+// The allow-less-tickets row is NOT handled here -- it applies to the whole
+// TixCraft family incl. Ticketmaster and is driven by data-under="tixcraft".
 function updateTixcraftSoftBlockDelayVisibility(url) {
     const row = document.getElementById('tixcraft-soft-block-delay-row');
-    const allowLessTicketsRow = document.getElementById('tixcraft-allow-less-tickets-row');
-    if (!row && !allowLessTicketsRow) return;
+    if (!row) return;
 
     if (isTixcraftSoftBlockScope(url)) {
-        row?.classList.remove('disappear');
-        allowLessTicketsRow?.classList.remove('disappear');
+        row.classList.remove('disappear');
     } else {
-        row?.classList.add('disappear');
-        allowLessTicketsRow?.classList.add('disappear');
+        row.classList.add('disappear');
     }
 }
 

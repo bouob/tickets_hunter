@@ -84,13 +84,60 @@ Secure: True, HttpOnly: True
 
 1. 從 URL 解析 `back_to` 參數取得登入後的跳轉目標
 2. 填寫 `#user_login`（帳號）與 `#user_password`（密碼）
-3. 點擊 `input[type="submit"][value="登入"]` 按鈕
+3. 點擊送出按鈕（選擇器降級鏈，見下）
 4. 智慧輪詢：每 0.3 秒檢查 URL 是否離開 `/users/sign_in`，最多等待 10 秒
 5. 登入完成後，若停留在首頁/使用者頁面，自動跳轉至 `back_to` 目標
 
 **觸發時機**：主迴圈偵測到 URL 含 `/users/sign_in?` 時，以及 `nodriver_goto_homepage()` 中自動將首頁改為 `CONST_KKTIX_SIGN_IN_URL`。
 
 **實作位置**：`src/platforms/kktix.py`（nodriver_kktix_signin）
+
+#### 登入前置關卡（三道，皆早於填表）
+
+登入路徑上有三個會讓「帳密沒被填寫」的關卡，全都不是帳密本身的問題：
+
+| 關卡 | 偵測 | 行為 |
+|------|------|------|
+| Cloudflare 等候室 | `nodriver_kktix_check_queue_page`（`#cf-time`）| 直接返回不填表。頁面會自我刷新，**禁止手動 reload** |
+| 訪客彈窗「立刻成為 KKTIX 會員」| `nodriver_kktix_check_guest_modal`（`#guestModal`）| 點 `button[data-dismiss="modal"]` 關閉 |
+| 排隊後掉成訪客 session | `nodriver_kktix_redirect_to_signin_if_guest`（`li.not-signed-in:not(.hidden)`）| 導回 sign_in 頁，跳過本輪 |
+
+另有一道不在程式控制內：**Cloudflare challenge 會攔截登入表單的提交**。
+症狀是送出按鈕確實被點到，但 URL 始終停在 `/users/sign_in`，直到 challenge 被解掉為止。
+此時 log 會先出現 `[KKTIX SIGNIN] Login timeout after 10s; 0/33 URL checks failed`
+（`0/33` 表示 websocket 正常，純粹是頁面沒跳轉），隨後才出現 `[CLOUDFLARE] Challenge page detected`。
+
+#### 送出按鈕的選擇器降級鏈
+
+送出按鈕曾以中文 `value="登入"` 綁定，非繁中 locale 會靜默失敗（找不到就什麼都不做，也不留 log）。
+現改為依序嘗試並回報實際命中者：
+
+```
+form#new_user input[type="submit"]
+form[action*="sign_in"] input[type="submit"]
+input[type="submit"][value="登入"]
+button[type="submit"]
+```
+
+命中時記錄 `[KKTIX SIGNIN] Submit clicked via <selector>`；全部落空則記錄候選數量並提前返回，
+不再對一個註定失敗的表單空等 10 秒。
+
+#### 診斷輸出的語意
+
+| 訊息 | 意義 |
+|------|------|
+| `#user_login not found; page may be a queue room, a Cloudflare challenge, or already signed in` | 欄位不存在。舊版此處靜默跳過，看起來就像「不填帳密」|
+| `URL check failed (attempt N/33): ...` | 輪詢第一次失敗（只印一次，避免洗版）|
+| `Login timeout after 10s; X/33 URL checks failed, last error: ...` | 逾時彙總。`X=0` 代表連線正常、純粹沒跳轉；`X` 接近 33 代表 websocket 有問題 |
+
+#### 帳號啟用門檻
+
+`is_kktix_account_configured()` 是「帳號是否已設定」的**唯一判定**（去空白後非空）。
+
+過去三處各判各的：主迴圈用 `> 0` 決定要不要把首頁改寫成登入頁，
+`nodriver_kktix_signin` 用 `> 4` 決定要不要填表，訪客導回用 `<= 4`。
+1–4 字的帳號因此會被送到一個永遠不會被填寫的登入頁，表現就是 bot 停在登入畫面不動。
+新增呼叫點時務必沿用此函式，不要重新寫長度判斷。
 
 ### FamiTicket
 
@@ -192,6 +239,21 @@ UDN 為半自動登入：程式填寫帳密，但 reCAPTCHA 圖片驗證需使�
 **症狀**：帳密填寫後頁面無反應或提示錯誤
 **原因**：帳密錯誤、帳號鎖定、驗證碼辨識失敗
 **解法**：先手動登入確認帳號狀態，檢查 OCR 模型準確率
+
+### KKTIX 看起來沒有自動填入帳密
+**症狀**：畫面停在登入頁，帳密欄位是空的，log 只有 `nodriver_kktix_signin:` 一行
+**原因**：多數情況不是填寫失敗，而是根本沒走到填寫——見上方「登入前置關卡」三道。
+先看 log 有沒有 `#user_login not found`（欄位不存在）或 `No clickable submit button found`（按鈕沒找到）。
+**解法**：確認是否卡在 CF 等候室或 challenge；帳號長度 1–4 字者請確認已升級至含
+`is_kktix_account_configured` 的版本
+
+### Bot 不動也不結束，log 只有 [URL DIAG] empty url 反覆出現
+**症狀**：畫面停住，終端機每 2 秒印一次 `[URL DIAG] empty url, skipping dispatch`，
+且 `silent_ws_errors` 持續增加
+**原因**：CDP websocket 已中斷。`no close frame received or sent` 原本被歸類為正常關閉而靜默，
+主迴圈取不到 URL 就跳過所有平台分派，形成既不工作也不退出的空轉
+**解法**：連續 15 次後會出現 `[URL ERROR] Browser connection lost`，依提示關閉瀏覽器並重啟程式。
+細節見 `12-error-handling.md`
 
 ### tour.ibon.com.tw 登入異常
 **症狀**：Cookie 注入成功但 tour.ibon 頁面仍未登入

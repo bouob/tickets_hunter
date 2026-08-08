@@ -30,7 +30,8 @@ docs/03-mechanisms/
 ├── 15-cloudflare-turnstile.md   跨階段: Cloudflare Turnstile 偵測與自動點擊 ✅
 ├── 16-yii2-captcha-hash.md      跨階段: Yii2 Captcha Hash 預驗證與 1-char 自動修正 ✅
 ├── 17-multi-instance.md         跨階段: 多開實例隔離與儀表板 ✅
-└── 18-universal-ocr-model.md    跨階段: 通用/tixcraft_tm OCR 模型自動選擇 ✅ NEW
+├── 18-universal-ocr-model.md    跨階段: 通用/tixcraft_tm OCR 模型自動選擇 ✅
+└── 19-purchase-qualification.md 跨階段: KKTIX 購票資格（信用卡優先購/會員序號）✅ NEW
 
 ✅ = 已完成詳細文件化
 ```
@@ -484,6 +485,7 @@ else:
 | | | ✅ Stage 7: 驗證碼處理機制 |
 | | | ✅ KKTIX 參考實作 |
 | | | ✅ iBon 參考實作 |
+| v2.9 | 2026-08-04 | 新增購票資格機制文件（19-purchase-qualification.md）；02-authentication 補 KKTIX 登入前置關卡與診斷；12-error-handling 補 WebSocket 靜默斷線計數 |
 | v2.8 | 2026-06-14 | 新增通用 OCR 模型選擇機制文件（18-universal-ocr-model.md） |
 | v2.7 | 2026-06-13 | 新增多開實例機制文件（17-multi-instance.md） |
 | v2.6 | 2026-06-10 | 平台模組化重構後更新：移除行號引用，程式碼位置改為 `platforms/*.py` / `nodriver_common.py` |

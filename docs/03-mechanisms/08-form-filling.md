@@ -69,6 +69,20 @@ KKTIX 的驗證問題出現在票種選擇頁面。填寫流程：
 - 填寫前加入 0.3-1 秒隨機延遲，填寫後 0.5-1.2 秒再點擊按鈕
 - 問題文字寫入檔案（`write_question_to_file`），供使用者查看
 
+#### 會員序號的時序約束（`nodriver_kktix_order_member_code`）
+
+限定資格票券的序號欄位（`input.member-code`）有兩個容易踩的限制：
+
+- **必須在資格 radio 選定之後才填。** 序號欄位隸屬於某一個資格選項，
+  選定之前填寫會寫到錯誤的（或不存在的）選項上。詳見 `19-purchase-qualification.md`。
+- **必須綁定作用域。** 欄位位於各自的 `.ticket-unit` 內，
+  全域 `document.querySelectorAll` 在多票種頁面會填到別的票種去。
+  作法是先找出張數 > 0 的 ticket-unit 再查詢。
+
+**值的來源限制**：取自 `advanced.discount_code`，且**所有欄位填同一個值**。
+該設定同時服務三個用途（TicketPlus 折價碼、KKTIX 會員/資格序號、
+TixCraft 家族驗證題的最終 fallback），目前沒有「不同欄位填不同序號」的機制。
+
 ### iBon — 雙輸入框模式（`nodriver_ibon_fill_verify_form`）
 
 iBon 驗證表單可能同時出現兩個輸入框（例如同時填寫身分證與手機號碼）：

@@ -395,7 +395,7 @@ const HELP_CONTENT = {
     title: '不足張數仍購買',
     short: '拓元家族票數不足時，允許購買小於設定張數的最大可用張數',
     detail: `
-      <p>此開關只影響拓元、添翼、Indievox。預設關閉，避免買到少於您原本設定的張數。</p>
+      <p>此開關影響拓元、添翼、Indievox 與 Ticketmaster（同一套售票系統）。預設關閉，避免買到少於您原本設定的張數。</p>
       <table class="table table-sm table-bordered">
         <thead><tr><th>狀態</th><th>行為</th></tr></thead>
         <tbody>
@@ -1260,7 +1260,7 @@ const HELP_CONTENT_EN_META = {
     title: 'Buy fewer TixCraft tickets if needed',
     short: 'Allow the TixCraft family to buy the largest available count below your configured ticket count.',
     detailHtml: `
-      <p>This switch applies only to TixCraft, TeamEar, and Indievox. It is off by default to avoid buying fewer tickets than requested.</p>
+      <p>This switch applies to TixCraft, TeamEar, Indievox, and Ticketmaster (the same ticketing backend). It is off by default to avoid buying fewer tickets than requested.</p>
       <table class="table table-sm table-bordered">
         <thead><tr><th>Status</th><th>Behavior</th></tr></thead>
         <tbody>
