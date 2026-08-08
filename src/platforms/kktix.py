@@ -21,7 +21,6 @@ import util
 from nodriver_common import (
     check_and_handle_pause,
     nodriver_check_checkbox,
-    nodriver_get_text_by_selector,
     play_sound_while_ordering,
     send_discord_notification,
     send_telegram_notification,
@@ -49,10 +48,36 @@ __all__ = [
     "nodriver_kktix_booking_main",
     "nodriver_kktix_confirm_order_button",
     "nodriver_kktix_order_member_code",
+    "is_kktix_account_configured",
+    "nodriver_kktix_check_form_state",
+    "nodriver_kktix_check_qualification",
+    "nodriver_kktix_check_form_ready",
+    "nodriver_kktix_wait_member_code_enabled",
+    "nodriver_kktix_select_qualification",
+    "nodriver_kktix_handle_qualification_and_next",
+    "CONST_KKTIX_FORM_STATE_JS",
 ]
 
 # Module-level state (replaces global kktix_dict)
 _state = {}
+
+# How long after pressing "next" to leave the ticket flow alone. Long enough for
+# the submission to navigate, short enough that a failed press retries almost
+# immediately - this window is the whole reason the guard cannot latch.
+CONST_KKTIX_NEXT_BUTTON_COOLDOWN = 1.5
+
+
+def is_kktix_account_configured(config_dict):
+    """Single source of truth for "is a KKTIX account set up?" (issue #374).
+
+    Three call sites used to disagree: the main loop rewrote the homepage to
+    the sign-in page for any non-empty account, while the sign-in and guest
+    redirect paths required more than 4 characters. A 1-4 character account
+    therefore landed on the login page that nobody would ever fill in, which
+    reads to the user as "the bot does not type my credentials".
+    """
+    account = config_dict.get("accounts", {}).get("kktix_account", "")
+    return len(account.strip()) > 0
 
 
 async def nodriver_kktix_check_queue_page(tab, config_dict):
@@ -127,30 +152,78 @@ async def nodriver_kktix_signin(tab, url, config_dict):
     kktix_password = config_dict["accounts"]["kktix_password"].strip()
 
     has_redirected = False
-    if len(kktix_account) > 4:
+    if is_kktix_account_configured(config_dict):
         try:
+            # A missing field used to be skipped silently, so a queue room or a
+            # Cloudflare interstitial looked exactly like "credentials not typed"
+            # in the log. Report it and stop instead of submitting a dead form.
             account = await tab.query_selector("#user_login")
-            if account:
-                await account.send_keys(kktix_account)
-                await asyncio.sleep(random.uniform(0.1, 0.2))
+            if account is None:
+                debug.log("[KKTIX SIGNIN] #user_login not found; page may be a queue room, "
+                          "a Cloudflare challenge, or already signed in")
+                return False
+            await account.send_keys(kktix_account)
+            await asyncio.sleep(random.uniform(0.1, 0.2))
 
             password = await tab.query_selector("#user_password")
-            if password:
-                await password.send_keys(kktix_password)
-                await asyncio.sleep(random.uniform(0.1, 0.2))
+            if password is None:
+                debug.log("[KKTIX SIGNIN] #user_password not found; login form is incomplete")
+                return False
+            await password.send_keys(kktix_password)
+            await asyncio.sleep(random.uniform(0.1, 0.2))
 
-            await tab.evaluate('''
-                const loginBtn = document.querySelector('input[type="submit"][value="登入"]');
-                if (loginBtn) {
-                    loginBtn.click();
-                }
+            # The submit button used to be matched by its Chinese value only,
+            # which fails silently on any other locale.
+            submit_result = await tab.evaluate('''
+                (function() {
+                    const selectors = [
+                        'form#new_user input[type="submit"]',
+                        'form[action*="sign_in"] input[type="submit"]',
+                        'input[type="submit"][value="登入"]',
+                        'button[type="submit"]'
+                    ];
+                    let candidateCount = 0;
+                    for (const sel of selectors) {
+                        const btn = document.querySelector(sel);
+                        if (btn) {
+                            candidateCount += 1;
+                            if (!btn.disabled) {
+                                btn.click();
+                                return { clicked: true, selector: sel, candidateCount: candidateCount };
+                            }
+                        }
+                    }
+                    return { clicked: false, selector: '', candidateCount: candidateCount };
+                })()
             ''')
+            submit_result = util.parse_nodriver_result(submit_result)
+            if isinstance(submit_result, dict) and submit_result.get('clicked'):
+                debug.log(f"[KKTIX SIGNIN] Submit clicked via {submit_result.get('selector')}")
+            else:
+                candidate_count = 0
+                if isinstance(submit_result, dict):
+                    candidate_count = submit_result.get('candidateCount', 0)
+                debug.log(f"[KKTIX SIGNIN] No clickable submit button found "
+                          f"(candidates={candidate_count}); locale may differ or form not rendered")
+                return False
 
             # Smart polling: wait for login completion (URL change from sign_in page)
+            #
+            # Do NOT add an early return when Cloudflare takes over the page.
+            # It was tried and measurably made things worse: the main loop's
+            # Cloudflare check only re-arms on a URL change, and returning during
+            # the __cf_chl_rt_tk redirect means it runs before the challenge
+            # target exists, finds nothing, and never looks again - the bot then
+            # idles forever. Sitting out the full 10s wastes time but gives the
+            # challenge time to render, which is what lets the main loop solve it.
+            # Fixing this properly needs event-driven detection
+            # (cdp.target.TargetCreated), not an earlier poll.
             max_wait = 10
             check_interval = 0.3
             max_attempts = int(max_wait / check_interval)
             login_completed = False
+            url_error_count = 0
+            last_url_exc = ""
 
             for attempt in range(max_attempts):
                 # 登入後檢查暫停
@@ -166,14 +239,21 @@ async def nodriver_kktix_signin(tab, url, config_dict):
                         debug.log(f"[KKTIX SIGNIN] Login completed after {attempt * check_interval:.1f}s, redirected to: {current_url}")
                         break
                 except Exception as exc:
-                    if attempt == max_attempts - 1:
-                        debug.log(f"[KKTIX SIGNIN] Error checking URL: {exc}")
+                    # Report the first failure with its attempt index, then only
+                    # the summary below; printing every attempt floods the log.
+                    url_error_count += 1
+                    last_url_exc = str(exc)
+                    if url_error_count == 1:
+                        debug.log(f"[KKTIX SIGNIN] URL check failed "
+                                  f"(attempt {attempt + 1}/{max_attempts}): {exc}")
 
                 if attempt < max_attempts - 1:
                     await asyncio.sleep(check_interval)
 
             if not login_completed:
-                debug.log(f"[KKTIX SIGNIN] Login timeout after {max_wait}s")
+                debug.log(f"[KKTIX SIGNIN] Login timeout after {max_wait}s; "
+                          f"{url_error_count}/{max_attempts} URL checks failed, "
+                          f"last error: {last_url_exc}")
 
             # Check if need to manually redirect to back_to URL
             try:
@@ -211,7 +291,7 @@ async def nodriver_kktix_redirect_to_signin_if_guest(tab, url, config_dict):
     Returns:
         bool: True if guest session detected (caller should skip this round)
     """
-    if len(config_dict["accounts"]["kktix_account"]) <= 4:
+    if not is_kktix_account_configured(config_dict):
         return False
 
     debug = util.create_debug_logger(config_dict)
@@ -1234,6 +1314,348 @@ async def nodriver_kktix_dismiss_failure_modal(tab, config_dict):
     return False
 
 
+# Single source of truth for "what state is the registration form in?".
+#
+# Everything that used to answer this question did so with its own inline JS,
+# and the copies disagreed: one treated multiple member-code fields as OR while
+# another used AND, one honoured `disabled` on legacy ticket inputs while
+# another ignored it. Filling the form could therefore satisfy the outer guard
+# (skip the whole ticket flow) while failing the inner check (do not press
+# next) at the same time, which is the deadlock behind #377 / #375.
+#
+# Scope matters too: div.code-input is rendered per .ticket-unit and gated on
+# `ticketModel.quantity > 0`, so a document-wide query misattributes it on
+# multi-ticket pages. Resolve the active unit first, fall back to document for
+# legacy layouts.
+CONST_KKTIX_FORM_STATE_JS = '''
+    (function() {
+        const QTY_CSS = 'input[ng-model="ticketModel.quantity"]';
+        const LEGACY_QTY_CSS = 'input[name^="tickets"]';
+
+        const readQuantity = (root) => {
+            for (const sel of [QTY_CSS, LEGACY_QTY_CSS]) {
+                const inputs = root.querySelectorAll(sel);
+                for (const input of inputs) {
+                    const value = parseInt(input.value);
+                    if (!input.disabled && !isNaN(value) && value > 0) {
+                        return value;
+                    }
+                }
+            }
+            return 0;
+        };
+
+        let scope = null;
+        let scopeKind = 'none';
+        const units = document.querySelectorAll('.ticket-unit');
+        for (const unit of units) {
+            if (readQuantity(unit) > 0) {
+                scope = unit;
+                scopeKind = 'ticket-unit';
+                break;
+            }
+        }
+        if (!scope) {
+            scope = document;
+            scopeKind = 'document';
+        }
+
+        const ticketCount = readQuantity(scope);
+        const hasTicket = ticketCount > 0;
+
+        // The terms checkbox lives outside the ticket unit, so always look it
+        // up document-wide. Absent checkbox means the event has no terms step.
+        const agreeCheckbox = document.querySelector('#person_agree_terms');
+        const agreed = agreeCheckbox ? agreeCheckbox.checked : true;
+
+        const qualification = {
+            status: 'missing',
+            label: '',
+            selectedIndex: -1,
+            options: [],
+            invitationPending: false
+        };
+
+        const block = scope.querySelector('div.code-input');
+        if (block) {
+            const labelEl = block.querySelector('label.control-label');
+            qualification.label = labelEl ? (labelEl.innerText || '').trim() : '';
+
+            // Index by radio position inside the block so the click helper can
+            // address the exact same element without re-deriving the mapping.
+            const radios = block.querySelectorAll('input[type="radio"]');
+            radios.forEach((radio, idx) => {
+                const optionLabel = radio.closest('label');
+                const codeInput = optionLabel
+                    ? optionLabel.querySelector('input.member-code')
+                    : null;
+                const joinedLink = optionLabel
+                    ? optionLabel.querySelector('span[ng-if] > a[ng-href="#"]')
+                    : null;
+
+                let optionType = 'plain';
+                if (codeInput) {
+                    optionType = 'member_code';
+                } else if (joinedLink) {
+                    optionType = 'joined';
+                }
+
+                if (radio.checked) {
+                    qualification.selectedIndex = idx;
+                }
+
+                qualification.options.push({
+                    index: idx,
+                    type: optionType,
+                    disabled: !!radio.disabled,
+                    checked: !!radio.checked,
+                    codeDisabled: codeInput ? !!codeInput.disabled : null,
+                    codeFilled: codeInput
+                        ? !!(codeInput.value && codeInput.value.trim() !== '')
+                        : null
+                });
+            });
+
+            // An invitation-code qualification renders outside the radio repeat
+            // (ng-if="oq.type != 'invitation_code'" excludes it). No verified
+            // snapshot exists, so only flag it - never guess at its selectors.
+            const textInputs = block.querySelectorAll('input[type="text"]');
+            for (const input of textInputs) {
+                if (!input.classList.contains('member-code')) {
+                    qualification.invitationPending = true;
+                    break;
+                }
+            }
+
+            if (qualification.options.length === 0) {
+                // No radios: either a plain description label, or an
+                // invitation-style input we deliberately do not automate.
+                qualification.status = qualification.invitationPending
+                    ? 'pending'
+                    : 'missing';
+            } else if (qualification.options.some((o) => o.type === 'joined')) {
+                qualification.status = 'satisfied';
+            } else if (qualification.selectedIndex >= 0) {
+                const selected = qualification.options.find(
+                    (o) => o.index === qualification.selectedIndex
+                );
+                if (!selected || selected.type !== 'member_code') {
+                    qualification.status = 'satisfied';
+                } else {
+                    qualification.status = selected.codeFilled ? 'satisfied' : 'pending';
+                }
+            } else {
+                qualification.status = 'pending';
+            }
+        }
+
+        return {
+            scope: scopeKind,
+            hasTicket: hasTicket,
+            ticketCount: ticketCount,
+            agreed: agreed,
+            qualification: qualification,
+            ready: hasTicket && agreed && qualification.status !== 'pending'
+        };
+    })()
+'''
+
+
+def _kktix_default_form_state():
+    """Conservative fallback: let the flow move forward rather than stall.
+
+    A detection failure must never invent a blocking state - that is how the
+    old guard turned a transient misread into a permanent deadlock.
+    """
+    return {
+        "scope": "none",
+        "hasTicket": False,
+        "ticketCount": 0,
+        "agreed": True,
+        "qualification": {
+            "status": "missing",
+            "label": "",
+            "selectedIndex": -1,
+            "options": [],
+            "invitationPending": False,
+        },
+        "ready": False,
+    }
+
+
+async def nodriver_kktix_check_form_state(tab, config_dict):
+    """Read the whole registration form state in one round trip."""
+    debug = util.create_debug_logger(config_dict)
+    try:
+        result = await tab.evaluate(CONST_KKTIX_FORM_STATE_JS)
+        state = util.parse_nodriver_result(result)
+        if isinstance(state, dict) and "qualification" in state:
+            return state
+        debug.log(f"[KKTIX FORM STATE] Unexpected result type "
+                  f"{type(state).__name__}, using conservative default")
+    except Exception as exc:
+        debug.log(f"[KKTIX FORM STATE] Read failed: {exc}")
+    return _kktix_default_form_state()
+
+
+async def nodriver_kktix_check_qualification(tab, config_dict):
+    """Purchase-qualification subset of the form state.
+
+    Returns a dict with 'status' in {'missing', 'satisfied', 'pending'}.
+    """
+    state = await nodriver_kktix_check_form_state(tab, config_dict)
+    return state.get("qualification", _kktix_default_form_state()["qualification"])
+
+
+async def nodriver_kktix_check_form_ready(tab, config_dict):
+    """True when tickets are set, terms agreed, and qualification not pending."""
+    state = await nodriver_kktix_check_form_state(tab, config_dict)
+    return bool(state.get("ready", False))
+
+
+async def nodriver_kktix_wait_member_code_enabled(tab, config_dict, timeout=1.2):
+    """Poll until a member-code input is typable after selecting its radio.
+
+    ng-disabled resolves on the next digest cycle, so a fixed sleep either wastes
+    time or fires early under load. Returns False on timeout; the caller just
+    retries next round rather than treating it as fatal.
+    """
+    debug = util.create_debug_logger(config_dict)
+    interval = 0.05
+    attempts = int(timeout / interval)
+    for _ in range(attempts):
+        try:
+            is_enabled = await tab.evaluate(
+                "!!document.querySelector('div.code-input input.member-code:not([disabled])')"
+            )
+            if is_enabled:
+                return True
+        except Exception:
+            pass
+        await asyncio.sleep(interval)
+    debug.log(f"[KKTIX QUALIFICATION] member-code still disabled after {timeout}s, "
+              "angular digest may be stalled")
+    return False
+
+
+async def nodriver_kktix_select_qualification(tab, config_dict, qualification):
+    """Select the first available purchase-qualification radio.
+
+    Picks the first option that is neither disabled nor already checked. There
+    is deliberately no keyword setting for this: the qualification list is
+    event-specific and short, and a wrong stored keyword would silently block
+    every purchase.
+
+    Returns:
+        bool: True if a radio was clicked this round.
+    """
+    debug = util.create_debug_logger(config_dict)
+
+    if qualification.get("status") != "pending":
+        return False
+
+    if qualification.get("invitationPending"):
+        debug.log("[KKTIX QUALIFICATION] Invitation-code style input detected; "
+                  "this variant is not automated, please fill it manually")
+        return False
+
+    options = qualification.get("options", [])
+    target_index = -1
+    for option in options:
+        if not option.get("disabled") and not option.get("checked"):
+            target_index = option.get("index", -1)
+            break
+
+    if target_index < 0:
+        debug.log(f"[KKTIX QUALIFICATION] No selectable option among "
+                  f"{len(options)} (all disabled or already selected)")
+        return False
+
+    # Native clicks do not drive AngularJS radios under zendriver, so go
+    # through JS and let ng-model see the change.
+    click_result = await tab.evaluate(f'''
+        (function() {{
+            const block = document.querySelector('div.code-input');
+            if (!block) {{ return {{ clicked: false, reason: 'no-block' }}; }}
+            const radios = block.querySelectorAll('input[type="radio"]');
+            const radio = radios[{json.dumps(target_index)}];
+            if (!radio) {{ return {{ clicked: false, reason: 'index-out-of-range' }}; }}
+            if (radio.disabled) {{ return {{ clicked: false, reason: 'disabled' }}; }}
+            radio.click();
+            return {{ clicked: true, reason: '' }};
+        }})()
+    ''')
+    click_result = util.parse_nodriver_result(click_result)
+
+    if not (isinstance(click_result, dict) and click_result.get('clicked')):
+        reason = click_result.get('reason', 'unknown') if isinstance(click_result, dict) else 'unknown'
+        debug.log(f"[KKTIX QUALIFICATION] Radio click failed at index {target_index}: {reason}")
+        return False
+
+    debug.log(f"[KKTIX QUALIFICATION] Selected option {target_index}")
+
+    selected = next((o for o in options if o.get("index") == target_index), None)
+    if selected and selected.get("type") == "member_code":
+        await nodriver_kktix_wait_member_code_enabled(tab, config_dict)
+
+    return True
+
+
+async def nodriver_kktix_handle_qualification_and_next(tab, config_dict,
+                                                       button_clicked_in_captcha=False):
+    """Satisfy any purchase qualification, then press next (#377 / #375).
+
+    Replaces the old branch that decided whether to act by asking whether a text
+    input existed. On a member_code qualification both a radio and a text input
+    are present, so that branch never ran and the flow stalled with everything
+    filled in but "next" never pressed.
+
+    Returns:
+        bool: True if the next button was pressed this round.
+    """
+    debug = util.create_debug_logger(config_dict)
+
+    qualification = await nodriver_kktix_check_qualification(tab, config_dict)
+
+    if qualification.get("status") == "pending":
+        if await nodriver_kktix_select_qualification(tab, config_dict, qualification):
+            # The code field belongs to the option just selected, so fill it
+            # only now - filling it earlier targeted the wrong (or no) option.
+            await nodriver_kktix_order_member_code(tab, config_dict)
+            qualification = await nodriver_kktix_check_qualification(tab, config_dict)
+
+    if qualification.get("status") == "pending":
+        debug.log(f"[KKTIX QUALIFICATION] Still pending "
+                  f"(label={qualification.get('label', '')!r}), not pressing next")
+        return False
+
+    if button_clicked_in_captcha:
+        debug.log("Button already clicked during captcha processing, skipping duplicate click")
+        return False
+
+    if not config_dict["kktix"].get("auto_press_next_step_button", True):
+        debug.log("[KKTIX] auto_press_next_step_button is off, leaving the form for the user")
+        return False
+
+    try:
+        current_url = await tab.evaluate('window.location.href')
+        if current_url and '/registrations/' in current_url and '-' in current_url \
+                and '/new' not in current_url:
+            debug.log("Already redirected to order page, skipping button click")
+            return False
+    except Exception as exc:
+        debug.log(f"[KKTIX] URL check before next click failed: {exc}")
+        current_url = ""
+
+    pressed = await nodriver_kktix_press_next_button(tab, config_dict)
+    if pressed:
+        # Feeds the cooldown guard so the next loop does not re-run the whole
+        # ticket flow while this submission is still in flight.
+        _state["next_button_pressed_url"] = current_url
+        _state["next_button_pressed_time"] = time.time()
+    return pressed
+
+
 async def nodriver_kktix_press_next_button(tab, config_dict=None):
     """使用 JavaScript 點擊下一步按鈕，包含重試和等待機制"""
     # 函數開始時檢查暫停
@@ -1614,10 +2036,9 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                 if await check_and_handle_pause(config_dict):
                     return fail_list, played_sound_ticket
 
-                # 填寫會員序號（如果有設定）
-                await nodriver_kktix_order_member_code(tab, config_dict)
-
-                # 會員序號填寫後檢查暫停
+                # The member code belongs to a qualification option, so it is
+                # filled after that option is selected - see
+                # nodriver_kktix_handle_qualification_and_next below.
                 if await check_and_handle_pause(config_dict):
                     return fail_list, played_sound_ticket
 
@@ -1643,272 +2064,25 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                     # This ensures modal doesn't block the next button
                     await nodriver_kktix_check_guest_modal(tab, config_dict, force_check=True)
 
-                    # no captcha text popup, goto next page.
-                    control_text = await nodriver_get_text_by_selector(tab, 'div > div.code-input > div.control-group > label.control-label', 'innerText')
-                    debug.log("control_text:", control_text)
-
-                    # 防止無限迴圈：當執行超過 2 次且欄位已填寫時，強制清空 control_text
-                    if _state and _state.get("reg_execution_count", 0) > 2:
-                        if len(control_text) > 0:
-                            # 檢查票券數量和序號是否已填寫
-                            try:
-                                all_fields_filled = await tab.evaluate('''
-                                    () => {
-                                        let hasTicket = false;
-
-                                        // Strategy 1: ng-model (AngularJS pages)
-                                        const ngInputs = document.querySelectorAll('input[ng-model="ticketModel.quantity"]');
-                                        for (let input of ngInputs) {
-                                            if (parseInt(input.value) > 0) {
-                                                hasTicket = true;
-                                                break;
-                                            }
-                                        }
-
-                                        // Strategy 2: name attribute (legacy pages)
-                                        if (!hasTicket) {
-                                            const ticketInputs = document.querySelectorAll('input[name^="tickets"]');
-                                            for (let input of ticketInputs) {
-                                                if (!isNaN(parseInt(input.value)) && parseInt(input.value) > 0) {
-                                                    hasTicket = true;
-                                                    break;
-                                                }
-                                            }
-                                        }
-
-                                        if (!hasTicket) return false;
-
-                                        // 檢查優惠序號（如果有的話）
-                                        const memberCodeInputs = document.querySelectorAll('input.member-code');
-                                        if (memberCodeInputs.length > 0) {
-                                            for (let input of memberCodeInputs) {
-                                                if (!input.value || input.value.trim() === '') {
-                                                    return false;
-                                                }
-                                            }
-                                        }
-
-                                        return true;
-                                    }
-                                ''')
-                                if all_fields_filled:
-                                    debug.log(f"[KKTIX FORCE CLEAR] Execution count {_state['reg_execution_count']}, all fields filled, clearing control_text to break loop")
-                                    control_text = ""
-                            except Exception as exc:
-                                debug.log(f"[KKTIX FORCE CLEAR] Check failed: {exc}")
-
-                    if len(control_text) > 0:
-                        input_text_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="text"]'
-                        input_text_element = None
-                        try:
-                            input_text_element = await tab.query_selector(input_text_css)
-                        except Exception as exc:
-                            #print(exc)
-                            pass
-                        if input_text_element is None:
-                            # 嘗試多種選擇器來找到資格 radio
-                            radio_selectors = [
-                                'input[type="radio"][ng-model="ticketModel.use_qualification_id"]',  # 最精確
-                                'div.code-input input[type="radio"]',  # 次要選擇
-                                'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="radio"]'  # 原始選擇器
-                            ]
-                            radio_element = None
-                            for radio_css in radio_selectors:
-                                try:
-                                    radio_element = await tab.query_selector(radio_css)
-                                    if radio_element:
-                                        debug.log(f"[KKTIX RADIO] Found radio with selector: {radio_css}")
-                                        break
-                                except Exception:
-                                    pass
-
-                            try:
-                                pass  # 保持原有的 try block 結構
-                                if radio_element:
-                                    debug.log("[KKTIX] found radio")
-                                    joined_button_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > span[ng-if] > a[ng-href="#"]'
-                                    joined_element = await tab.query_selector(joined_button_css)
-                                    if joined_element:
-                                        control_text = ""
-                                        debug.log("[KKTIX] member joined")
-                                    else:
-                                        # 沒有 "已加入" 標記，需要勾選 radio
-                                        try:
-                                            # 檢查 radio 是否被禁用
-                                            is_disabled = await radio_element.get_attribute('disabled')
-                                            if not is_disabled:
-                                                debug.log("[KKTIX RADIO] Clicking radio qualification option")
-                                                # Use JS click for AngularJS radio (native click may fail in zendriver)
-                                                click_result = await tab.evaluate('''
-                                                    (function() {
-                                                        const selectors = [
-                                                            'input[type="radio"][ng-model="ticketModel.use_qualification_id"]',
-                                                            'div.code-input input[type="radio"]'
-                                                        ];
-                                                        for (const sel of selectors) {
-                                                            const radio = document.querySelector(sel);
-                                                            if (radio && !radio.disabled) {
-                                                                radio.click();
-                                                                return { success: true, selector: sel };
-                                                            }
-                                                        }
-                                                        return { success: false };
-                                                    })();
-                                                ''')
-                                                click_result = util.parse_nodriver_result(click_result)
-                                                if click_result and click_result.get('success'):
-                                                    debug.log(f"[KKTIX RADIO] Clicked via JS: {click_result.get('selector')}")
-                                                else:
-                                                    debug.log("[KKTIX RADIO] JS click failed, no matching radio found")
-                                                await asyncio.sleep(0.3)
-                                        except Exception as click_exc:
-                                            debug.log(f"[KKTIX RADIO ERROR] {click_exc}")
-                            except Exception as exc:
-                                debug.log(f"[KKTIX] {exc}")
-                                pass
-
-                            # 如果既沒有輸入框也沒有 radio，清空 control_text 以便點擊按鈕
-                            # 這種情況下 label 可能只是購票資格說明而非實際輸入欄位
-                            if radio_element is None:
-                                debug.log(f"[KKTIX] Found label '{control_text}' but no input/radio, proceeding to click button")
-                                control_text = ""
-                            else:
-                                # 有 radio 元素：檢查所有必填欄位是否已填寫
-                                try:
-                                    all_inputs_filled_result = await tab.evaluate('''
-                                        () => {
-                                            // 策略 1: 使用 ng-model 檢查票券數量（KKTIX 使用 AngularJS）
-                                            const ngModelInputs = document.querySelectorAll('input[ng-model="ticketModel.quantity"]');
-                                            let hasTicketSelected = false;
-                                            for (let input of ngModelInputs) {
-                                                if (parseInt(input.value) > 0) {
-                                                    hasTicketSelected = true;
-                                                    break;
-                                                }
-                                            }
-
-                                            // 策略 2: 檢查 name 屬性開頭為 tickets 的輸入框
-                                            if (!hasTicketSelected) {
-                                                const ticketInputs = document.querySelectorAll('input[name^="tickets"]');
-                                                for (let input of ticketInputs) {
-                                                    const value = input.value.trim();
-                                                    if (!input.disabled && value !== '' && value !== '0') {
-                                                        hasTicketSelected = true;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-
-                                            // 如果沒有選擇票券，返回 false
-                                            if (!hasTicketSelected) return false;
-
-                                            // 檢查會員序號欄位
-                                            const memberCodeInputs = document.querySelectorAll('input.member-code');
-                                            if (memberCodeInputs.length === 0) return true;  // 沒有會員序號欄位 = 已完成
-
-                                            for (let input of memberCodeInputs) {
-                                                if (!input.disabled && (!input.value || input.value.trim() === '')) {
-                                                    return false;  // 有未填寫的會員序號欄位
-                                                }
-                                            }
-
-                                            // 不檢查 Radio 勾選狀態
-                                            // 因為「本票券需要符合以下任一資格才可以購買」只是說明文字
-                                            // 不是必填欄位，票券和序號完成後就應該點擊下一步
-
-                                            return true;  // 所有欄位都已填寫
-                                        }
-                                    ''')
-                                    all_inputs_filled = util.parse_nodriver_result(all_inputs_filled_result)
-
-                                    if all_inputs_filled:
-                                        debug.log(f"[KKTIX] All required fields filled (tickets + member code), clearing control_text to proceed")
-                                        control_text = ""
-                                    else:
-                                        debug.log(f"[KKTIX] Some required fields not filled yet, keeping control_text")
-                                except Exception as exc:
-                                    debug.log(f"[KKTIX] Input fields check failed: {exc}")
-
-                    if len(control_text) == 0:
-                        # 檢查是否在驗證碼處理時已經點擊過按鈕
-                        if button_clicked_in_captcha:
-                            debug.log("Button already clicked during captcha processing, skipping duplicate click")
-                        else:
-                            # 檢查是否已經跳轉到成功頁面，避免重複點擊
-                            try:
-                                current_url = await tab.evaluate('window.location.href')
-                                if '/registrations/' in current_url and '-' in current_url and '/new' not in current_url:
-                                    debug.log("Already redirected to order page, skipping button click")
-                                else:
-                                    click_ret = await nodriver_kktix_press_next_button(tab, config_dict)
-                            except Exception as exc:
-                                # 如果檢查失敗，還是嘗試點擊
-                                click_ret = await nodriver_kktix_press_next_button(tab, config_dict)
-                    else:
-                        pass
+                    # Qualification handling and the next-button press live in
+                    # one place now. The old code decided whether to touch the
+                    # qualification radio by asking whether a text input existed,
+                    # but a member_code qualification has both, so that branch
+                    # never ran and control_text was never cleared (#377 / #375).
+                    await nodriver_kktix_handle_qualification_and_next(
+                        tab, config_dict, button_clicked_in_captcha
+                    )
             else:
                 # is_ticket_number_assigned is False
                 # 檢查票券是否已經在上一次填寫完成
                 if not is_need_refresh:
-                    # 沒有需要重新載入，可能是票券已選擇但 matched_blocks 為空
-                    # 檢查是否所有必填欄位都已填寫
-                    try:
-                        all_fields_filled_result = await tab.evaluate('''
-                            () => {
-                                let hasTicketSelected = false;
-
-                                // Strategy 1: ng-model (AngularJS pages)
-                                const ngInputs = document.querySelectorAll('input[ng-model="ticketModel.quantity"]');
-                                for (let input of ngInputs) {
-                                    if (parseInt(input.value) > 0) {
-                                        hasTicketSelected = true;
-                                        break;
-                                    }
-                                }
-
-                                // Strategy 2: name attribute (legacy pages)
-                                if (!hasTicketSelected) {
-                                    const ticketInputs = document.querySelectorAll('input[name^="tickets"]');
-                                    for (let input of ticketInputs) {
-                                        const value = input.value.trim();
-                                        if (!input.disabled && value !== '' && value !== '0') {
-                                            hasTicketSelected = true;
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                if (!hasTicketSelected) return false;
-
-                                // 檢查會員序號欄位（如果有的話）
-                                const memberCodeInputs = document.querySelectorAll('input.member-code');
-                                for (let input of memberCodeInputs) {
-                                    if (!input.disabled && (!input.value || input.value.trim() === '')) {
-                                        return false;
-                                    }
-                                }
-
-                                return true;
-                            }
-                        ''')
-                        all_fields_filled = util.parse_nodriver_result(all_fields_filled_result)
-
-                        if all_fields_filled:
-                            debug.log("[KKTIX] Tickets already filled but not assigned this round, attempting to click next button")
-
-                            # 檢查是否已經跳轉到成功頁面
-                            try:
-                                current_url = await tab.evaluate('window.location.href')
-                                if '/registrations/' in current_url and '-' in current_url and '/new' not in current_url:
-                                    debug.log("[KKTIX] Already on order page, skipping button click")
-                                else:
-                                    # 嘗試點擊下一步按鈕
-                                    if config_dict["kktix"]["auto_press_next_step_button"]:
-                                        await nodriver_kktix_press_next_button(tab, config_dict)
-                            except Exception as exc:
-                                debug.log(f"[KKTIX] Button click attempt failed: {exc}")
-                    except Exception as exc:
-                        debug.log(f"[KKTIX] Filled fields check failed: {exc}")
+                    # Tickets may already be set from a previous round while
+                    # matched_blocks came back empty. Same detector as the main
+                    # path, so both agree on what "filled" means.
+                    if await nodriver_kktix_check_form_ready(tab, config_dict):
+                        debug.log("[KKTIX] Tickets already filled but not assigned this round, "
+                                  "attempting to click next button")
+                        await nodriver_kktix_handle_qualification_and_next(tab, config_dict)
 
                 if is_need_refresh:
                     # reset to play sound when ticket avaiable.
@@ -1980,6 +2154,9 @@ async def nodriver_kktix_main(tab, url, config_dict):
             "last_ticket_already_selected_log_value": None,
             "printed_completed": False,
             "last_homepage_redirect_time": 0,
+            # Cooldown guard: which page we last submitted, and when.
+            "next_button_pressed_url": "",
+            "next_button_pressed_time": 0,
         })
 
     # Global alert handler - auto-dismiss KKTIX sold-out alerts
@@ -2076,6 +2253,10 @@ async def nodriver_kktix_main(tab, url, config_dict):
             if _state.get("alert_needs_reload", False):
                 _state["alert_needs_reload"] = False
                 _state["played_sound_ticket"] = False
+                # The submission failed, so drop the cooldown and let the next
+                # round act immediately instead of waiting it out.
+                _state["next_button_pressed_url"] = ""
+                _state["next_button_pressed_time"] = 0
                 debug.log("[KKTIX] Alert triggered reload, refreshing page...")
                 try:
                     await tab.reload()
@@ -2092,6 +2273,8 @@ async def nodriver_kktix_main(tab, url, config_dict):
             is_failure_modal = await nodriver_kktix_dismiss_failure_modal(tab, config_dict)
             if is_failure_modal:
                 _state["played_sound_ticket"] = False
+                _state["next_button_pressed_url"] = ""
+                _state["next_button_pressed_time"] = 0
                 debug.log("[KKTIX] Failure modal dismissed, refreshing page...")
                 try:
                     await tab.reload()
@@ -2129,81 +2312,32 @@ async def nodriver_kktix_main(tab, url, config_dict):
                 # 勾選同意條款 - 使用精確的 ID 選擇器
                 is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#person_agree_terms:not(:checked)')
 
-                # Check if tickets are already selected (prevent repeated execution)
-                is_ticket_already_selected = False
-                try:
-                    result = await tab.evaluate('''
-                        (function() {
-                            var hasTicket = false;
-
-                            // Strategy 1: ng-model (AngularJS pages)
-                            var ngInputs = document.querySelectorAll('input[ng-model="ticketModel.quantity"]');
-                            for (var i = 0; i < ngInputs.length; i++) {
-                                var val = parseInt(ngInputs[i].value);
-                                if (!isNaN(val) && val > 0) {
-                                    hasTicket = true;
-                                    break;
-                                }
-                            }
-
-                            // Strategy 2: name attribute (legacy pages)
-                            if (!hasTicket) {
-                                var ticketInputs = document.querySelectorAll('input[name^="tickets"]');
-                                for (var i = 0; i < ticketInputs.length; i++) {
-                                    var val = parseInt(ticketInputs[i].value);
-                                    if (!isNaN(val) && val > 0) {
-                                        hasTicket = true;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            var memberCodeInputs = document.querySelectorAll('input.member-code');
-                            var hasMemberCode = memberCodeInputs.length === 0;
-                            for (var j = 0; j < memberCodeInputs.length; j++) {
-                                if (memberCodeInputs[j].value && memberCodeInputs[j].value.trim() !== '') {
-                                    hasMemberCode = true;
-                                    break;
-                                }
-                            }
-
-                            var agreeCheckbox = document.querySelector('#person_agree_terms');
-                            var isAgreed = agreeCheckbox ? agreeCheckbox.checked : true;
-
-                            return hasTicket && hasMemberCode && isAgreed;
-                        })()
-                    ''')
-
-                    # 直接使用結果，不依賴 parse_nodriver_result
-                    if isinstance(result, bool):
-                        is_ticket_already_selected = result
-                    else:
-                        # 嘗試解析，但更寬容
-                        parsed_result = util.parse_nodriver_result(result) if result is not None else None
-                        if isinstance(parsed_result, bool):
-                            is_ticket_already_selected = parsed_result
-                        elif isinstance(parsed_result, dict):
-                            is_ticket_already_selected = parsed_result.get('hasTicket', False)
-                        else:
-                            debug.log(f"[KKTIX CHECK WARNING] parse_nodriver_result returned {type(parsed_result).__name__}: {parsed_result}, raw result: {result}")
-                            is_ticket_already_selected = False
-
-                except Exception as exc:
-                    debug.log(f"[KKTIX CHECK ERROR] {exc}")
-                    is_ticket_already_selected = False
-
-                # Log only when this state changes. While KKTIX is querying seats,
-                # the main loop can repeat many times with the same value.
+                # Telemetry only. This used to gate the ticket flow with the
+                # meaning "the form looks filled in, so do not run again", but
+                # "filled in" can stay true forever: the bot ticks the terms box
+                # and types the ticket count itself, so one bad round latched the
+                # guard on permanently and nothing could ever recover (#377/#375).
+                form_state = await nodriver_kktix_check_form_state(tab, config_dict)
+                is_form_ready = bool(form_state.get("ready", False))
                 if _state is not None:
                     last_logged_value = _state.get("last_ticket_already_selected_log_value", None)
-                    if last_logged_value != is_ticket_already_selected:
-                        debug.log(f"[KKTIX CHECK] is_ticket_already_selected: {is_ticket_already_selected}")
-                        _state["last_ticket_already_selected_log_value"] = is_ticket_already_selected
+                    if last_logged_value != is_form_ready:
+                        debug.log(f"[KKTIX CHECK] form ready: {is_form_ready} "
+                                  f"(qualification={form_state['qualification']['status']})")
+                        _state["last_ticket_already_selected_log_value"] = is_form_ready
                 else:
-                    debug.log(f"[KKTIX CHECK] is_ticket_already_selected: {is_ticket_already_selected}")
+                    debug.log(f"[KKTIX CHECK] form ready: {is_form_ready}")
 
-                # check is able to buy (only if tickets not already selected)
-                if config_dict["kktix"]["auto_fill_ticket_number"] and not is_ticket_already_selected:
+                # The real guard: did we just submit this very page? Bounded by
+                # both time and URL, so it always expires - unlike the old
+                # boolean, which had no route back once it latched.
+                is_press_cooldown = (
+                    _state.get("next_button_pressed_url") == url
+                    and time.time() - _state.get("next_button_pressed_time", 0)
+                    < CONST_KKTIX_NEXT_BUTTON_COOLDOWN
+                )
+
+                if config_dict["kktix"]["auto_fill_ticket_number"] and not is_press_cooldown:
                     debug.log("[KKTIX] Executing ticket selection logic...")
                     _state["fail_list"], _state["played_sound_ticket"] = await nodriver_kktix_reg_new_main(tab, config_dict, _state["fail_list"], _state["played_sound_ticket"])
                     _state["done_time"] = time.time()
@@ -2410,7 +2544,8 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
     - 會員序號欄位在選擇票券數量後動態展開
     - 使用 AngularJS 框架（需要特殊事件觸發處理）
 
-    插入位置：nodriver_kktix_reg_new_main() Line 2188 (播放音效之前)
+    呼叫位置：nodriver_kktix_handle_qualification_and_next()，在資格 radio
+    點選之後——序號欄位屬於某個資格選項，先選資格才填碼。
 
     Args:
         tab: NoDriver tab 物件
@@ -2433,11 +2568,12 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
         debug.log("[KKTIX MEMBER CODE] No member code configured, skipping")
         return False
 
-    debug.log(f"[KKTIX MEMBER CODE] Attempting to fill member code: {member_code}")
+    debug.log("[KKTIX MEMBER CODE] Attempting to fill member code")
 
     try:
-        # 轉義 JavaScript 字串，避免注入攻擊
-        escaped_member_code = member_code.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
+        # json.dumps produces a complete JS string literal, quotes included -
+        # hand-rolled escaping missed cases and is banned by code-boundaries.
+        member_code_literal = json.dumps(member_code)
 
         # 人類化延遲（隨機 100-300ms）
         await tab.sleep(random.uniform(0.1, 0.3))
@@ -2445,11 +2581,23 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
         # 使用 JavaScript 注入填入會員序號
         result = await tab.evaluate(f'''
             (function() {{
-                const memberCode = '{escaped_member_code}';
+                const memberCode = {member_code_literal};
                 let filledCount = 0;
 
+                // Bind to the ticket unit that actually holds the selection;
+                // a document-wide fill would spill onto other ticket types.
+                let scope = document;
+                const units = document.querySelectorAll('.ticket-unit');
+                for (const unit of units) {{
+                    const qty = unit.querySelector('input[ng-model="ticketModel.quantity"]');
+                    if (qty && !qty.disabled && parseInt(qty.value) > 0) {{
+                        scope = unit;
+                        break;
+                    }}
+                }}
+
                 // 策略 1: 使用 class 選擇器（最直接）
-                const memberCodeInputs = document.querySelectorAll('input.member-code');
+                const memberCodeInputs = scope.querySelectorAll('input.member-code');
 
                 for (let input of memberCodeInputs) {{
                     // 檢查輸入框是否為空且未禁用
@@ -2475,7 +2623,7 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
 
                 // 策略 2: 如果策略 1 失敗，使用 ng-model 選擇器
                 if (filledCount === 0) {{
-                    const ngModelInputs = document.querySelectorAll('input[ng-model*="member_codes"]');
+                    const ngModelInputs = scope.querySelectorAll('input[ng-model*="member_codes"]');
                     for (let input of ngModelInputs) {{
                         if (!input.value && !input.disabled) {{
                             input.value = memberCode;
@@ -2512,27 +2660,11 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
             # 填寫完成後短暫延遲，確保 Angular 更新完成
             await tab.sleep(0.2)
 
-            # 檢查是否需要點擊下一步按鈕
-            # 當會員序號填寫完成後，直接點擊下一步按鈕，避免 control_text 檢查邏輯干擾
-            auto_press = config_dict["kktix"].get("auto_press_next_step_button", False)
-            debug.log(f"[KKTIX MEMBER CODE] auto_press_next_step_button: {auto_press}")
-
-            if auto_press:
-                # 簡化邏輯：會員序號成功填寫後，假設票券數量和同意條款都已完成
-                # 直接嘗試點擊下一步按鈕
-                try:
-                    debug.log("[KKTIX MEMBER CODE] Member code filled successfully, attempting to click next button...")
-
-                    # 點擊下一步按鈕
-                    click_ret = await nodriver_kktix_press_next_button(tab, config_dict)
-                    debug.log(f"[KKTIX MEMBER CODE] Click button result: {click_ret}")
-                    if click_ret:
-                        debug.log("[KKTIX MEMBER CODE] Successfully clicked next button after filling member code")
-                    else:
-                        debug.log("[KKTIX MEMBER CODE] Button click returned False (button may not be enabled yet)")
-                except Exception as exc:
-                    debug.log(f"[KKTIX MEMBER CODE] Failed to click next button: {exc}")
-
+            # This function used to press "next" itself, on the assumption that
+            # a filled code meant the whole form was done. It did not check the
+            # qualification radio, so it could submit an incomplete form and
+            # double-click alongside the caller. The flow layer now owns that
+            # decision - see nodriver_kktix_handle_qualification_and_next.
             return True
         else:
             debug.log("[KKTIX MEMBER CODE] No member code fields found on page")

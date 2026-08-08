@@ -1,7 +1,7 @@
 # Zendriver API 使用指南
 
 **文件說明**：Zendriver（nodriver fork）的 API 參考，專注於本專案使用的功能和與 nodriver 的差異
-**最後更新**：2026-03-14
+**最後更新**：2026-07-04
 **zendriver 版本**：0.15.3
 **官方文件**：https://zendriver.dev/
 
@@ -13,6 +13,19 @@
 - **[CDP Protocol 參考指南](cdp_protocol_reference.md)** -- Chrome DevTools Protocol 完整參考
 - **[nodriver API 指南](nodriver_api_guide.md)** -- 舊版參考（遷移前）
 - **[遷移研究報告](../internal/reference/chrome-nodriver-compatibility-research.md)** -- 完整相容性分析
+
+---
+
+## 0. Breaking Changes 一覽（從 nodriver 遷移）
+
+| 項目 | nodriver（舊） | zendriver（新） |
+|------|---------------|-----------------|
+| 事件迴圈 | `uc.loop().run_until_complete(main())` | `asyncio.run(main())` |
+| `evaluate` 回傳值 | RemoteObject，需 `parse_nodriver_result()` 解析 | 直接回傳實際值（字串/數字/bool），新程式碼禁用 `parse_nodriver_result()` |
+| 移除 handler | `tab.remove_handler(event, handler)` 逐一移除 | `tab.remove_handlers(event)` 移除**全部**同類型 handler |
+| sandbox 設定 | `Config(no_sandbox=True)` | `Config(sandbox=False)`（布林值反轉） |
+| lang 設定 | `Config(lang="zh-TW")` | **禁止 `Config(lang=...)`**（zendriver validator bug 會擋掉），改用 `browser_args` |
+| 取頁面 HTML | `evaluate('document.documentElement.outerHTML')` | 優先 `await tab.get_content()`（走 CDP，較快） |
 
 ---
 

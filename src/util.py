@@ -2100,15 +2100,21 @@ def launch_maxbot(script_name="nodriver_tixcraft", filename="", homepage="", kkt
     if hasattr(sys, 'frozen'):
         print("execute in frozen mode")
         # check platform here.
-        cmd = './' + script_name + ' '.join(cmd_argument)
+        binary_name = script_name
         if platform.system() == 'Darwin':
             print("execute MacOS python script")
         if platform.system() == 'Linux':
             print("execute linux binary")
         if platform.system() == 'Windows':
             print("execute .exe binary.")
-            cmd = script_name + '.exe ' + ' '.join(cmd_argument)
-        subprocess.Popen(cmd, shell=True, cwd=working_dir)
+            binary_name = script_name + '.exe'
+        # Pass argv as a list (shell=False). A shell command string is split on
+        # spaces, so any install path containing one truncates --input= and the
+        # child exits with "unrecognized arguments" (issue #378). The binary
+        # needs an absolute path: cwd= sets the child's directory but does not
+        # affect how the executable itself is resolved.
+        binary_path = os.path.join(working_dir, binary_name)
+        subprocess.Popen([binary_path] + cmd_argument, cwd=working_dir)
     else:
         interpreter_binary = sys.executable
         print("execute in shell mode.")

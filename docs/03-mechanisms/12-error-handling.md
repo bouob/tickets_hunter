@@ -84,6 +84,38 @@
 - 遞增等待：基礎等待時間 + `retry_count * 2` 秒
 - 詳見 `docs/03-mechanisms/15-cloudflare-turnstile.md`
 
+### 5. WebSocket 靜默斷線（silent-but-count）
+
+`nodriver_current_url()`（`src/nodriver_common.py`）把 CDP 例外分成三類，
+由純函式 `classify_url_error()` 判定：
+
+| 類別 | 常數 | 行為 |
+|------|------|------|
+| 結束程式 | `CONST_URL_EXIT_ERROR_STRINGS` | 設 `is_quit_bot`，主迴圈收掉瀏覽器 |
+| 靜默 | `CONST_URL_SILENT_ERROR_STRINGS` | 不印例外，但**計數** |
+| 其他 | — | 照常印出並記錄 `[URL DIAG]` |
+
+`no close frame received or sent` 屬靜默類。它在頁面導航或分頁關閉時本來就會出現一兩次，
+所以不能每次都印。但它同時也是**連線已死**的樣子：URL 永遠取回空字串，
+主迴圈 `len(url) == 0` 就 `continue`，於是 bot 既不工作也不退出，無限空轉。
+
+計數機制讓這個狀態可見而不吵：
+
+- 連續第 `CONST_URL_SILENT_ERROR_REPORT_THRESHOLD`（15）次時 `print()` 一次 `[URL ERROR]`
+- 之後每 `CONST_URL_SILENT_ERROR_REPORT_INTERVAL`（50）次重報一次
+- 一旦成功取得非空 URL 即歸零，並記錄 `[URL DIAG] websocket recovered after N silent errors`
+- 主迴圈的 `[URL DIAG] empty url` 節流訊息會附上 `silent_ws_errors=N`，兩條訊息可交叉對照
+
+閾值取 15 的依據：主迴圈約每 50ms 輪詢一次，15 次代表已經接近一秒完全讀不到 URL，
+遠超過任何正常導航的瞬時抖動。
+
+**刻意不做的兩件事**：不自動重連（重建 tab/browser 連線動到共用基礎設施，且難以測試，
+可能引入比原問題更難查的不穩定），也不加進結束清單（搶票中途自行退出的代價太高）。
+使用者看到訊息後自行決定何時重啟。
+
+**預期中的副作用**：使用者手動關閉分頁後，計數會持續累積並每 50 次重報一次。
+這是設計如此——目的就是提示該重啟了——不是新的缺陷。
+
 ---
 
 ## 重試策略

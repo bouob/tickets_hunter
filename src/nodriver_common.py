@@ -28,7 +28,7 @@ except Exception:
 
 # ===== Constants =====
 
-CONST_APP_VERSION = "TicketsHunter (2026.06.30)"
+CONST_APP_VERSION = "TicketsHunter (2026.08.07)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -455,21 +455,94 @@ def convert_remote_object(obj, depth=0):
     else:
         return obj
 
+CONST_URL_EXIT_ERROR_STRINGS = [
+    "server rejected WebSocket connection: HTTP 500",
+    "[Errno 61] Connect call failed ('127.0.0.1',",
+    "[WinError 1225] ",
+]
+# WebSocket connection closed normally (e.g. after purchase completed or page navigation)
+# These are expected and should not be printed.
+CONST_URL_SILENT_ERROR_STRINGS = [
+    "no close frame received or sent",
+    "no close frame sent",
+    "no close frame received",
+]
+
+# A silent close is normal once or twice per navigation, but a sustained run of
+# them means the CDP websocket is dead: nodriver_current_url keeps returning "",
+# the main loop skips every dispatch, and the bot idles forever without ever
+# quitting (issue #374). Count them so that state becomes visible.
+# The main loop polls every 50ms, so 15 consecutive failures is close to a
+# second of being completely unable to read the URL - well past any transient.
+CONST_URL_SILENT_ERROR_REPORT_THRESHOLD = 15
+CONST_URL_SILENT_ERROR_REPORT_INTERVAL = 50
+
+_url_error_state = {"silent_count": 0, "last_error": "", "last_reported": 0,
+                    "js_timeout_count": 0}
+
+
+def classify_url_error(str_exc):
+    """Classify a nodriver_current_url exception.
+
+    Returns:
+        tuple[bool, bool]: (is_silent, is_quit_bot)
+    """
+    is_silent = any(s in str_exc for s in CONST_URL_SILENT_ERROR_STRINGS)
+    is_quit_bot = any(s in str_exc for s in CONST_URL_EXIT_ERROR_STRINGS)
+    return is_silent, is_quit_bot
+
+
+def get_url_error_count():
+    """Consecutive silent websocket failures seen so far (0 when healthy)."""
+    return _url_error_state["silent_count"]
+
+
+def get_url_js_timeout_count():
+    """Times js_dumps timed out, i.e. JS execution was suspended.
+
+    A Cloudflare full-page interstitial suspends JS the same way an alert does.
+    The main loop watches this counter to know it should re-run its Cloudflare
+    check even though the URL never changed - otherwise a challenge that renders
+    after the URL settles is never detected at all.
+    """
+    return _url_error_state["js_timeout_count"]
+
+
+def record_url_silent_error(str_exc):
+    """Accumulate a silent failure; report only at the threshold and interval.
+
+    Returns:
+        bool: True when the caller should surface the error to the user.
+    """
+    _url_error_state["silent_count"] += 1
+    _url_error_state["last_error"] = str_exc
+
+    count = _url_error_state["silent_count"]
+    if count < CONST_URL_SILENT_ERROR_REPORT_THRESHOLD:
+        return False
+
+    last_reported = _url_error_state["last_reported"]
+    if last_reported == 0:
+        _url_error_state["last_reported"] = count
+        return True
+    if count - last_reported >= CONST_URL_SILENT_ERROR_REPORT_INTERVAL:
+        _url_error_state["last_reported"] = count
+        return True
+    return False
+
+
+def reset_url_error_state():
+    """Clear the counter. Returns how many failures were pending (0 if none)."""
+    recovered = _url_error_state["silent_count"]
+    _url_error_state["silent_count"] = 0
+    _url_error_state["last_error"] = ""
+    _url_error_state["last_reported"] = 0
+    return recovered
+
+
 async def nodriver_current_url(tab, config_dict=None):
     debug = util.create_debug_logger(config_dict)
     is_quit_bot = False
-    exit_bot_error_strings = [
-        "server rejected WebSocket connection: HTTP 500",
-        "[Errno 61] Connect call failed ('127.0.0.1',",
-        "[WinError 1225] ",
-    ]
-    # WebSocket connection closed normally (e.g. after purchase completed or page navigation)
-    # These are expected and should not be printed
-    silent_error_strings = [
-        "no close frame received or sent",
-        "no close frame sent",
-        "no close frame received",
-    ]
 
     url = ""
     if tab:
@@ -479,8 +552,10 @@ async def nodriver_current_url(tab, config_dict=None):
                 tab.js_dumps('window.location.href'), timeout=5.0
             )
         except asyncio.TimeoutError:
-            # js_dumps blocks when JS execution is suspended (alert dialog, navigation, tab throttling)
+            # js_dumps blocks when JS execution is suspended (alert dialog,
+            # navigation, tab throttling, or a Cloudflare full-page interstitial)
             # tab.target.url is a CDP-cached value that never requires JS execution
+            _url_error_state["js_timeout_count"] += 1
             url = tab.target.url if hasattr(tab, 'target') and tab.target else ""
             # [URL DIAG] Step 0: surface the otherwise-invisible suspended-JS path.
             # Naturally rate-limited (this branch costs ~5s per hit).
@@ -492,13 +567,11 @@ async def nodriver_current_url(tab, config_dict=None):
                 str_exc = str(exc)
             except Exception as exc2:
                 pass
-            is_silent = any(s in str_exc for s in silent_error_strings)
+            is_silent, is_exit_error = classify_url_error(str_exc)
+            if is_exit_error:
+                is_quit_bot = True
             if not is_silent:
                 print(exc)
-            if len(str_exc) > 0:
-                for each_error_string in exit_bot_error_strings:
-                    if each_error_string in str_exc:
-                        is_quit_bot = True
             # [URL DIAG] Step 0: a stale/dead tab target surfaces here (not as timeout).
             # Expected websocket-close errors (silent list) flood the log when the page
             # is closed while the loop still polls; the throttled empty-url log in the
@@ -506,6 +579,16 @@ async def nodriver_current_url(tab, config_dict=None):
             if not is_silent:
                 target_url_now = getattr(getattr(tab, 'target', None), 'url', None)
                 debug.log(f"[URL DIAG] js_dumps error; target.url={target_url_now!r}; exc={str_exc[:120]!r}")
+            elif record_url_silent_error(str_exc):
+                # print() rather than debug.log(): this is an actionable failure
+                # the user must see even with verbose off. Behaviour is unchanged
+                # on purpose - no auto-reconnect, no forced quit - so the user
+                # decides what to do (issue #374).
+                count = get_url_error_count()
+                print(f"[URL ERROR] Browser connection lost: {count} consecutive "
+                      f"websocket failures ({str_exc[:80]}).")
+                print("[URL ERROR] The bot cannot read the page URL and will keep "
+                      "idling. Please close the browser and restart the bot.")
 
         url_array = []
         if url_dict:
@@ -514,6 +597,11 @@ async def nodriver_current_url(tab, config_dict=None):
                     if "0" in url_dict[k]:
                         url_array.append(url_dict[k]["0"])
             url = ''.join(url_array)
+
+        if len(url) > 0:
+            recovered = reset_url_error_state()
+            if recovered > 0:
+                debug.log(f"[URL DIAG] websocket recovered after {recovered} silent errors")
     return url, is_quit_bot
 
 async def nodriver_resize_window(tab, config_dict):

@@ -168,6 +168,13 @@ KKTIX 主流程
 ├── nodriver_kktix_booking_main          # platforms/kktix.py
 ├── nodriver_kktix_confirm_order_button  # platforms/kktix.py
 ├── nodriver_kktix_order_member_code     # platforms/kktix.py
+├── nodriver_kktix_check_form_state      # platforms/kktix.py
+├── nodriver_kktix_check_qualification   # platforms/kktix.py
+├── nodriver_kktix_check_form_ready      # platforms/kktix.py
+├── nodriver_kktix_select_qualification  # platforms/kktix.py
+├── nodriver_kktix_wait_member_code_enabled # platforms/kktix.py
+├── nodriver_kktix_handle_qualification_and_next # platforms/kktix.py
+├── is_kktix_account_configured          # platforms/kktix.py
 └── nodriver_facebook_login              # platforms/facebook.py
 ```
 
@@ -1025,7 +1032,14 @@ with_pause_check(task_func, config_dict, *args, **kwargs)      # ✅
 - `async nodriver_kktix_reg_new_main()` - 新註冊主流程 ✅
 - `async nodriver_kktix_booking_main()` - 訂票主流程 ✅
 - `async nodriver_kktix_confirm_order_button()` - 確認訂單按鈕 ✅
-- `async nodriver_kktix_order_member_code()` - 會員代碼 ✅
+- `async nodriver_kktix_order_member_code()` - 會員序號 ✅
+- `async nodriver_kktix_check_form_state()` - 表單狀態單一來源（票數/條款/資格）✅
+- `async nodriver_kktix_check_qualification()` - 購票資格狀態 ✅
+- `async nodriver_kktix_check_form_ready()` - 表單是否全部就緒 ✅
+- `async nodriver_kktix_select_qualification()` - 選取購票資格 radio ✅
+- `async nodriver_kktix_wait_member_code_enabled()` - 等待序號欄位解鎖 ✅
+- `async nodriver_kktix_handle_qualification_and_next()` - 資格處理與送出編排 ✅
+- `is_kktix_account_configured()` - 帳號是否已設定（三處呼叫的單一判定）✅
 - `async debug_kktix_page_state()` - 除錯頁面狀態 ✅
 - `check_kktix_got_ticket()` - 檢查是否取得票券 ✅
 
