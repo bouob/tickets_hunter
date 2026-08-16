@@ -766,6 +766,10 @@ async def main(args):
     heartbeat_interval_sec = 5
     heartbeat_filename = "heartbeat.txt"
     last_heartbeat_time = 0.0
+    # Cheap re-check that the current target carries the instance label; the
+    # label itself persists across navigation via a document-start script.
+    instance_label_interval_sec = 2
+    last_instance_label_time = 0.0
     last_empty_url_log = 0.0  # [URL DIAG] Step 0: throttle empty-url diagnostics
     is_quit_bot = False
     refresh_datetime_state = {
@@ -798,6 +802,14 @@ async def main(args):
                     heartbeat_file.write(str(int(heartbeat_now)))
             except Exception:
                 pass
+
+        # Register the instance label on this target. The injected script is
+        # what keeps the mark alive across navigation; this call only covers
+        # the case where the flow moved to a different tab, and returns
+        # immediately once a target is already registered.
+        if heartbeat_now - last_instance_label_time >= instance_label_interval_sec:
+            last_instance_label_time = heartbeat_now
+            await nodriver_install_instance_label(tab, config_dict)
 
         # pass if driver not loaded.
         if driver is None:
