@@ -54,6 +54,13 @@ CONST_TICKETPLUS_SUBMIT_POLL_INTERVAL = 0.3
 # URL is polled at this interval so a page transition is not missed for a cycle.
 CONST_TICKETPLUS_QUEUE_URL_POLL_INTERVAL = 0.5
 
+# Absolute fuse on queue monitoring. The queue keywords include wording as
+# generic as "processing" and "please wait", so any future dialog carrying one
+# can strand the loop the same way the failure popup did (#389). While stranded
+# the main loop never runs, which also leaves the stop flag unreadable -- only
+# the pause flag is checked in here. Ten minutes is well past any real queue.
+CONST_TICKETPLUS_QUEUE_MONITOR_MAX = 600.0
+
 
 def _get_status():
     """Return current ticketplus status for main loop (Approach B)."""
@@ -1351,8 +1358,9 @@ async def nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_de
 
                 // A bare scrim is NOT a queue: every Vuetify dialog and loading
                 // mask draws one, so the order-failure popup used to be read as
-                // a queue and the monitor loop spun forever (#389). Kept as a
-                // diagnostic only -- queue wording is now what decides.
+                // a queue and the monitor loop spun forever (#389). Queue
+                // wording decides now; the scrim is only reported back for the
+                // forced-debug dump below, never for the verdict.
                 const overlayScrim = document.querySelector('.v-overlay__scrim');
                 const hasOverlay = !!(overlayScrim && overlayScrim.style.opacity === '1');
 
@@ -1374,6 +1382,14 @@ async def nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_de
 
         if isinstance(result, dict):
             is_in_queue = result.get('inQueue', False)
+
+            # Logged unconditionally: a failure dialog forces inQueue false, so
+            # this never reaches the queue dump below. It is the one line that
+            # explains why a queue verdict was withheld, and the popup is rare
+            # enough that reporting every hit cannot flood the log.
+            if result.get('hasFailureDialog'):
+                debug.log("[QUEUE] Failure dialog present, not treating as queue")
+
             if is_in_queue and force_show_debug:
                 debug.log("[QUEUE] Queue status detected")
                 if result.get('hasOverlay'):
@@ -1455,7 +1471,8 @@ async def _ticketplus_wait_after_submit(tab, config_dict, debug):
             debug.log("[SUBMIT WAIT] Platform queue detected")
             return "queue"
 
-        await tab.sleep(CONST_TICKETPLUS_SUBMIT_POLL_INTERVAL)
+        if await sleep_with_pause_check(tab, CONST_TICKETPLUS_SUBMIT_POLL_INTERVAL, config_dict):
+            return "timeout"
 
     debug.log("[SUBMIT WAIT] No outcome within wait budget")
     return "timeout"
@@ -1467,10 +1484,15 @@ async def _ticketplus_monitor_queue(tab, config_dict, debug):
     The queue re-check keeps its randomized 5-10s cadence, but the URL is polled
     every CONST_TICKETPLUS_QUEUE_URL_POLL_INTERVAL seconds and the failure popup
     is checked each round, so neither has to wait out a full cycle.
+
+    Gives up after CONST_TICKETPLUS_QUEUE_MONITOR_MAX: removing the scrim signal
+    fixed the popup that caused #389, but an unbounded loop would strand the bot
+    all the same the next time a dialog happens to carry queue wording.
     """
     last_url = ""
+    monitor_deadline = time.time() + CONST_TICKETPLUS_QUEUE_MONITOR_MAX
 
-    while True:
+    while time.time() < monitor_deadline:
         if await check_and_handle_pause(config_dict):
             return
 
@@ -1495,13 +1517,16 @@ async def _ticketplus_monitor_queue(tab, config_dict, debug):
 
             recheck_deadline = time.time() + random.uniform(5.0, 10.0)
             while time.time() < recheck_deadline:
-                await tab.sleep(CONST_TICKETPLUS_QUEUE_URL_POLL_INTERVAL)
+                if await sleep_with_pause_check(tab, CONST_TICKETPLUS_QUEUE_URL_POLL_INTERVAL, config_dict):
+                    return
                 if tab.url != current_url:
                     break
 
         except Exception as exc:
             debug.log(f"Queue monitoring error: {exc}")
             return
+
+    debug.log("[QUEUE END] Queue monitoring hit its time limit, returning to main loop")
 
 
 async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser):
