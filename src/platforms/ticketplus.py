@@ -1284,9 +1284,21 @@ async def nodriver_ticketplus_accept_order_fail(tab, debug=None):
                     'OK',
                     'Ok'
                 ];
+                // .v-dialog__content is position:fixed, so its offsetParent is
+                // always null whether or not the dialog shows. rect + computed
+                // style is the only visibility test valid for every wrapper.
+                const isVisible = (el) => {
+                    const rect = el.getBoundingClientRect();
+                    if (!rect.width || !rect.height) return false;
+                    const style = window.getComputedStyle(el);
+                    return style.display !== 'none' &&
+                           style.visibility !== 'hidden' &&
+                           style.opacity !== '0';
+                };
+
                 const dialogs = document.querySelectorAll('[role="dialog"], .v-dialog, .v-dialog__content');
                 for (const dialog of dialogs) {
-                    if (dialog.offsetParent === null) continue;
+                    if (!isVisible(dialog)) continue;
                     const text = (dialog.textContent || '').trim();
                     if (!failureTexts.some(t => text.includes(t))) continue;
                     const buttons = dialog.querySelectorAll('button');
@@ -1350,11 +1362,31 @@ async def nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_de
 
                 const hasQueueKeyword = queueKeywords.some(keyword => bodyText.includes(keyword));
 
-                const dialogText = document.querySelector('.v-dialog')?.textContent || '';
-                const hasFailureDialog = failureKeywords.some(keyword => dialogText.includes(keyword));
+                // Vuetify keeps every dialog mounted, so querySelector('.v-dialog')
+                // usually returns an inactive empty node and the failure veto below
+                // never fires -- which is how the failure popup got read as a queue
+                // in the first place (#389). Scan every *visible* dialog instead.
+                const isVisible = (el) => {
+                    const rect = el.getBoundingClientRect();
+                    if (!rect.width || !rect.height) return false;
+                    const style = window.getComputedStyle(el);
+                    return style.display !== 'none' &&
+                           style.visibility !== 'hidden' &&
+                           style.opacity !== '0';
+                };
+
+                const dialogTexts = Array.from(document.querySelectorAll('.v-dialog, [role="dialog"]'))
+                    .filter(isVisible)
+                    .map(el => (el.textContent || '').trim())
+                    .filter(text => text.length > 0);
+
+                const dialogText = dialogTexts.join(' | ');
+                const hasFailureDialog = dialogTexts.some(text =>
+                    failureKeywords.some(keyword => text.includes(keyword)));
                 const hasQueueDialog = !hasFailureDialog &&
-                                       (dialogText.includes('\u6392\u968a') ||
-                                        dialogText.includes('\u8acb\u7a0d\u5019'));
+                                       dialogTexts.some(text =>
+                                           text.includes('\u6392\u968a') ||
+                                           text.includes('\u8acb\u7a0d\u5019'));
 
                 // A bare scrim is NOT a queue: every Vuetify dialog and loading
                 // mask draws one, so the order-failure popup used to be read as
@@ -1481,27 +1513,36 @@ async def _ticketplus_wait_after_submit(tab, config_dict, debug):
 async def _ticketplus_monitor_queue(tab, config_dict, debug):
     """Watch the in-page queue until it clears, moves on, or the order fails.
 
-    The queue re-check keeps its randomized 5-10s cadence, but the URL is polled
-    every CONST_TICKETPLUS_QUEUE_URL_POLL_INTERVAL seconds and the failure popup
-    is checked each round, so neither has to wait out a full cycle.
+    The queue re-check keeps its randomized 5-10s cadence (anti-detection), but
+    the URL *and* the failure popup are polled every
+    CONST_TICKETPLUS_QUEUE_URL_POLL_INTERVAL seconds. Reading the popup out of the
+    local DOM sends no request, so it must not be rate-limited with the queue
+    check: doing so left the modal on screen for the whole randomized window
+    (5-10s, ~7.5s average) while it blocked every click on the page.
 
     Gives up after CONST_TICKETPLUS_QUEUE_MONITOR_MAX: removing the scrim signal
     fixed the popup that caused #389, but an unbounded loop would strand the bot
     all the same the next time a dialog happens to carry queue wording.
+
+    Returns:
+        "confirmed"  -- confirmation page reached
+        "order_fail" -- failure popup detected (dismissed if possible)
+        "queue_end"  -- queue wording gone, resume normal page processing
+        "timeout"    -- monitor fuse blew, or paused / errored out
     """
     last_url = ""
     monitor_deadline = time.time() + CONST_TICKETPLUS_QUEUE_MONITOR_MAX
 
     while time.time() < monitor_deadline:
         if await check_and_handle_pause(config_dict):
-            return
+            return "timeout"
 
         try:
             current_url = tab.url
 
             if '/confirm/' in current_url.lower() or '/confirmseat/' in current_url.lower():
                 debug.log("Detected entry to confirmation page, exiting queue monitoring")
-                return
+                return "confirmed"
 
             if current_url != last_url:
                 debug.log(f"Page status update - URL: {current_url}")
@@ -1509,24 +1550,28 @@ async def _ticketplus_monitor_queue(tab, config_dict, debug):
 
             if await nodriver_ticketplus_accept_order_fail(tab, debug) is True:
                 debug.log("[QUEUE END] Order failure popup dismissed, exiting queue monitoring")
-                return
+                return "order_fail"
 
             if not await nodriver_ticketplus_check_queue_status(tab, config_dict):
                 debug.log("[QUEUE END] Queue ended, continuing page processing")
-                return
+                return "queue_end"
 
             recheck_deadline = time.time() + random.uniform(5.0, 10.0)
             while time.time() < recheck_deadline:
                 if await sleep_with_pause_check(tab, CONST_TICKETPLUS_QUEUE_URL_POLL_INTERVAL, config_dict):
-                    return
+                    return "timeout"
                 if tab.url != current_url:
                     break
+                if await nodriver_ticketplus_accept_order_fail(tab, debug) is True:
+                    debug.log("[QUEUE END] Order failure popup dismissed mid-wait, exiting queue monitoring")
+                    return "order_fail"
 
         except Exception as exc:
             debug.log(f"Queue monitoring error: {exc}")
-            return
+            return "timeout"
 
     debug.log("[QUEUE END] Queue monitoring hit its time limit, returning to main loop")
+    return "timeout"
 
 
 async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser):
@@ -1632,7 +1677,19 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser):
 
             if outcome == "queue":
                 debug.log("Entered queue monitoring (recheck every 5-10 seconds, display only on status change)")
-                await _ticketplus_monitor_queue(tab, config_dict, debug)
+                queue_outcome = await _ticketplus_monitor_queue(tab, config_dict, debug)
+
+                # Mirror the direct order_fail path above: the popup is gone but the
+                # ticket counts on screen are stale, so refresh before the next
+                # attempt instead of submitting against them.
+                if queue_outcome == "order_fail":
+                    debug.log("[ORDER FAIL] Popup dismissed during queue monitoring, refreshing ticket availability")
+                    _state["order_page_visited"] = False
+                    try:
+                        await tab.reload()
+                    except Exception as reload_exc:
+                        debug.log(f"[ORDER FAIL] Reload failed: {reload_exc}")
+                    return
 
         debug.log(f"Form submission: {'Success' if is_form_submitted else 'Failed'}")
     else:
