@@ -94,6 +94,8 @@
   <div class="container py-4">
   <div id="message"></div>
   <h2 id="page_title">Tickets Hunter <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-ticket-perforated" viewBox="0 0 16 16" style="vertical-align: -0.125em;"><path d="M4 4.85v.9h1v-.9zm7 0v.9h1v-.9zm-7 1.8v.9h1v-.9zm7 0v.9h1v-.9zm-7 1.8v.9h1v-.9zm7 0v.9h1v-.9zm-7 1.8v.9h1v-.9zm7 0v.9h1v-.9z"/><path d="M1.5 3A1.5 1.5 0 0 0 0 4.5V6a.5.5 0 0 0 .5.5 1.5 1.5 0 1 1 0 3 .5.5 0 0 0-.5.5v1.5A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5V10a.5.5 0 0 0-.5-.5 1.5 1.5 0 0 1 0-3A.5.5 0 0 0 16 6V4.5A1.5 1.5 0 0 0 14.5 3zM1 4.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v1.05a2.5 2.5 0 0 0 0 4.9v1.05a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-1.05a2.5 2.5 0 0 0 0-4.9z"/></svg> - 多平台搶票自動化系統</h2>
+  <!-- Sticky header: profile bar + tab nav stay visible while scrolling the long form -->
+  <div class="sticky-header" id="sticky_header">
   <!-- Instance profile bar: one pill per profile (= one bot instance config) -->
   <div class="d-flex align-items-center flex-wrap mb-2" id="profile_bar">
     <span class="me-2 text-muted small">實例設定檔：</span>
@@ -102,7 +104,6 @@
             onclick="show_profile_modal()" title="新增實例設定檔（選擇平台）">＋ 新增</button>
     <span id="profile_warnings" class="d-flex flex-wrap gap-1 ms-2"></span>
   </div>
-  <div class="row g-3">
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link active" id="readme-tab" data-bs-toggle="tab" data-bs-target="#readme-tab-pane" type="button" role="tab" aria-controls="readme-tab-pane" aria-selected="true">使用需知</button>
@@ -154,6 +155,9 @@
         </div>
       </li>
     </ul>
+  </div>
+
+  <div class="row g-3">
     <div class="tab-content" id="myTabContent">
       <!-- tab 1 -->
       <div class="tab-pane fade show active" id="readme-tab-pane" role="tabpanel" aria-labelledby="readme-tab" tabindex="0">
@@ -1210,17 +1214,19 @@
       </div>
 
     </div>
-    <hr/>
-    <div class="col-12">
+  </div>
+  </div>
+
+  <!-- Sticky action bar: fixed to the viewport bottom so the four primary
+       actions stay reachable at any scroll position -->
+  <div class="action-bar" id="action_bar">
+    <div class="action-bar-inner">
       <button class="btn btn-primary" id="run_btn">搶票</button>
       <button class="btn btn-primary" id="save_btn">存檔</button>
-      <button class="btn btn-primary" id="reset_btn">重設為預設值</button>
+      <button class="btn btn-warning" id="reset_btn">重設為預設值</button>
       <button class="btn btn-danger" id="exit_btn">結束</button>
-    </div>
-    <div class="col-12">
       <span class="text-danger" id="run_btn_pressed_message"></span>
     </div>
-  </div>
   </div>
 
 <div class="modal" id="profile_modal" tabindex="-1" role="dialog">
