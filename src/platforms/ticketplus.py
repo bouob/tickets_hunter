@@ -1811,49 +1811,112 @@ async def nodriver_ticketplus_check_next_button(tab):
 
 
 async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
-    """Handle exclusive discount codes."""
+    """Handle exclusive discount codes and credit card prefix verification."""
     debug = util.create_debug_logger(config_dict)
 
     if await check_and_handle_pause(config_dict):
         return False, fail_list, False
 
-    discount_code = config_dict["advanced"].get("discount_code", "").strip()
+    credit_card_prefix = config_dict.get("contact", {}).get("credit_card_prefix", "").strip()
+    discount_code = config_dict.get("advanced", {}).get("discount_code", "").strip()
 
-    if not discount_code:
-        debug.log("[DISCOUNT CODE] No discount code configured, skipping")
+    if not discount_code and not credit_card_prefix:
+        debug.log("[EXCLUSIVE CODE] Neither discount_code nor credit_card_prefix configured, skipping")
         return False, fail_list, False
 
-    debug.log(f"[DISCOUNT CODE] Attempting to fill discount code: {discount_code}")
+    debug.log(f"[EXCLUSIVE CODE] Checking code fields (credit_card_prefix: '{credit_card_prefix}', discount_code: '{discount_code}')")
 
     try:
         escaped_discount_code = discount_code.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
+        escaped_card_prefix = credit_card_prefix.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
 
         result = await tab.evaluate(f'''
-            (function() {{
-                const keywords = ['\u5e8f\u865f', '\u52a0\u8cfc', '\u512a\u60e0'];
+            (async function() {{
+                const startTime = Date.now();
+                while (!document.querySelector('.exclusive-code') && (Date.now() - startTime < 600)) {{
+                    await new Promise(r => setTimeout(r, 50));
+                }}
+
+                const cardKeywords = [
+                    '\\u4fe1\\u7528\\u5361',        // 信用卡
+                    '\\u5361\\u865f',            // 卡號
+                    '\\u4e2d\\u4fe1',            // 中信
+                    '\\u4e2d\\u570b\\u4fe1\\u8a17', // 中國信託
+                    '\\u7c3d\\u8cec\\u91d1\\u878d\\u5361', // 簽帳金融卡
+                    '\\u91d1\\u878d\\u5361',       // 金融卡
+                    '\\u524d\\u516d\\u78bc',       // 前六碼
+                    '\\u524d6\\u78bc',           // 前6碼
+                    '\\u524d\\u516b\\u78bc',       // 前八碼
+                    '\\u524d8\\u78bc',           // 前8碼
+                    '\\u5361\\u53cb',            // 卡友
+                    'credit',
+                    'card'
+                ];
+                const discountKeywords = [
+                    '\\u5e8f\\u865f',            // 序號
+                    '\\u52a0\\u8cfc',            // 加購
+                    '\\u512a\\u60e0',            // 優惠
+                    '\\u6298\\u6263',            // 折扣
+                    'promo',
+                    'code'
+                ];
+
                 const discountCode = '{escaped_discount_code}';
+                const creditCardPrefix = '{escaped_card_prefix}';
                 let filledCount = 0;
+                let detectedType = '';
 
-                const labelDivs = document.querySelectorAll('.exclusive-code .label');
-                for (let label of labelDivs) {{
-                    const labelText = label.textContent.trim();
-                    const container = label.closest('.exclusive-code');
-                    if (!container) continue;
+                const containers = document.querySelectorAll('.exclusive-code');
+                for (let container of containers) {{
+                    const label = container.querySelector('.label') || container.querySelector('label') || container;
+                    const labelText = (label ? label.textContent : '') || '';
+                    const input = container.querySelector('.v-text-field__slot input[type="text"]') ||
+                                  container.querySelector('input[type="text"]');
+                    if (!input) continue;
 
-                    const input = container.querySelector('.v-text-field__slot input[type="text"]');
+                    const placeholder = input.getAttribute('placeholder') || '';
+                    const combinedText = (labelText + ' ' + placeholder).toLowerCase();
 
-                    const hasKeyword = keywords.some(keyword => labelText.includes(keyword));
-                    if (hasKeyword && input && !input.value) {{
-                        input.value = discountCode;
-                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                        filledCount++;
+                    const isCardField = cardKeywords.some(k => combinedText.includes(k.toLowerCase()));
+                    const isDiscountField = discountKeywords.some(k => combinedText.includes(k.toLowerCase()));
+
+                    let targetValue = '';
+                    if (isCardField) {{
+                        detectedType = 'credit_card';
+                        targetValue = creditCardPrefix;
+                    }} else if (isDiscountField) {{
+                        detectedType = 'discount';
+                        targetValue = discountCode;
+                    }} else {{
+                        detectedType = 'generic';
+                        if (discountCode) {{
+                            targetValue = discountCode;
+                        }} else if (creditCardPrefix) {{
+                            targetValue = creditCardPrefix;
+                        }}
+                    }}
+
+                    if (targetValue) {{
+                        if (input.value !== targetValue) {{
+                            const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+                            if (nativeSetter) {{
+                                nativeSetter.call(input, targetValue);
+                            }} else {{
+                                input.value = targetValue;
+                            }}
+                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            filledCount++;
+                        }} else {{
+                            filledCount++;
+                        }}
                     }}
                 }}
 
                 return {{
                     success: filledCount > 0,
-                    filledCount: filledCount
+                    filledCount: filledCount,
+                    detectedType: detectedType
                 }};
             }})()
         ''')
@@ -1862,20 +1925,23 @@ async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
             if isinstance(result, dict):
                 success = result.get('success', False)
                 filled_count = result.get('filledCount', 0)
+                detected_type = result.get('detectedType', '')
+                field_type_str = f" ({detected_type})" if detected_type else ""
             else:
-                debug.log(f"[DISCOUNT CODE] Unexpected result type: {type(result)}, value: {result}")
+                debug.log(f"[EXCLUSIVE CODE] Unexpected result type: {type(result)}, value: {result}")
                 success = True
                 filled_count = 1
+                field_type_str = ""
 
             if success and filled_count > 0:
-                debug.log(f"[DISCOUNT CODE] Successfully filled {filled_count} discount code field(s)")
+                debug.log(f"[EXCLUSIVE CODE] Successfully filled {filled_count} code field(s){field_type_str}")
                 return True, fail_list, False
 
-        debug.log("[DISCOUNT CODE] No matching discount code fields found on page")
+        debug.log("[EXCLUSIVE CODE] No matching code fields found or filled on page")
         return False, fail_list, False
 
     except Exception as e:
-        debug.log(f"[DISCOUNT CODE] Error filling discount code: {str(e)}")
+        debug.log(f"[EXCLUSIVE CODE] Error filling code: {str(e)}")
         return False, fail_list, False
 
 
