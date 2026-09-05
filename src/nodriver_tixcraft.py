@@ -85,7 +85,7 @@ async def nodriver_goto_homepage(driver, config_dict):
         # Shared with nodriver_kktix_signin and the guest redirect so all three
         # agree on what counts as "configured" (issue #374).
         if is_kktix_account_configured(config_dict):
-            if not 'https://kktix.com/users/sign_in?' in homepage:
+            if '/users/sign_in' not in homepage:
                 homepage = CONST_KKTIX_SIGN_IN_URL % (homepage)
 
     if 'famiticket.com' in homepage:
@@ -876,9 +876,9 @@ async def main(args):
 
         # Cloudflare challenge detection (only on URL change to avoid performance hit)
         # After 3 consecutive failures on same URL, stop retrying to avoid infinite loop
-        # Skip Cityline Login page: Turnstile there is part of the login form, not a block
-        # (covers both cityline.com and the venue cityline.com.hk login pages)
-        if is_cityline_login_page(url):
+        # Skip Cityline & KKTIX Login pages: Turnstile there is part of the login form, not a block
+        # (covers both cityline.com and the venue cityline.com.hk login pages, as well as KKTIX sign in)
+        if is_cityline_login_page(url) or is_kktix_login_page(url):
             cloudflare_checked = True
         if not cloudflare_checked and cloudflare_fail_count < 3:
             is_cloudflare = await detect_cloudflare_challenge(tab, show_debug=config_dict.get("advanced", {}).get("verbose", False))

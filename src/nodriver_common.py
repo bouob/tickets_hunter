@@ -632,6 +632,31 @@ async def detect_cloudflare_challenge(tab, show_debug=False):
     """
     debug = util.create_debug_logger(enabled=show_debug)
     try:
+        # Pre-check: If Turnstile is embedded on page and already solved (response token present),
+        # verify whether there are still active full-page blocking indicators.
+        # If no blocking indicators, the challenge has already been solved.
+        try:
+            turnstile_solved = await tab.evaluate(
+                '!!(document.querySelector(\'input[name="cf-turnstile-response"]\') && '
+                'document.querySelector(\'input[name="cf-turnstile-response"]\').value && '
+                'document.querySelector(\'input[name="cf-turnstile-response"]\').value.length > 0)'
+            )
+            if turnstile_solved:
+                html_content = await tab.get_content()
+                html_lower = (html_content or "").lower()
+                blocking_indicators = [
+                    "cf-browser-verification",
+                    "cf-challenge-running",
+                    "cf-spinner-allow-5-secs",
+                    "checking your browser",
+                    "please wait while we verify",
+                ]
+                if not any(indicator in html_lower for indicator in blocking_indicators):
+                    debug.log("[CF DETECT] Turnstile response token present and no blocking indicators; challenge resolved")
+                    return False
+        except Exception:
+            pass
+
         # Layer 1: CDP Target detection (most reliable - finds iframes invisible to JS)
         try:
             targets = await tab.send(cdp.target.get_targets())
