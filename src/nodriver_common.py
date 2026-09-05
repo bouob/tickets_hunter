@@ -913,6 +913,9 @@ async def handle_cloudflare_challenge(tab, config_dict, max_retry=None):
                             "cf-challenge-running",
                             "cf-spinner-allow-5-secs",
                             "checking your browser",
+                            "正在執行安全驗證",
+                            "__cf_chl_",
+                            "請稍候...",
                         ]
                         still_active = any(ind in html_lower for ind in active_indicators)
                 except Exception as exc:
