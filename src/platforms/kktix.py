@@ -134,6 +134,52 @@ async def nodriver_kktix_check_queue_page(tab, config_dict):
     return is_queue_page
 
 
+async def _get_kktix_submit_button_target(tab):
+    """Find clickable submit button on KKTIX login form and return its center coordinates (x, y) or None."""
+    submit_btn_info = await tab.evaluate('''
+        (function() {
+            const selectors = [
+                'form#new_user input[type="submit"]',
+                'form[action*="sign_in"] input[type="submit"]',
+                'input[type="submit"][value="登入"]',
+                'button[type="submit"]'
+            ];
+            for (const sel of selectors) {
+                const btn = document.querySelector(sel);
+                if (btn && !btn.disabled) {
+                    const r = btn.getBoundingClientRect();
+                    return { found: true, x: r.x + r.width / 2, y: r.y + r.height / 2 };
+                }
+            }
+            return { found: false };
+        })()
+    ''')
+    submit_btn_info = util.parse_nodriver_result(submit_btn_info)
+    if isinstance(submit_btn_info, dict) and submit_btn_info.get('found'):
+        return (submit_btn_info['x'], submit_btn_info['y'])
+    return None
+
+
+async def _get_kktix_login_error_message(tab):
+    """Detect login failure alert on KKTIX sign-in page for fast-fail."""
+    error_msg = await tab.evaluate('''
+        (function() {
+            const selectors = ['.alert.alert-danger', '#flash_alert', '.flash-alert', '.alert-error'];
+            for (const sel of selectors) {
+                const el = document.querySelector(sel);
+                if (el && el.innerText && el.innerText.trim().length > 0) {
+                    return el.innerText.trim();
+                }
+            }
+            return "";
+        })()
+    ''')
+    error_msg = util.parse_nodriver_result(error_msg)
+    if isinstance(error_msg, str) and len(error_msg.strip()) > 0:
+        return error_msg.strip()
+    return None
+
+
 async def nodriver_kktix_signin(tab, url, config_dict):
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
@@ -286,23 +332,11 @@ async def nodriver_kktix_signin(tab, url, config_dict):
                     return False
 
             # Click submit button via CDP to produce trusted native click (event.isTrusted = true)
-            submit_btn_info = await tab.evaluate('''
-                (function() {
-                    const btn = document.querySelector('form#new_user input[type="submit"]') ||
-                                document.querySelector('form[action*="sign_in"] input[type="submit"]') ||
-                                document.querySelector('input[type="submit"][value="登入"]') ||
-                                document.querySelector('button[type="submit"]');
-                    if (btn && !btn.disabled) {
-                        const r = btn.getBoundingClientRect();
-                        return { found: true, x: r.x + r.width / 2, y: r.y + r.height / 2 };
-                    }
-                    return { found: false };
-                })()
-            ''')
-            submit_btn_info = util.parse_nodriver_result(submit_btn_info)
-            if isinstance(submit_btn_info, dict) and submit_btn_info.get('found'):
-                debug.log(f"[KKTIX SIGNIN] Submit clicked via CDP at ({submit_btn_info['x']:.0f}, {submit_btn_info['y']:.0f})")
-                await cdp_click(tab, submit_btn_info['x'], submit_btn_info['y'])
+            submit_target = await _get_kktix_submit_button_target(tab)
+            if submit_target:
+                target_x, target_y = submit_target
+                debug.log(f"[KKTIX SIGNIN] Submit clicked via CDP at ({target_x:.0f}, {target_y:.0f})")
+                await cdp_click(tab, target_x, target_y)
             else:
                 debug.log("[KKTIX SIGNIN] No clickable submit button found; locale may differ or form not rendered")
                 return False
@@ -335,6 +369,13 @@ async def nodriver_kktix_signin(tab, url, config_dict):
                         debug.log(f"[KKTIX SIGNIN] Login completed after {attempt * check_interval:.1f}s, redirected to: {current_url}")
                         has_redirected = True
                         break
+
+                    # Fast-Fail: Check if page reported invalid credentials
+                    if attempt >= 2 and current_url and is_kktix_login_page(current_url):
+                        login_error = await _get_kktix_login_error_message(tab)
+                        if login_error:
+                            debug.log(f"[KKTIX SIGNIN ERROR] Login failed with message: '{login_error}'")
+                            return False
                 except Exception as exc:
                     url_error_count += 1
                     last_url_exc = str(exc)

@@ -47,7 +47,12 @@ from platforms.cityline import *
 from platforms.famiticket import *
 from platforms.ticketplus import *
 from platforms.funone import *
-from platforms.kktix import *
+from platforms.kktix import (
+    is_kktix_account_configured,
+    is_kktix_login_page,
+    nodriver_kktix_main,
+    nodriver_kktix_paused_main,
+)
 from platforms.tixcraft import *
 from platforms.ibon import *
 from platforms.kham import *
