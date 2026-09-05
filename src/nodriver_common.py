@@ -11,6 +11,7 @@ Dependency: util.py, settings.py, chrome_downloader.py (no platform imports)
 import asyncio
 import json
 import os
+import random
 import traceback
 
 from zendriver import cdp
@@ -651,7 +652,6 @@ async def detect_cloudflare_challenge(tab, show_debug=False):
                     "checking your browser",
                     "please wait while we verify",
                     "正在執行安全驗證",
-                    "__cf_chl_",
                     "just a moment...",
                     "請稍候...",
                 ]
@@ -700,7 +700,6 @@ async def detect_cloudflare_challenge(tab, show_debug=False):
             "please wait while we verify",
             "verify you are human",
             "正在執行安全驗證",
-            "__cf_chl_",
             "just a moment...",
             "請稍候...",
         ]
@@ -747,17 +746,24 @@ def _find_cf_iframe_in_dom(node, depth=0):
     return (None, None)
 
 
-async def _cdp_click(tab, x, y):
-    """Dispatch CDP mousePressed + mouseReleased at (x, y)."""
+async def cdp_click(tab, x, y):
+    """Dispatch CDP mouseMoved + mousePressed + mouseReleased at (x, y) with natural timing."""
+    await tab.send(cdp.input_.dispatch_mouse_event(
+        type_="mouseMoved", x=x, y=y
+    ))
+    await tab.sleep(random.uniform(0.04, 0.08))
     await tab.send(cdp.input_.dispatch_mouse_event(
         type_="mousePressed", x=x, y=y,
-        button=cdp.input_.MouseButton("left"), click_count=1
+        button=cdp.input_.MouseButton("left"), buttons=1, click_count=1
     ))
-    await tab.sleep(0.05)
+    await tab.sleep(random.uniform(0.06, 0.12))
     await tab.send(cdp.input_.dispatch_mouse_event(
         type_="mouseReleased", x=x, y=y,
-        button=cdp.input_.MouseButton("left"), click_count=1
+        button=cdp.input_.MouseButton("left"), buttons=0, click_count=1
     ))
+
+
+_cdp_click = cdp_click
 
 
 async def handle_cloudflare_challenge(tab, config_dict, max_retry=None):
@@ -899,26 +905,44 @@ async def handle_cloudflare_challenge(tab, config_dict, max_retry=None):
             # Polling ensures we catch the exact moment the challenge resolves without
             # prematurely declaring failure or reloading the page.
             if clicked:
+                # Check if this is an embedded Turnstile widget or a full-page challenge
+                has_embedded_turnstile = False
+                try:
+                    has_embedded_turnstile = await tab.evaluate(
+                        '!!document.querySelector(\'input[name="cf-turnstile-response"]\')'
+                    )
+                except Exception:
+                    pass
+
                 still_active = True
                 for poll_step in range(16):  # Poll up to 8s (0.5s intervals)
                     await tab.sleep(0.5)
                     try:
-                        html_content = await tab.get_content()
-                        if html_content:
-                            html_lower = html_content.lower()
-                            active_indicators = [
-                                "cf-browser-verification",
-                                "cf-challenge-running",
-                                "cf-spinner-allow-5-secs",
-                                "checking your browser",
-                                "正在執行安全驗證",
-                                "__cf_chl_",
-                                "請稍候...",
-                            ]
-                            still_active = any(ind in html_lower for ind in active_indicators)
-                            if not still_active:
-                                debug.log(f"[CLOUDFLARE] Challenge bypassed successfully (resolved in {poll_step * 0.5 + 0.5:.1f}s)")
+                        if has_embedded_turnstile:
+                            token_val = await tab.evaluate(
+                                'document.querySelector(\'input[name="cf-turnstile-response"]\') ? '
+                                'document.querySelector(\'input[name="cf-turnstile-response"]\').value : ""'
+                            )
+                            token_val = util.parse_nodriver_result(token_val)
+                            if token_val and len(token_val) > 20:
+                                debug.log(f"[CLOUDFLARE] Embedded Turnstile token received (len={len(token_val)}) in {poll_step * 0.5 + 0.5:.1f}s")
                                 return True
+                        else:
+                            html_content = await tab.get_content()
+                            if html_content:
+                                html_lower = html_content.lower()
+                                active_indicators = [
+                                    "cf-browser-verification",
+                                    "cf-challenge-running",
+                                    "cf-spinner-allow-5-secs",
+                                    "checking your browser",
+                                    "正在執行安全驗證",
+                                    "請稍候...",
+                                ]
+                                still_active = any(ind in html_lower for ind in active_indicators)
+                                if not still_active:
+                                    debug.log(f"[CLOUDFLARE] Challenge bypassed successfully (resolved in {poll_step * 0.5 + 0.5:.1f}s)")
+                                    return True
                     except Exception as exc:
                         debug.log(f"[CLOUDFLARE] Post-click verification check: {exc}")
                         still_active = True
@@ -1028,45 +1052,11 @@ async def with_pause_check(task_func, config_dict, *args, **kwargs):
 def get_nodriver_browser_args():
     """
     Get nodriver browser args.
-    Based on verified args that pass Cloudflare checks.
+    Uses zendriver default args verified to pass Cloudflare checks.
     """
-    # Browser args verified to pass Cloudflare checks
-    browser_args = [
-        "--disable-animations",
-        "--disable-app-info-dialog-mac",
-        "--disable-background-networking",
-        "--disable-backgrounding-occluded-windows",
-        "--disable-breakpad",
-        "--disable-component-update",
-        "--disable-default-apps",
-        "--disable-dev-shm-usage",
-        "--disable-device-discovery-notifications",
-        "--disable-dinosaur-easter-egg",
-        "--disable-domain-reliability",
-        "--disable-features=IsolateOrigins,site-per-process,TranslateUI",
-        "--disable-infobars",
-        "--disable-logging",
-        "--disable-login-animations",
-        "--disable-login-screen-apps",
-        "--disable-notifications",
-        "--disable-password-generation",
-        "--disable-popup-blocking",
-        "--disable-renderer-backgrounding",
-        "--disable-session-crashed-bubble",
-        "--disable-smooth-scrolling",
-        "--disable-suggestions-ui",
-        "--disable-sync",
-        "--disable-translate",
-        "--hide-crash-restore-bubble",
-        "--homepage=about:blank",
-        "--no-default-browser-check",
-        "--no-first-run",
-        "--no-pings",
-        "--no-service-autorun",
-        "--password-store=basic",
-        # Note: --remote-debugging-host is managed by Config(host=...) when MCP debug is enabled
-        "--lang=zh-TW",
-    ]
+    browser_args = list(Config().browser_args)
+    if "--lang=zh-TW" not in browser_args:
+        browser_args.append("--lang=zh-TW")
 
     # Expert mode: cautiously add high-risk args
     if CLOUDFLARE_ENABLE_EXPERT_MODE:

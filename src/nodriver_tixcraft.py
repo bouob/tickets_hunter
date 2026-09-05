@@ -75,13 +75,6 @@ async def nodriver_goto_homepage(driver, config_dict):
     tab = None
     homepage = config_dict["homepage"]
     if 'kktix.c' in homepage:
-        # for like human.
-        try:
-            tab = await driver.get(homepage)
-            await asyncio.sleep(random.uniform(1.0, 2.5))
-        except Exception as e:
-            print(f"[ERROR] Failed to navigate to kktix homepage: {e}")
-
         # Shared with nodriver_kktix_signin and the guest redirect so all three
         # agree on what counts as "configured" (issue #374).
         if is_kktix_account_configured(config_dict):
