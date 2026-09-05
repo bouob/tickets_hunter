@@ -894,53 +894,46 @@ async def handle_cloudflare_challenge(tab, config_dict, max_retry=None):
                 except Exception:
                     pass
 
-            # Wait for challenge to resolve
-            wait_time = CLOUDFLARE_WAIT_TIME + (retry_count * 2)
-            await tab.sleep(wait_time)
-
             # Verify: check if CF challenge is resolved
-            # Note: CDP target persists even after solved Turnstile, so use HTML-only check
-            # when a click was dispatched. HTML active indicators only appear in full-page
-            # interstitials, not in embedded (solved) Turnstile widgets.
+            # Note: Cloudflare verification typically takes 2-6 seconds after click.
+            # Polling ensures we catch the exact moment the challenge resolves without
+            # prematurely declaring failure or reloading the page.
             if clicked:
-                still_active = False
-                try:
-                    html_content = await tab.get_content()
-                    if html_content:
-                        html_lower = html_content.lower()
-                        active_indicators = [
-                            "cf-browser-verification",
-                            "cf-challenge-running",
-                            "cf-spinner-allow-5-secs",
-                            "checking your browser",
-                            "正在執行安全驗證",
-                            "__cf_chl_",
-                            "請稍候...",
-                        ]
-                        still_active = any(ind in html_lower for ind in active_indicators)
-                except Exception as exc:
-                    debug.log(f"[CLOUDFLARE] Post-click verification failed: {exc}")
-                    still_active = True
+                still_active = True
+                for poll_step in range(16):  # Poll up to 8s (0.5s intervals)
+                    await tab.sleep(0.5)
+                    try:
+                        html_content = await tab.get_content()
+                        if html_content:
+                            html_lower = html_content.lower()
+                            active_indicators = [
+                                "cf-browser-verification",
+                                "cf-challenge-running",
+                                "cf-spinner-allow-5-secs",
+                                "checking your browser",
+                                "正在執行安全驗證",
+                                "__cf_chl_",
+                                "請稍候...",
+                            ]
+                            still_active = any(ind in html_lower for ind in active_indicators)
+                            if not still_active:
+                                debug.log(f"[CLOUDFLARE] Challenge bypassed successfully (resolved in {poll_step * 0.5 + 0.5:.1f}s)")
+                                return True
+                    except Exception as exc:
+                        debug.log(f"[CLOUDFLARE] Post-click verification check: {exc}")
+                        still_active = True
                 if not still_active:
                     debug.log("[CLOUDFLARE] Challenge bypassed successfully")
                     return True
             else:
-                # No click dispatched; use full detection
+                # No click dispatched; wait and use full detection
+                wait_time = CLOUDFLARE_WAIT_TIME + (retry_count * 2)
+                await tab.sleep(wait_time)
                 if not await detect_cloudflare_challenge(tab, cf_debug):
                     debug.log("[CLOUDFLARE] Challenge resolved (no click needed)")
                     return True
 
             debug.log(f"[CLOUDFLARE] Attempt {retry_count + 1} unsuccessful")
-
-            if retry_count == max_retry - 1:
-                try:
-                    debug.log("[CLOUDFLARE] Last attempt: Refreshing page")
-                    await tab.reload()
-                    await tab.sleep(5)
-                    if not await detect_cloudflare_challenge(tab, cf_debug):
-                        return True
-                except Exception:
-                    pass
 
         except Exception as exc:
             debug.log(f"[CLOUDFLARE] Error during processing: {exc}")
