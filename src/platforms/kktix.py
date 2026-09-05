@@ -19,7 +19,11 @@ from zendriver import cdp
 
 import util
 from nodriver_common import (
+    cdp_click,
     check_and_handle_pause,
+    detect_cloudflare_challenge,
+    handle_cloudflare_challenge,
+    _find_cf_iframe_in_dom,
     nodriver_check_checkbox,
     play_sound_while_ordering,
     send_discord_notification,
@@ -31,6 +35,7 @@ from nodriver_common import (
 )
 
 __all__ = [
+    "is_kktix_login_page",
     "nodriver_kktix_signin",
     "nodriver_kktix_paused_main",
     "nodriver_kktix_travel_price_list",
@@ -57,6 +62,12 @@ __all__ = [
     "nodriver_kktix_handle_qualification_and_next",
     "CONST_KKTIX_FORM_STATE_JS",
 ]
+
+def is_kktix_login_page(url):
+    """True for KKTIX sign_in page."""
+    if not url:
+        return False
+    return ('kktix.com' in url or 'kktix.cc' in url) and '/users/sign_in' in url
 
 # Module-level state (replaces global kktix_dict)
 _state = {}
@@ -123,6 +134,52 @@ async def nodriver_kktix_check_queue_page(tab, config_dict):
     return is_queue_page
 
 
+async def _get_kktix_submit_button_target(tab):
+    """Find clickable submit button on KKTIX login form and return its center coordinates (x, y) or None."""
+    submit_btn_info = await tab.evaluate('''
+        (function() {
+            const selectors = [
+                'form#new_user input[type="submit"]',
+                'form[action*="sign_in"] input[type="submit"]',
+                'input[type="submit"][value="登入"]',
+                'button[type="submit"]'
+            ];
+            for (const sel of selectors) {
+                const btn = document.querySelector(sel);
+                if (btn && !btn.disabled) {
+                    const r = btn.getBoundingClientRect();
+                    return { found: true, x: r.x + r.width / 2, y: r.y + r.height / 2 };
+                }
+            }
+            return { found: false };
+        })()
+    ''')
+    submit_btn_info = util.parse_nodriver_result(submit_btn_info)
+    if isinstance(submit_btn_info, dict) and submit_btn_info.get('found'):
+        return (submit_btn_info['x'], submit_btn_info['y'])
+    return None
+
+
+async def _get_kktix_login_error_message(tab):
+    """Detect login failure alert on KKTIX sign-in page for fast-fail."""
+    error_msg = await tab.evaluate('''
+        (function() {
+            const selectors = ['.alert.alert-danger', '#flash_alert', '.flash-alert', '.alert-error'];
+            for (const sel of selectors) {
+                const el = document.querySelector(sel);
+                if (el && el.innerText && el.innerText.trim().length > 0) {
+                    return el.innerText.trim();
+                }
+            }
+            return "";
+        })()
+    ''')
+    error_msg = util.parse_nodriver_result(error_msg)
+    if isinstance(error_msg, str) and len(error_msg.strip()) > 0:
+        return error_msg.strip()
+    return None
+
+
 async def nodriver_kktix_signin(tab, url, config_dict):
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
@@ -132,13 +189,20 @@ async def nodriver_kktix_signin(tab, url, config_dict):
 
     debug.log("nodriver_kktix_signin:", url)
 
-    # 解析 back_to 參數取得真正的目標頁面
-    target_url = config_dict["homepage"]  # 預設值
+    # 解析 back_to 參數取得真正的目標頁面，並記錄到 _state 以免重導後遺失
+    target_url = _state.get("kktix_target_url", config_dict["homepage"])
     try:
         parsed_url = urllib.parse.urlparse(url)
         params = urllib.parse.parse_qs(parsed_url.query)
         if 'back_to' in params and len(params['back_to']) > 0:
             target_url = params['back_to'][0]
+            _state["kktix_target_url"] = target_url
+        elif 'back_to' in config_dict.get("homepage", ""):
+            parsed_home = urllib.parse.urlparse(config_dict["homepage"])
+            home_params = urllib.parse.parse_qs(parsed_home.query)
+            if 'back_to' in home_params and len(home_params['back_to']) > 0:
+                target_url = home_params['back_to'][0]
+                _state["kktix_target_url"] = target_url
     except Exception as exc:
         debug.log(f"[KKTIX SIGNIN] Failed to parse back_to parameter: {exc}")
 
@@ -159,67 +223,127 @@ async def nodriver_kktix_signin(tab, url, config_dict):
             # in the log. Report it and stop instead of submitting a dead form.
             account = await tab.query_selector("#user_login")
             if account is None:
-                debug.log("[KKTIX SIGNIN] #user_login not found; page may be a queue room, "
-                          "a Cloudflare challenge, or already signed in")
+                # Check if page is currently intercepted by a Cloudflare challenge
+                if await detect_cloudflare_challenge(tab, show_debug=True):
+                    debug.log("[KKTIX SIGNIN] Cloudflare challenge page detected, attempting to solve...")
+                    await handle_cloudflare_challenge(tab, config_dict, max_retry=1)
+                    for _ in range(16):
+                        await asyncio.sleep(0.5)
+                        cf_active = await tab.evaluate('''
+                            (function() {
+                                var text = document.body ? document.body.innerText : '';
+                                return text.includes('正在執行安全驗證') || 
+                                       text.includes('請稍候') ||
+                                       window.location.search.includes('__cf_chl_') ||
+                                       !!window._cf_chl_opt;
+                            })()
+                        ''')
+                        if not cf_active:
+                            break
+                    return False
+                debug.log("[KKTIX SIGNIN] #user_login not found; page may be a queue room or already signed in")
                 return False
-            await account.send_keys(kktix_account)
+
+            account_val = await tab.evaluate('document.querySelector("#user_login") ? document.querySelector("#user_login").value : null')
+            if account_val != kktix_account:
+                await tab.evaluate('if (document.querySelector("#user_login")) { document.querySelector("#user_login").value = ""; }')
+                await account.send_keys(kktix_account)
+                await tab.evaluate('''
+                    (function() {
+                        const el = document.querySelector("#user_login");
+                        if (el) {
+                            el.dispatchEvent(new Event('input', { bubbles: true }));
+                            el.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    })()
+                ''')
             await asyncio.sleep(random.uniform(0.1, 0.2))
 
             password = await tab.query_selector("#user_password")
             if password is None:
                 debug.log("[KKTIX SIGNIN] #user_password not found; login form is incomplete")
                 return False
-            await password.send_keys(kktix_password)
+
+            password_val = await tab.evaluate('document.querySelector("#user_password") ? document.querySelector("#user_password").value : null')
+            if password_val != kktix_password:
+                await tab.evaluate('if (document.querySelector("#user_password")) { document.querySelector("#user_password").value = ""; }')
+                await password.send_keys(kktix_password)
+                await tab.evaluate('''
+                    (function() {
+                        const el = document.querySelector("#user_password");
+                        if (el) {
+                            el.dispatchEvent(new Event('input', { bubbles: true }));
+                            el.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    })()
+                ''')
             await asyncio.sleep(random.uniform(0.1, 0.2))
 
-            # The submit button used to be matched by its Chinese value only,
-            # which fails silently on any other locale.
-            submit_result = await tab.evaluate('''
+            # If Turnstile challenge widget is present on login form, ensure it is solved before submitting
+            has_turnstile = await tab.evaluate('''
                 (function() {
-                    const selectors = [
-                        'form#new_user input[type="submit"]',
-                        'form[action*="sign_in"] input[type="submit"]',
-                        'input[type="submit"][value="登入"]',
-                        'button[type="submit"]'
-                    ];
-                    let candidateCount = 0;
-                    for (const sel of selectors) {
-                        const btn = document.querySelector(sel);
-                        if (btn) {
-                            candidateCount += 1;
-                            if (!btn.disabled) {
-                                btn.click();
-                                return { clicked: true, selector: sel, candidateCount: candidateCount };
-                            }
-                        }
-                    }
-                    return { clicked: false, selector: '', candidateCount: candidateCount };
+                    return !!(
+                        document.querySelector('.cf-turnstile') ||
+                        document.querySelector('iframe[src*="challenges.cloudflare.com"]') ||
+                        document.querySelector('input[name="cf-turnstile-response"]')
+                    );
                 })()
             ''')
-            submit_result = util.parse_nodriver_result(submit_result)
-            if isinstance(submit_result, dict) and submit_result.get('clicked'):
-                debug.log(f"[KKTIX SIGNIN] Submit clicked via {submit_result.get('selector')}")
+            if has_turnstile:
+                debug.log("[KKTIX SIGNIN] Turnstile widget detected on login form, checking status...")
+                # First check if token is already present
+                token_val = await tab.evaluate('''
+                    (function() {
+                        const input = document.querySelector('input[name="cf-turnstile-response"]');
+                        return (input && input.value) ? input.value : "";
+                    })()
+                ''')
+                token_val = util.parse_nodriver_result(token_val)
+
+                if not (token_val and len(token_val) > 20):
+                    # Find Turnstile iframe and click checkbox via CDP
+                    try:
+                        doc = await tab.send(cdp.dom.get_document(depth=-1, pierce=True))
+                        node_id, src = _find_cf_iframe_in_dom(doc)
+                        if node_id:
+                            box = await tab.send(cdp.dom.get_box_model(node_id=node_id))
+                            if box and box.content and len(box.content) >= 6:
+                                cx = box.content[0] + 30
+                                cy = box.content[1] + (box.content[5] - box.content[1]) / 2
+                                debug.log(f"[KKTIX SIGNIN] Clicking Turnstile at ({cx:.1f}, {cy:.1f})")
+                                await cdp_click(tab, cx, cy)
+                    except Exception as cf_e:
+                        debug.log(f"[KKTIX SIGNIN] Turnstile CDP click error: {cf_e}")
+
+                    # Wait for token
+                    for s in range(20):
+                        await asyncio.sleep(0.5)
+                        token_val = await tab.evaluate('document.querySelector("input[name=\\"cf-turnstile-response\\"]") ? document.querySelector("input[name=\\"cf-turnstile-response\\"]").value : ""')
+                        token_val = util.parse_nodriver_result(token_val)
+                        if token_val and len(token_val) > 20:
+                            debug.log(f"[KKTIX SIGNIN] Token acquired in {s*0.5+0.5:.1f}s! len={len(token_val)}")
+                            break
+
+                if token_val and len(token_val) > 20:
+                    _state["last_kktix_turnstile_token"] = token_val
+                    debug.log(f"[KKTIX SIGNIN] Fresh Turnstile token confirmed (len={len(token_val)})")
+                else:
+                    debug.log("[KKTIX SIGNIN] Turnstile token not obtained, aborting submit for this attempt")
+                    return False
+
+            # Click submit button via CDP to produce trusted native click (event.isTrusted = true)
+            submit_target = await _get_kktix_submit_button_target(tab)
+            if submit_target:
+                target_x, target_y = submit_target
+                debug.log(f"[KKTIX SIGNIN] Submit clicked via CDP at ({target_x:.0f}, {target_y:.0f})")
+                await cdp_click(tab, target_x, target_y)
             else:
-                candidate_count = 0
-                if isinstance(submit_result, dict):
-                    candidate_count = submit_result.get('candidateCount', 0)
-                debug.log(f"[KKTIX SIGNIN] No clickable submit button found "
-                          f"(candidates={candidate_count}); locale may differ or form not rendered")
+                debug.log("[KKTIX SIGNIN] No clickable submit button found; locale may differ or form not rendered")
                 return False
 
             # Smart polling: wait for login completion (URL change from sign_in page)
-            #
-            # Do NOT add an early return when Cloudflare takes over the page.
-            # It was tried and measurably made things worse: the main loop's
-            # Cloudflare check only re-arms on a URL change, and returning during
-            # the __cf_chl_rt_tk redirect means it runs before the challenge
-            # target exists, finds nothing, and never looks again - the bot then
-            # idles forever. Sitting out the full 10s wastes time but gives the
-            # challenge time to render, which is what lets the main loop solve it.
-            # Fixing this properly needs event-driven detection
-            # (cdp.target.TargetCreated), not an earlier poll.
-            max_wait = 10
-            check_interval = 0.3
+            max_wait = 20
+            check_interval = 0.5
             max_attempts = int(max_wait / check_interval)
             login_completed = False
             url_error_count = 0
@@ -232,20 +356,31 @@ async def nodriver_kktix_signin(tab, url, config_dict):
 
                 try:
                     current_url = await tab.evaluate('window.location.href')
+                    current_url = util.parse_nodriver_result(current_url)
+                    title = await tab.evaluate('document.title')
+                    title = util.parse_nodriver_result(title)
+
+                    if attempt % 3 == 0 or attempt == max_attempts - 1:
+                        debug.log(f"[KKTIX SIGNIN POLL] attempt {attempt}: url={current_url}, title='{title}'")
 
                     # Detect if left sign_in page (login completed)
-                    if '/users/sign_in' not in current_url:
+                    if current_url and not is_kktix_login_page(current_url) and '__cf_chl_' not in current_url:
                         login_completed = True
                         debug.log(f"[KKTIX SIGNIN] Login completed after {attempt * check_interval:.1f}s, redirected to: {current_url}")
+                        has_redirected = True
                         break
+
+                    # Fast-Fail: Check if page reported invalid credentials
+                    if attempt >= 2 and current_url and is_kktix_login_page(current_url):
+                        login_error = await _get_kktix_login_error_message(tab)
+                        if login_error:
+                            debug.log(f"[KKTIX SIGNIN ERROR] Login failed with message: '{login_error}'")
+                            return False
                 except Exception as exc:
-                    # Report the first failure with its attempt index, then only
-                    # the summary below; printing every attempt floods the log.
                     url_error_count += 1
                     last_url_exc = str(exc)
                     if url_error_count == 1:
-                        debug.log(f"[KKTIX SIGNIN] URL check failed "
-                                  f"(attempt {attempt + 1}/{max_attempts}): {exc}")
+                        debug.log(f"[KKTIX SIGNIN] URL check failed (attempt {attempt + 1}/{max_attempts}): {exc}")
 
                 if attempt < max_attempts - 1:
                     await asyncio.sleep(check_interval)
@@ -258,6 +393,7 @@ async def nodriver_kktix_signin(tab, url, config_dict):
             # Check if need to manually redirect to back_to URL
             try:
                 current_url = await tab.evaluate('window.location.href')
+                current_url = util.parse_nodriver_result(current_url)
                 if current_url and ('kktix.com/' in current_url or 'kktix.cc/' in current_url):
                     if '/users/sign_in' in current_url:
                         # Still on sign_in page (login failed or queue intercepted);
@@ -324,11 +460,8 @@ async def nodriver_kktix_redirect_to_signin_if_guest(tab, url, config_dict):
 async def nodriver_kktix_paused_main(tab, url, config_dict):
     debug = util.create_debug_logger(config_dict)
 
-    is_url_contain_sign_in = False
-    if '/users/sign_in?' in url:
+    if is_kktix_login_page(url):
         redirect_needed = await nodriver_kktix_signin(tab, url, config_dict)
-        is_url_contain_sign_in = True
-
         return redirect_needed
 
     return False
@@ -2116,7 +2249,7 @@ def check_kktix_got_ticket(url, config_dict):
     if '/events/' in url and '/registrations/' in url and "-" in url:
         if not '/registrations/new' in url:
             if not '#/booking' in url:
-                if not 'https://kktix.com/users/sign_in?' in url:
+                if not is_kktix_login_page(url):
                     is_kktix_got_ticket = True
                     debug.log(f"[KKTIX] Success page detected: {url}")
 
@@ -2215,14 +2348,15 @@ async def nodriver_kktix_main(tab, url, config_dict):
             debug.log(f"[KKTIX ALERT] Failed to register alert handler: {handler_exc}")
 
     is_url_contain_sign_in = False
-    if '/users/sign_in?' in url:
+    if is_kktix_login_page(url):
+        is_url_contain_sign_in = True
         # nodriver_kktix_signin already handles smart polling and redirect
         await nodriver_kktix_signin(tab, url, config_dict)
 
         # Update URL after signin completes
         try:
             url = await tab.evaluate('window.location.href')
-            is_url_contain_sign_in = False
+            is_url_contain_sign_in = is_kktix_login_page(url)
         except Exception as exc:
             debug.log(f"取得跳轉後 URL 失敗: {exc}")
 
