@@ -20,6 +20,7 @@ from zendriver import cdp
 import util
 from nodriver_common import (
     check_and_handle_pause,
+    detect_cloudflare_challenge,
     handle_cloudflare_challenge,
     nodriver_check_checkbox,
     play_sound_while_ordering,
@@ -167,8 +168,12 @@ async def nodriver_kktix_signin(tab, url, config_dict):
             # in the log. Report it and stop instead of submitting a dead form.
             account = await tab.query_selector("#user_login")
             if account is None:
-                debug.log("[KKTIX SIGNIN] #user_login not found; page may be a queue room, "
-                          "a Cloudflare challenge, or already signed in")
+                # Check if page is currently intercepted by a Cloudflare challenge
+                if await detect_cloudflare_challenge(tab, show_debug=True):
+                    debug.log("[KKTIX SIGNIN] Cloudflare challenge page detected, attempting to solve...")
+                    await handle_cloudflare_challenge(tab, config_dict)
+                    return False
+                debug.log("[KKTIX SIGNIN] #user_login not found; page may be a queue room or already signed in")
                 return False
 
             account_val = await tab.evaluate('document.querySelector("#user_login") ? document.querySelector("#user_login").value : null')
@@ -282,6 +287,22 @@ async def nodriver_kktix_signin(tab, url, config_dict):
                         login_completed = True
                         debug.log(f"[KKTIX SIGNIN] Login completed after {attempt * check_interval:.1f}s, redirected to: {current_url}")
                         break
+
+                    # Check if Cloudflare challenge took over the page after submit
+                    if attempt >= 2:
+                        if await detect_cloudflare_challenge(tab, show_debug=False):
+                            debug.log("[KKTIX SIGNIN] Cloudflare challenge detected after submit, solving...")
+                            await handle_cloudflare_challenge(tab, config_dict)
+                            # Poll for navigation after CF solve
+                            for _ in range(8):
+                                await asyncio.sleep(0.5)
+                                cur_url = await tab.evaluate('window.location.href')
+                                if '/users/sign_in' not in cur_url:
+                                    login_completed = True
+                                    debug.log(f"[KKTIX SIGNIN] Redirected after CF solve: {cur_url}")
+                                    break
+                            if login_completed:
+                                break
                 except Exception as exc:
                     # Report the first failure with its attempt index, then only
                     # the summary below; printing every attempt floods the log.

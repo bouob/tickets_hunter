@@ -650,6 +650,10 @@ async def detect_cloudflare_challenge(tab, show_debug=False):
                     "cf-spinner-allow-5-secs",
                     "checking your browser",
                     "please wait while we verify",
+                    "正在執行安全驗證",
+                    "__cf_chl_",
+                    "just a moment...",
+                    "請稍候...",
                 ]
                 if not any(indicator in html_lower for indicator in blocking_indicators):
                     debug.log("[CF DETECT] Turnstile response token present and no blocking indicators; challenge resolved")
@@ -695,6 +699,10 @@ async def detect_cloudflare_challenge(tab, show_debug=False):
             "checking your browser",
             "please wait while we verify",
             "verify you are human",
+            "正在執行安全驗證",
+            "__cf_chl_",
+            "just a moment...",
+            "請稍候...",
         ]
 
         detected = any(indicator in html_lower for indicator in cloudflare_indicators)
@@ -839,6 +847,7 @@ async def handle_cloudflare_challenge(tab, config_dict, max_retry=None):
                                     var cjk = [
                                         "\u8acb\u8b93\u6211\u5011\u77e5\u9053\u60a8\u662f\u4eba\u985e",
                                         "\u9a57\u8b49\u60a8\u662f\u4eba\u985e",
+                                        "\u6b63\u5728\u57f7\u884c\u5b89\u5168\u9a57\u8b42",
                                         "\u4eba\u9593\u3067\u3042\u308b\u3053\u3068\u3092\u78ba\u8a8d"
                                     ];
                                     for (var k = 0; k < cjk.length; k++) {
