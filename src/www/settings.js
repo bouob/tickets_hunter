@@ -567,6 +567,13 @@ function renderAdvancedTabTranslations() {
 </svg>
 <strong>Tixcraft refresh warning:</strong> Refresh intervals below 8 seconds may trigger a temporary IP soft block. Use 8 seconds or more, or distribute requests across different networks or devices.
 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`);
+
+    applyOrRestore('#tixcraft-reload-disabled-warning', 'innerHTML', `
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle-fill me-2" viewBox="0 0 16 16">
+  <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+</svg>
+<strong>Tixcraft date/area auto refresh disabled:</strong> When the refresh interval is not a number above 0 (for example 0 or empty), date and area pages are not reloaded when nothing can be selected (sale not started, sold out, or no keyword match). Reloads on the ticket page when the ticket count is unavailable, and on Ticketmaster after 30 failed ticket-count attempts, work as before and happen right away when the interval is 0. Use 8 seconds or more to keep refreshing.
+<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`);
 }
 
 function renderVerificationTabTranslations() {
@@ -1117,8 +1124,40 @@ function updateTixcraftSoftBlockDelayVisibility(url) {
     }
 }
 
+// Toggle the notice shown when Tixcraft polling reloads are disabled (issue #396).
+// Uses the same conversion as the save handler (Number()): an empty field saves as 0,
+// and NaN or Infinity save as null, which the bot also treats as reload disabled.
+function updateTixcraftReloadDisabledNotice() {
+    const noticeElement = document.getElementById('tixcraft-reload-disabled-warning');
+    if (!noticeElement) return;
+
+    const url = homepage.value;
+    const interval = Number(auto_reload_page_interval.value);
+
+    // Show notice if: Tixcraft family site AND refresh interval is not a number above 0
+    const shouldShowNotice = isTixcraftFamily(url) && !(Number.isFinite(interval) && interval > 0);
+
+    if (shouldShowNotice) {
+        noticeElement.style.display = 'block';
+        setTimeout(() => {
+            noticeElement.classList.add('show');
+        }, 10);
+    } else {
+        if (noticeElement.classList.contains('show')) {
+            noticeElement.classList.remove('show');
+            setTimeout(() => {
+                // Keep it visible if it was shown again during the fade-out delay
+                if (!noticeElement.classList.contains('show')) {
+                    noticeElement.style.display = 'none';
+                }
+            }, 150);
+        }
+    }
+}
+
 // Toggle Tixcraft refresh rate warning visibility
 function updateTixcraftRefreshWarning() {
+    updateTixcraftReloadDisabledNotice();
     const warningElement = document.getElementById('tixcraft-refresh-warning');
     if (!warningElement) return;
 
