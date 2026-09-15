@@ -200,6 +200,38 @@ def _process_queue_it_state(url, state, current_time):
     return False, None
 
 
+def _is_page_reload_enabled(config_dict, debug, log_tag):
+    """True when auto_reload_page_interval allows a page reload (issue #396).
+
+    The settings help defines 0 as "disable auto reload", but the reload
+    sites only skipped the wait before tab.reload(), so 0 still reloaded the
+    page, on most sites once per 50ms main-loop pass. A value <= 0 now skips
+    the reload itself.
+    The skip is logged once per call site. A site's mark is cleared the next
+    time that same site runs with an interval above 0, so a change between
+    two values <= 0 is not logged again. The mark is only set while verbose
+    is on, so a site that skipped while verbose was off still logs the first
+    time verbose is on.
+    """
+    interval = config_dict.get("advanced", {}).get("auto_reload_page_interval", 0)
+    try:
+        is_enabled = interval > 0
+    except TypeError:
+        # Non-numeric value (e.g. a hand-edited string): four of the old
+        # sites swallowed this TypeError inside try/except and did not
+        # reload, while the TixCraft date and area sites raised it. Treat
+        # it as reload disabled at every reload site.
+        is_enabled = False
+    logged_tags = _state.setdefault("reload_disabled_logged_tags", set())
+    if is_enabled:
+        logged_tags.discard(log_tag)
+        return True
+    if debug.enabled and log_tag not in logged_tags:
+        debug.log(f"[{log_tag}] auto_reload_page_interval={interval!r}, page reload disabled")
+        logged_tags.add(log_tag)
+    return False
+
+
 async def nodriver_tixcraft_home_close_window(tab):
     if _state.get('cookie_accepted'):
         return
@@ -860,7 +892,7 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
             debug.log(f"[TICKETMASTER DATE] Failed to click link: {exc}")
 
     # Auto reload if no match
-    if auto_reload_coming_soon_page_enable and not is_date_clicked and len(formated_area_list) == 0:
+    if auto_reload_coming_soon_page_enable and not is_date_clicked and len(formated_area_list) == 0 and _is_page_reload_enabled(config_dict, debug, "TICKETMASTER DATE"):
         debug.log("[TICKETMASTER DATE] No dates available, reloading page...")
         try:
             # Honor the user's refresh interval, the same way the area-select
@@ -964,7 +996,7 @@ async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
         # Check if area_keyword is empty (empty = should match all areas)
         area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "").strip()
 
-        if area_keyword:
+        if area_keyword and _is_page_reload_enabled(config_dict, debug, "TICKETMASTER AREA"):
             # Keyword specified but no match → might need to wait for availability
             debug.log("[TICKETMASTER AREA] No areas matched keyword, reloading page...")
             try:
@@ -973,7 +1005,7 @@ async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
                 await tab.reload()
             except:
                 pass
-        else:
+        elif not area_keyword:
             # No keyword but no areas → likely a data parsing issue, don't reload
             debug.log("[TICKETMASTER AREA] No areas available (possible zone_info parsing issue)")
             # Let next function (assign_ticket_number) handle it
@@ -1899,7 +1931,7 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
                 debug.log(f"[DATE SELECT] ========================================")
 
     # Auto refresh if no date was selected (for strict mode or sold out scenarios)
-    if not is_date_clicked:
+    if not is_date_clicked and _is_page_reload_enabled(config_dict, debug, "DATE SELECT"):
         # Simple wait mode (consistent with TicketPlus/iBon/FamiTicket)
         interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
         if interval > 0:
@@ -2049,7 +2081,7 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
                 pass
 
     # Auto refresh if needed (simple wait mode, consistent with TicketPlus/iBon/FamiTicket)
-    if is_need_refresh:
+    if is_need_refresh and _is_page_reload_enabled(config_dict, debug, "AREA SELECT"):
         interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
         if interval > 0:
             debug.log(f"[AREA SELECT] Waiting {interval}s before reload...")
@@ -2610,9 +2642,10 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
         _state[ticket_state_key] = True
         debug.log("Ticket number set successfully, starting OCR captcha processing")
         await nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name)
-    else:
+    elif _is_page_reload_enabled(config_dict, debug, "TICKET SELECT"):
         # T026: Fix Issue #174 - reload page when ticket number cannot be set
         # This prevents infinite loop when desired ticket count is unavailable
+        # With auto_reload_page_interval <= 0 this recovery reload is skipped too (issue #396)
         debug.log("[TICKET SELECT] Ticket count unavailable, reloading page to retry...")
         try:
             # Wait based on auto_reload_page_interval setting
@@ -3398,16 +3431,19 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
                             # would spin on a stale page forever and miss any
                             # returned ticket. Reload (throttled) like the
                             # TixCraft ticket page does (issue #378 / #174).
-                            debug.log("[TICKETMASTER] Ticket assignment failed after 30 retries, reloading page")
+                            # With auto_reload_page_interval <= 0 the reload is
+                            # skipped (issue #396) and only the phase resets run.
                             _state["ticketmaster_phase"] = "area_select"
                             _state["area_retry_count"] = 0
-                            try:
-                                reload_interval = config_dict.get("advanced", {}).get("auto_reload_page_interval", 0)
-                                if reload_interval > 0:
-                                    await sleep_with_pause_check(tab, reload_interval, config_dict)
-                                await tab.reload()
-                            except Exception:
-                                pass
+                            if _is_page_reload_enabled(config_dict, debug, "TICKETMASTER"):
+                                debug.log("[TICKETMASTER] Ticket assignment failed after 30 retries, reloading page")
+                                try:
+                                    reload_interval = config_dict.get("advanced", {}).get("auto_reload_page_interval", 0)
+                                    if reload_interval > 0:
+                                        await sleep_with_pause_check(tab, reload_interval, config_dict)
+                                    await tab.reload()
+                                except Exception:
+                                    pass
 
                 # phase == "done": no-op, wait for POST navigation to /ticket/ticket/
     else:
