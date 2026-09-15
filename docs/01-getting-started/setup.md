@@ -2,7 +2,7 @@
 
 **文件說明**：引導開發者完成 Tickets Hunter 環境設定、依賴套件安裝與開發環境準備
 **目標受眾**：開發者。一般使用者請改看 [guide/installation.md](../../guide/installation.md)
-**最後更新**：2026-06-10
+**最後更新**：2026-09-15
 
 ---
 
@@ -11,7 +11,7 @@
 ### 必要條件
 | 項目 | 需求 | 說明 |
 |------|------|------|
-| **Python** | **3.10-3.11**（推薦） | 完整支援所有功能 |
+| **Python** | **3.10-3.11**（推薦 3.11.9） | 完整支援所有功能 |
 | Python | 3.12 | 可能支援，部分套件相容性待驗證 |
 | Python | 3.13+ | ❌ 不支援（ddddocr 不相容） |
 | **Chrome** | 90+ | 建議使用最新穩定版 |
@@ -56,18 +56,13 @@ cd tickets_hunter
 pip install -r requirement.txt
 ```
 
-#### 4. ZenDriver 安裝（推薦）
-```bash
-# 從 PyPI 安裝（推薦）
-pip install zendriver
+#### 4. ZenDriver（已包含在 requirement.txt）
+`requirement.txt` 已鎖定 `zendriver==0.15.3`，第 3 步已一併安裝，安裝流程中不需要另外執行 `pip install zendriver`。
 
-# ZenDriver 是 nodriver 的活躍 fork，支援 Chrome 145+ 並有持續維護
-```
+> ZenDriver 是 nodriver 的活躍 fork，支援 Chrome 145+ 並有持續維護
 
 #### 5. OCR 驗證碼辨識（選用）
-```bash
-pip install ddddocr
-```
+`requirement.txt` 已鎖定 `ddddocr==1.5.6`，第 3 步已一併安裝，安裝流程中不需要另外執行 `pip install ddddocr`。
 
 ---
 
@@ -256,9 +251,9 @@ TicketPlus 搶票耗時: 1.823 秒
 python --version
 
 # 使用 virtualenv 隔離環境
-python -m venv venv
-venv\Scripts\activate  # Windows
-source venv/bin/activate  # Mac/Linux
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # Mac/Linux
 pip install -r requirement.txt
 ```
 
@@ -390,8 +385,8 @@ rm -f MAXBOT_INT28_IDLE.txt src/MAXBOT_INT28_IDLE.txt
 |------|------|
 | [專案概覽](./project_overview.md) | 整體架構介紹 |
 | [開發規範](../02-development/development_guide.md) | 開發者指南 |
-| [NoDriver API](../06-api-reference/nodriver_api_guide.md) | NoDriver 技術文件 |
+| [ZenDriver API](../06-api-reference/zendriver_api_guide.md) | ZenDriver 技術文件 |
 
 ---
 
-**最後更新**: 2026-03-09
+**最後更新**: 2026-09-15
