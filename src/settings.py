@@ -47,7 +47,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2026.08.17)"
+CONST_APP_VERSION = "TicketsHunter (2026.09.16)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -239,7 +239,7 @@ def get_default_config():
     config_dict["advanced"]["block_facebook_network"] = False
 
     config_dict["advanced"]["headless"] = False
-    config_dict["advanced"]["verbose"] = False
+    config_dict["advanced"]["verbose"] = True
     config_dict["advanced"]["show_timestamp"] = True
     config_dict["advanced"]["auto_guess_options"] = False
     config_dict["advanced"]["user_guess_string"] = ""

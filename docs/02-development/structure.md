@@ -594,9 +594,12 @@ OCR 相關
 
 Cloudflare Turnstile
 ├── detect_cloudflare_challenge          # nodriver_common.py ✅ (Cloudflare Turnstile 三層偵測)
-├── _find_cf_iframe_in_dom              # nodriver_common.py ✅ (DOM 樹遞迴搜尋 CF iframe)
-├── _cdp_click                          # nodriver_common.py ✅ (CDP 滑鼠事件封裝)
-└── handle_cloudflare_challenge         # nodriver_common.py ✅ (Cloudflare Turnstile 三階段處理)
+├── handle_cloudflare_challenge         # nodriver_common.py ✅ (Cloudflare Turnstile 三階段處理與驗證)
+├── solve_turnstile_checkbox            # nodriver_common.py ✅ (CDP pierce 定位 iframe 並點擊 checkbox)
+├── has_turnstile_token_field           # nodriver_common.py ✅ (分辨嵌入式 widget 與全頁攔截)
+├── wait_for_turnstile_token            # nodriver_common.py ✅ (輪詢 cf-turnstile-response token)
+├── cdp_click_at                        # nodriver_common.py ✅ (CDP 滑鼠事件封裝)
+└── _find_cf_iframe_in_dom              # nodriver_common.py ✅ (DOM 樹遞迴搜尋 CF iframe，模組私有)
 
 輔助工具
 ├── play_sound_while_ordering            # nodriver_common.py
@@ -713,7 +716,7 @@ iBon Livemap
 **機制索引**：
 - 設定熱重載（hot-reload）：`reload_config`（nodriver_tixcraft.py），詳見 [14-hot-reload.md](../03-mechanisms/14-hot-reload.md)
 - 多開實例（multi-instance）：`set_instance_id` / `get_instance_state_path`（util.py）、`InstancesHandler` / `list_instance_ids` / `get_instance_status` / `launch_maxbot`（settings.py），詳見 [17-multi-instance.md](../03-mechanisms/17-multi-instance.md)
-- Cloudflare Turnstile：`detect_cloudflare_challenge` / `handle_cloudflare_challenge`（nodriver_common.py），詳見 [15-cloudflare-turnstile.md](../03-mechanisms/15-cloudflare-turnstile.md)
+- Cloudflare Turnstile：`detect_cloudflare_challenge` / `handle_cloudflare_challenge`（nodriver_common.py）；平台模組要自行解題時用 `solve_turnstile_checkbox` + `wait_for_turnstile_token`，詳見 [15-cloudflare-turnstile.md](../03-mechanisms/15-cloudflare-turnstile.md)
 
 ### 🛑 **暫停機制輔助函數** (ZenDriver 專用)
 

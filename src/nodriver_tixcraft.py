@@ -85,7 +85,7 @@ async def nodriver_goto_homepage(driver, config_dict):
         # Shared with nodriver_kktix_signin and the guest redirect so all three
         # agree on what counts as "configured" (issue #374).
         if is_kktix_account_configured(config_dict):
-            if not 'https://kktix.com/users/sign_in?' in homepage:
+            if not is_kktix_login_page(homepage):
                 homepage = CONST_KKTIX_SIGN_IN_URL % (homepage)
 
     if 'famiticket.com' in homepage:
@@ -368,11 +368,18 @@ async def nodrver_block_urls(tab, config_dict):
         '*cdn.qgr.ph/*',
         '*.aiqua.io/*',
         # ibon self-hosted DMP SDK. Uploads mem_id + sha256(email) + UA via
-        # sendBeacon/fetch/XHR once loaded. ticket.ibon.com.tw hardcodes the UAT
-        # host (whole domain returns 403, so the SDK is currently dead), but the
-        # collector at order-uat.../dmp/api/v1.0/events is live -- a one-line URL
-        # fix would silently resume the upload. Blocked preemptively; harmless
-        # because window.IbonDMP is an inline-defined stub (audit 2026-07-29).
+        # sendBeacon/fetch/XHR once loaded. The 2026-07-29 audit blocked the UAT
+        # host preemptively while the SDK was dead (hardcoded UAT URL, 403).
+        # Audit 2026-08-23: the inline loader now points at the production host
+        # and the SDK really runs, so the UAT-only rule matched nothing. The UAT
+        # pattern stays because the collector is still order-uat.../dmp.
+        # Block the SDK PATH ONLY -- tour.ibon.com.tw also serves activity images
+        # and the /event/{id} purchase flow handled in platforms/ibon.py, so a
+        # domain-wide pattern would break ticket buying.
+        # A/B verified 2026-08-23: window.IbonDMP falls back to the inline stub,
+        # calls queue instead of throwing, no /dmp/api/v1.0/events request is
+        # sent, and images / Guard API / Queue-it are unaffected.
+        '*tour.ibon.com.tw/static/assets/javascripts/ibon-dmp.js*',
         '*tour-uat.ibon.com.tw/*',
         '*.cloudfront.com/*',
         '*.doubleclick.net/*',  # Covers securepubads.g.doubleclick.net
@@ -435,6 +442,38 @@ async def nodrver_block_urls(tab, config_dict):
 
         # Cookie consent geolocation
         '*geolocation.onetrust.com/*',
+
+        # Ad / behavior trackers on the legacy ASP.NET sites (KHAM, Ticket.com,
+        # UDN) -- audit 2026-08-23. A/B verified: ticket links, buttons, body
+        # text and console error count are identical with these blocked.
+        # Dcard AdKit uploads a device fingerprint (?fingerprint=...) on KHAM+UDN
+        '*pixel.dcard.tw/*',
+        '*assets.dcard.tw/*',
+        '*.taboola.com/*',
+        '*.popin.cc/*',
+        '*rixbeedesk.com/*',
+        '*analytics.tiktok.com/*',
+        '*tiktokw.us/*',
+        '*ib.adnxs.com/*',
+
+        # AviviD / Likr (Ticket.com): behavior tracking + push marketing
+        '*.likr.tw/*',
+        '*.likr.com.tw/*',
+        '*advividnetwork.com/*',
+        '*t.ssp.hinet.net/*',
+
+        # Microsoft UET + Comscore (UDN)
+        '*bat.bing.com/*',
+        '*sb.scorecardresearch.com/*',
+
+        # LINE Tag (KHAM / Ticket.com / UDN). Does not affect LINE login,
+        # which goes through access.line.me.
+        '*d.line-scdn.net/*',
+        '*tr.line.me/*',
+
+        # UDN customer-service chatbot (same policy as botbonnie / imbee)
+        '*ccbot-front-ticket.a-p-i.io/*',
+        '*ccbot-testfront.udn-device-dept.net/*',
     ]
 
     # Block session-recording trackers for non-TicketPlus platforms only.
@@ -876,9 +915,17 @@ async def main(args):
 
         # Cloudflare challenge detection (only on URL change to avoid performance hit)
         # After 3 consecutive failures on same URL, stop retrying to avoid infinite loop
-        # Skip Cityline Login page: Turnstile there is part of the login form, not a block
-        # (covers both cityline.com and the venue cityline.com.hk login pages)
-        if is_cityline_login_page(url):
+        # Skip the Cityline and KKTIX login pages: the Turnstile there is part of
+        # the login form, not a page-wide block (covers cityline.com, the venue
+        # cityline.com.hk pages, and kktix.com / kktix.cc sign-in).
+        #
+        # Handling it from here would fight the platform module, which is about
+        # to drive the same form: the generic handler clicks the checkbox on its
+        # own schedule and can consume the widget between the sign-in code
+        # filling the credentials and submitting them. Ownership of a login-form
+        # Turnstile therefore belongs to nodriver_kktix_signin and to
+        # nodriver_cityline_login, which solve it as part of their own sequence.
+        if is_cityline_login_page(url) or is_kktix_login_page(url):
             cloudflare_checked = True
         if not cloudflare_checked and cloudflare_fail_count < 3:
             is_cloudflare = await detect_cloudflare_challenge(tab, show_debug=config_dict.get("advanced", {}).get("verbose", False))

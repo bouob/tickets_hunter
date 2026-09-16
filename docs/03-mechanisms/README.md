@@ -485,6 +485,7 @@ else:
 | | | ✅ Stage 7: 驗證碼處理機制 |
 | | | ✅ KKTIX 參考實作 |
 | | | ✅ iBon 參考實作 |
+| v3.0 | 2026-09-08 | 15-cloudflare-turnstile 改寫驗證邏輯（嵌入式 widget 改以 token 為憑據，HTML 活躍指標對它恆為「已解決」）；02-authentication 補登入表單 Turnstile 的處理權轉移、CDP 送出與失敗冷卻 |
 | v2.9 | 2026-08-04 | 新增購票資格機制文件（19-purchase-qualification.md）；02-authentication 補 KKTIX 登入前置關卡與診斷；12-error-handling 補 WebSocket 靜默斷線計數 |
 | v2.8 | 2026-06-14 | 新增通用 OCR 模型選擇機制文件（18-universal-ocr-model.md） |
 | v2.7 | 2026-06-13 | 新增多開實例機制文件（17-multi-instance.md） |

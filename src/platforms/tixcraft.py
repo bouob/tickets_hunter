@@ -2031,10 +2031,11 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
         # T013: Log selected area with selection type
         if debug.enabled:
             try:
-                area_text = await target_area.text
-                if not area_text:
-                    area_text = await target_area.inner_text
-                area_text = area_text.strip()[:80] if area_text else "Unknown"
+                # Element.text is a property and there is no inner_text attribute;
+                # awaiting either raised and was swallowed, so this line never logged.
+                area_html = await target_area.get_html()
+                area_text = util.remove_html_tags(area_html)
+                area_text = area_text[:80] if area_text else "Unknown"
                 selection_type = "fallback" if is_fallback_selection else "keyword match"
                 debug.log(f"[AREA SELECT] Selected area: {area_text} ({selection_type})")
             except:
@@ -2166,17 +2167,27 @@ async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item,
                     if font_el:
                         font_text = await font_el.evaluate('el => el.textContent') or ''
                 if font_text:
-                    font_text = "@%s@" % font_text
+                    font_text = font_text.strip()
 
-                    debug.log(f"[AREA KEYWORD]   Checking seats: {font_text.strip('@')}")
+                    debug.log(f"[AREA KEYWORD]   Checking seats: {font_text}")
 
-                    # Skip if only 1-9 seats remaining
-                    SEATS_1_9 = ["@%d@" % i for i in range(1, 10)]
-                    if any(seat in font_text for seat in SEATS_1_9):
-                        debug.log(f"[AREA KEYWORD]   Insufficient seats (need {config_dict['ticket_number']}, only {font_text.strip('@')} available)")
-                        continue
+                    # The count is embedded in localized text, never a bare
+                    # number: "剩餘 1" (zh) / "1 seat(s) remaining" (en). The old
+                    # "@1@".."@9@" substring test therefore never matched and
+                    # this guard silently passed every area through (#358).
+                    # A status word instead of a count (熱賣中 / Available) means
+                    # the page is not telling us how many are left, so the area
+                    # is kept - the ticket-number page is the next line of
+                    # defence.
+                    seats_match = re.search(r'\d+', font_text)
+                    if seats_match:
+                        remaining = int(seats_match.group())
+                        if remaining < config_dict["ticket_number"]:
+                            debug.log(f"[AREA KEYWORD]   Insufficient seats (need {config_dict['ticket_number']}, only {remaining} available)")
+                            continue
+                        debug.log(f"[AREA KEYWORD]   Sufficient seats available ({remaining})")
                     else:
-                        debug.log(f"[AREA KEYWORD]   Sufficient seats available")
+                        debug.log(f"[AREA KEYWORD]   No seat count in '{font_text}', keeping this area")
             except:
                 pass
 
@@ -2384,20 +2395,30 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
                         break
 
                 if parent_row and parent_row.tag.lower() == 'tr':
-                    # 嘗試找 <h4> 標籤
-                    h4_element = await parent_row.query_selector('h4')
-                    if h4_element:
-                        ticket_type_name = h4_element.text or ""
-                    else:
-                        # 嘗試找 <td class="fcBlue">
-                        td_element = await parent_row.query_selector('td.fcBlue')
-                        if td_element:
-                            ticket_type_name = td_element.text or ""
+                    # Read the whole cell, not Element.text: that property returns
+                    # only the first text node, so a name split across nested tags
+                    # (e.g. <a>full</a>+<a>voucher</a>) would lose everything after
+                    # the first fragment. Stay scoped to the name cell -- widening
+                    # this to the <tr> would pull in the remark column, whose text
+                    # can match keyword_exclude and wipe out every row.
+                    name_element = await parent_row.query_selector('h4')
+                    if not name_element:
+                        name_element = await parent_row.query_selector('td.fcBlue')
 
-                    ticket_type_name = ticket_type_name.strip()
+                    if name_element:
+                        name_html = await name_element.get_html()
+                        ticket_type_name = util.remove_html_tags(name_html)
 
             except Exception as name_exc:
                 debug.log(f"[TICKET SELECT] Failed to extract ticket type name: {name_exc}")
+
+            # Apply keyword_exclude here so keyword matching and fallback share one
+            # clean candidate list -- an excluded ticket type can never be picked
+            # by the fallback branch below (same invariant as cityline's
+            # _cityline_collect_available_areas).
+            if util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_type_name):
+                debug.log(f"[TICKET SELECT] Excluded by keyword_exclude: '{ticket_type_name}'")
+                continue
 
             # 加入 valid_ticket_types
             valid_ticket_types.append({
@@ -2432,11 +2453,6 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
             for ticket_info in valid_ticket_types:
                 ticket_name = ticket_info['name']
 
-                # Apply exclude keyword filter
-                if util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_name):
-                    debug.log(f"[TICKET SELECT]   Excluded by keyword_exclude: {ticket_name}")
-                    continue
-
                 # Keyword matching (support space-separated AND logic)
                 keyword_parts = keyword_item.split(' ')
                 row_text = util.format_keyword_string(ticket_name)
@@ -2460,18 +2476,11 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
         if not matched_ticket:
             debug.log(f"[TICKET SELECT] All keywords failed to match")
 
-    # Single option auto-select: when only one valid ticket type exists, select it directly
-    # (unless excluded by keyword_exclude)
+    # Single option auto-select: when only one valid ticket type exists, select it
+    # directly. keyword_exclude was already applied while collecting candidates.
     if not matched_ticket and len(valid_ticket_types) == 1:
-        single_ticket = valid_ticket_types[0]
-        ticket_name = single_ticket['name']
-
-        # Check if excluded by keyword_exclude
-        if not util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_name):
-            matched_ticket = single_ticket
-            debug.log(f"[TICKET SELECT] Single option auto-select: '{ticket_name}'")
-        else:
-            debug.log(f"[TICKET SELECT] Single option excluded by keyword_exclude: '{ticket_name}'")
+        matched_ticket = valid_ticket_types[0]
+        debug.log(f"[TICKET SELECT] Single option auto-select: '{matched_ticket['name']}'")
 
     # Fallback logic (similar to area selection)
     if not matched_ticket:

@@ -283,6 +283,9 @@ textarea {
     top: 0;
     z-index: 1020;
     padding-top: 0.75rem;
+    /* Restores the gap the old .row wrapper provided, so the first form row
+       does not sit flush against the tab strip. */
+    padding-bottom: 0.5rem;
     background-color: var(--bs-body-bg);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
@@ -307,14 +310,7 @@ textarea {
     }
 }
 
-/* 存檔 button: a slightly lighter blue than the other primary buttons so the
-   most-frequently-used action is easy to spot. Overriding Bootstrap's per-button
-   CSS variables keeps hover/active/focus states consistent and theme-aware. */
-#save_btn {
-    --bs-btn-bg: #4d94ff;
-    --bs-btn-border-color: #4d94ff;
-    --bs-btn-hover-bg: #3d86f5;
-    --bs-btn-hover-border-color: #3d86f5;
-    --bs-btn-active-bg: #3d86f5;
-    --bs-btn-active-border-color: #3d86f5;
-}
+/* 存檔 uses Bootstrap's btn-success (see settings.html) rather than a custom
+   lighter blue. Bootstrap tunes $primary to land exactly on the WCAG AA 4.5:1
+   floor against white, so any lighter blue drops below it -- which would have
+   left the most-used button the only unreadable one. */
