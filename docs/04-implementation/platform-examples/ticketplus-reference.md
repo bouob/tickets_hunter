@@ -1,7 +1,7 @@
 # 平台實作參考：TicketPlus
 
 **文件說明**：TicketPlus 平台的完整實作參考，涵蓋排隊偵測、展開面板設計、實名驗證、多版面自動識別等技術實作指南。
-**最後更新**：2025-12-02
+**最後更新**：2026-09-08
 
 ---
 
@@ -67,30 +67,30 @@
 
 ---
 
-## 核心函數索引
+## 核心函式索引
 
-| 階段 | 函數名稱 | 行數 | 說明 |
-|------|---------|------|------|
-| Main | `nodriver_ticketplus_main()` | 8928 | 主控制流程（URL 路由）|
-| Stage 2 | `nodriver_ticketplus_account_sign_in()` | 6357 | 帳號登入 |
-| Stage 2 | `nodriver_ticketplus_account_auto_fill()` | 6433 | 自動填入帳密 |
-| Stage 3 | `nodriver_ticketplus_detect_layout_style()` | 6227 | 版面類型偵測 |
-| Stage 4 | `nodriver_ticketplus_date_auto_select()` | 6485 | 日期自動選擇 |
-| Stage 5 | `nodriver_ticketplus_unified_select()` | 6814 | 統一區域選擇 |
-| Stage 5 | `nodriver_ticketplus_order_expansion_auto_select()` | 7453 | 展開面板區域選擇 |
-| Stage 6 | `nodriver_ticketplus_assign_ticket_number()` | 8029 | 票數設定 |
-| Stage 9 | `nodriver_ticketplus_ticket_agree()` | 8207 | 同意條款 |
-| Stage 10 | `nodriver_ticketplus_click_next_button_unified()` | 7348 | 下一步按鈕 |
-| Stage 11 | `nodriver_ticketplus_check_queue_status()` | 8376 | **排隊狀態偵測** |
-| Stage 11 | `nodriver_ticketplus_order_auto_reload_coming_soon()` | 8455 | 即將開賣頁面處理 |
-| Stage 12 | `nodriver_ticketplus_confirm()` | 8574 | 確認頁面處理 |
-| Util | `nodriver_ticketplus_accept_realname_card()` | 8272 | 關閉實名驗證對話框 |
-| Util | `nodriver_ticketplus_accept_other_activity()` | 8285 | 關閉推薦活動對話框 |
-| Util | `nodriver_ticketplus_accept_order_fail()` | 8298 | 處理訂單失敗對話框 |
-| Util | `nodriver_ticketplus_order_exclusive_code()` | 8844 | 折扣碼輸入 |
-| Util | `nodriver_ticketplus_check_next_button()` | 8808 | 下一步按鈕狀態檢查 |
+| 階段 | 函式名稱 | 說明 |
+|------|---------|------|
+| Main | `nodriver_ticketplus_main()` | 主控制流程（URL 路由）|
+| Stage 2 | `nodriver_ticketplus_account_sign_in()` | 帳號登入 |
+| Stage 2 | `nodriver_ticketplus_account_auto_fill()` | 自動填入帳密 |
+| Stage 3 | `nodriver_ticketplus_detect_layout_style()` | 版面類型偵測 |
+| Stage 4 | `nodriver_ticketplus_date_auto_select()` | 日期自動選擇 |
+| Stage 5 | `nodriver_ticketplus_unified_select()` | 統一區域選擇 |
+| Stage 5 | `nodriver_ticketplus_order_expansion_auto_select()` | 展開面板區域選擇 |
+| Stage 6 | `nodriver_ticketplus_assign_ticket_number()` | 票數設定 |
+| Stage 9 | `nodriver_ticketplus_ticket_agree()` | 同意條款 |
+| Stage 10 | `nodriver_ticketplus_click_next_button_unified()` | 下一步按鈕 |
+| Stage 11 | `nodriver_ticketplus_check_queue_status()` | **排隊狀態偵測** |
+| Stage 11 | `nodriver_ticketplus_order_auto_reload_coming_soon()` | 即將開賣頁面處理 |
+| Stage 12 | `nodriver_ticketplus_confirm()` | 確認頁面處理 |
+| Util | `nodriver_ticketplus_accept_realname_card()` | 關閉實名驗證對話框 |
+| Util | `nodriver_ticketplus_accept_other_activity()` | 關閉推薦活動對話框 |
+| Util | `nodriver_ticketplus_accept_order_fail()` | 處理訂單失敗對話框 |
+| Util | `nodriver_ticketplus_order_exclusive_code()` | 優惠序號與信用卡前六碼填入 |
+| Util | `nodriver_ticketplus_check_next_button()` | 下一步按鈕狀態檢查 |
 
-**程式碼位置**：`src/nodriver_tixcraft.py`
+**程式碼位置**：`src/platforms/ticketplus.py`
 
 ---
 
@@ -105,7 +105,11 @@ TicketPlus 在高流量時會進入排隊狀態，此時：
 
 ### 解決方案
 
-**核心程式碼**（`nodriver_ticketplus_check_queue_status`, Line 8376）:
+**核心程式碼**（`nodriver_ticketplus_check_queue_status`）:
+
+> 以下片段是早期版本，僅供說明思路。實作已因 issue #389 改寫：改用 `innerText`
+> 避免抓到 Vuetify 常駐掛載的隱藏節點、只採計可見的對話框、遮罩層不再參與判定，
+> 並在偵測到失敗彈窗時強制判為「非排隊」。以原始碼為準。
 
 ```python
 async def nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_debug=False):
@@ -181,7 +185,7 @@ TicketPlus 有多種頁面版面，選擇器不同：
 
 ### 解決方案
 
-**核心程式碼**（`nodriver_ticketplus_detect_layout_style`, Line 6227）:
+**核心程式碼**（`nodriver_ticketplus_detect_layout_style`）:
 
 ```python
 async def nodriver_ticketplus_detect_layout_style(tab, config_dict=None):
@@ -254,7 +258,7 @@ for header in panel_headers:
 
 ## URL 路由表
 
-| URL 模式 | 頁面類型 | 處理函數 |
+| URL 模式 | 頁面類型 | 處理函式 |
 |---------|---------|---------|
 | `ticketplus.com.tw/` | 首頁 | 自動登入填入 |
 | `/activity/{id}` | 活動頁面 | 日期選擇 |
@@ -316,18 +320,36 @@ for header in panel_headers:
 2. 檢查 `layout_style` 輸出
 3. 手動確認頁面結構是否符合預期
 
-### Q3: 折扣碼無法輸入？
+### Q3: 優惠序號或卡號前六碼沒有被填入？
 
-**A**: 確認 `exclusive_code` 設定正確。
+**A**: 兩種欄位讀不同的設定鍵，先確認填的是對的那個。
 
-**設定方式**：
 ```json
 {
   "advanced": {
-    "ticketplus_exclusive_code": "YOUR_CODE"
+    "discount_code": "YOUR_CODE"
+  },
+  "contact": {
+    "credit_card_prefix": "412345"
   }
 }
 ```
+
+`.exclusive-code` 容器在票數選定後才由 Vue 掛載，同一個容器可能是加購序號欄，
+也可能是卡友專區的信用卡驗證欄，靠標籤文字與 placeholder 分辨：
+
+| 用字 | 填入 |
+|------|------|
+| 序號、加購 | `discount_code`（優先於卡片用字，「信用卡優惠序號」算序號欄）|
+| 信用卡、卡號、卡友、中國信託、簽帳金融卡、前六碼 | `credit_card_prefix` |
+| 優惠、折扣 | `discount_code` |
+| 以上皆無 | **不填**，並把實際看到的標籤與 placeholder 印進 debug log |
+
+最後一列是刻意的：無法辨識的欄位可能是發票載具之類，填錯比漏填糟。若在真實
+卡友專區看到沒被填的欄位，把 log 裡的用字回報回來擴充關鍵字即可。
+
+另外兩道保護：欄位已有值就不覆寫（平台可能預填），設定值長度超過欄位
+`maxlength` 也不填（例如要求前八碼的欄位不會被塞進六碼）。
 
 ---
 
@@ -348,7 +370,7 @@ for header in panel_headers:
 
 - 📋 [Stage 11: 排隊與付款機制](../../03-mechanisms/11-queue-payment.md) - 排隊偵測詳解
 - 📋 [Stage 5: 區域選擇機制](../../03-mechanisms/05-area-selection.md) - 展開面板處理
-- 🏗️ [程式碼結構分析](../../02-development/structure.md) - TicketPlus 函數索引
+- 🏗️ [程式碼結構分析](../../02-development/structure.md) - TicketPlus 函式索引
 - 📖 [12-Stage 標準](../../02-development/ticket_automation_standard.md) - 完整流程規範
 
 ---

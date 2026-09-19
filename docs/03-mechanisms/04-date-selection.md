@@ -1,7 +1,7 @@
 # 機制 04：日期選擇 (Stage 4)
 
 **文件說明**：詳細說明搶票系統的日期選擇機制、關鍵字匹配與自動回退策略
-**最後更新**：2026-06-10
+**最後更新**：2026-08-24
 
 ---
 
@@ -185,7 +185,7 @@ if formated_area_list is None or len(formated_area_list) == 0:
 
 **關鍵字解析**（v2025.12.18 標準：使用 `util.parse_keyword_string_to_array()`）：
 ```python
-# v2025.12.18: 使用統一的關鍵字解析函數（推薦）
+# v2025.12.18: 使用統一的關鍵字解析函式（推薦）
 import util
 keyword_array = util.parse_keyword_string_to_array(date_keyword)
 
@@ -249,12 +249,12 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
 
 ## 平台實作差異
 
-| 平台 | 選擇器類型 | Shadow DOM | 特殊處理 | 函數名稱 | 完成度 |
+| 平台 | 選擇器類型 | Shadow DOM | 特殊處理 | 函式名稱 | 完成度 |
 |------|-----------|-----------|---------|---------|--------|
 | **KKTIX** | Table rows | ❌ 無 | 支援 register_status 區域 | `nodriver_kktix_date_auto_select()` | 100% ✅ |
 | **TixCraft** | Button list | ❌ 無 | 檢查 `data-href` 屬性 | `nodriver_tixcraft_date_auto_select()` | 95% ⚠️ |
 | **iBon** | Button list | ✅ Closed | **DOMSnapshot 平坦化**策略 | `nodriver_ibon_date_auto_select()` | 100% ✅ |
-| **TicketPlus** | Expansion panel | ❌ 無 | 需先展開 date 面板 | `nodriver_ticketplus_date_auto_select()` | 100% ✅ |
+| **TicketPlus** | `div#buyTicket div.sesstion-item` | ❌ 無 | 雙路徑：Vue data 導航 → 注入 JS 點擊 | `nodriver_ticketplus_date_auto_select()` | 100% ✅ |
 | **KHAM** | Table rows | ❌ 無 | 支援 3 域名變體 (kham/ticket/udn) | `nodriver_kham_date_auto_select()` | 100% ✅ |
 | **UDN** | Session blocks | ❌ 無 | 複用 KHAM 邏輯 (`div.yd_session-block`) | `nodriver_kham_date_auto_select()` | 100% ✅ |
 
@@ -265,6 +265,30 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
 - TicketPlus: `ticketplus.py`（`nodriver_ticketplus_date_auto_select`）
 - KHAM: `kham.py`（`nodriver_kham_date_auto_select`）
 - **UDN**: 複用 KHAM 邏輯，選擇器 `div.yd_session-block`
+
+---
+
+## TicketPlus 的雙路徑與排除關鍵字
+
+`nodriver_ticketplus_date_auto_select` 有兩條**非互斥**的選擇路徑，第一條失敗會自動落到第二條：
+
+| 順序 | 路徑 | 取得場次的方式 | 動作 |
+|------|------|---------------|------|
+| 1 | Vue data | `document.querySelector('.eventClass').__vue__.$data.sessions`，過濾 `loadingStatusFinished` | 字串組出 order URL 後直接導航 |
+| 2 | 注入 JS | 在 JS 端以共用選擇器片段重新收集 session container | `dispatchEvent(MouseEvent)` 點擊該列的 `button.nextBtn` |
+
+Vue data 路徑在正式版 Vue 未暴露 `__vue__` 時會回傳 `ready:false`，此時實際運作的只有注入 JS 路徑。
+
+### 排除關鍵字的套用位置（Common Trap）
+
+`keyword_exclude` 在**兩條路徑各自的候選收集階段**都要套用，且判定一律在 Python 端以 `_ticketplus_filter_excluded()` 呼叫 `util.reset_row_text_if_match_keyword_exclude()` 完成。
+
+這有兩個必要理由：
+
+1. **不能只靠 Python 端掃 DOM 的那份清單。** `formated_area_list` 雖然套過排除，但它只被當成「有沒有場次可選」的閘門，不是候選來源。若只依賴它，排除就退化成 all-or-nothing：全部場次被排除時正確地不選，但只排除其中幾場時，兩條路徑仍會選中被排除的場次。
+2. **判定必須留在 Python 端。** 在 JS 內用 `includes()` 比對會失去 `util.format_keyword_string()` 的全形空白正規化與空格 AND 邏輯，導致 TicketPlus 的排除語意與其他平台不一致。
+
+注入 JS 路徑因此拆成「收集 → Python 過濾 → 點擊」三段：收集階段回傳每列的 index 與 `textContent`，Python 端算出允許的 index 清單，再以 `json.dumps()` 傳回點擊階段做 `filter`。兩段共用模組常數 `_TICKETPLUS_SESSION_CONTAINERS_JS` 定義候選集，避免兩次查詢的認定分歧導致 index 錯位。
 
 ---
 
@@ -447,7 +471,7 @@ for i, kw in enumerate(keyword_array):
 - 🔧 [KKTIX 參考實作](../04-implementation/platform-examples/kktix-reference.md)
 - 🔧 [iBon 參考實作](../04-implementation/platform-examples/ibon-reference.md) - Shadow DOM 範例
 - 📖 [12-Stage 標準](../02-development/ticket_automation_standard.md) - 完整 12 階段流程
-- 🏗️ [程式碼結構分析](../02-development/structure.md) - 函數位置索引
+- 🏗️ [程式碼結構分析](../02-development/structure.md) - 函式位置索引
 
 ---
 
@@ -458,7 +482,8 @@ for i, kw in enumerate(keyword_array):
 | v1.0 | 2024 | 初版：基本日期選擇邏輯 |
 | v1.1 | 2025-10 | 新增 AND/OR 邏輯支援 |
 | v1.2 | 2025-11 | Feature 003: Early Return + Conditional Fallback |
-| **v1.3** | **2025-12-18** | **util 共用函數重構** |
+| **v1.3** | **2025-12-18** | **util 共用函式重構** |
+| v1.4 | 2026-08 | 補充 TicketPlus 雙路徑與排除關鍵字套用位置 |
 
 **v1.3 重大變更**：
 - ✅ 新增 `util.parse_keyword_string_to_array()` 統一關鍵字解析

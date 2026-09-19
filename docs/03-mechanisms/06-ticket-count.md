@@ -1,7 +1,7 @@
 # 機制 06：票數設定 (Stage 6)
 
 **文件說明**：說明搶票系統的票數設定機制、數量選擇方式與配置驅動策略
-**最後更新**：2026-06-10
+**最後更新**：2026-08-23
 
 ---
 
@@ -53,11 +53,32 @@
 TixCraft 的票頁可能有多個 `<select>`（對應不同票種/價位）。系統先根據 `area_keyword` 篩選目標票種，再對該 select 設定票數：
 
 - 透過父元素 `<tr>` 中的 `<h4>` 或 `<td class="fcBlue">` 提取票種名稱
-- 支援排除關鍵字（`keyword_exclude`）
+- 票種頁沿用區域選擇的設定鍵：`area_auto_select.area_keyword`、`area_auto_select.mode`、`area_auto_fallback`、`keyword_exclude`，不是另一組獨立設定
 - 單一票種時自動選擇
 - 所有票種售完時回傳失敗，觸發頁面重新載入
 - `tixcraft.allow_less_tickets=false`（預設）時，票數下拉選單必須能選到使用者設定張數，否則回傳失敗並重新整理等待
 - `tixcraft.allow_less_tickets=true` 時，若設定張數不可選，會改選小於設定張數的最大可用張數（例如設定 4 張、可選 3/2/1 時選 3）
+
+#### 票種名稱的取值範圍（Common Trap）
+
+票種名稱以 `get_html()` + `util.remove_html_tags()` 取得，不使用 zendriver 的 `Element.text`。原因是後者只回傳第一個 text node，遇到名稱被拆成巢狀標籤（例如 `<a>全票</a>+<a>福利券</a>`）時只會拿到「全票」，導致關鍵字比對與排除關鍵字的來源字串本身就是殘缺的。
+
+取值範圍必須限定在票種名稱欄（`h4` 或 `td.fcBlue`），**不可擴大到整個 `<tr>`**。備註欄常出現與票種名互相牽連的說明文字（例如「如僅購買『全票』票種，將無法享有福利」），一旦納入比對，排除關鍵字「福利」會把所有列都排除，變成完全無法購票。
+
+#### 排除關鍵字的套用位置（Common Trap）
+
+`keyword_exclude` 在**收集候選票種的階段**就套用，使關鍵字比對與 fallback 自動選擇共用同一份已過濾清單。這是必要條件而非最佳化：`util.get_target_item_from_matched_list()` 不含任何過濾，若排除只寫在關鍵字比對迴圈內，未設 `area_keyword` 時走的 fallback 分支會直接從未過濾清單挑選，排除關鍵字形同無效（Issue #309）。
+
+同一不變式的既有範例見 `platforms/cityline.py` 的 `_cityline_collect_available_areas`；`platforms/kham.py` 的 `nodriver_kham_seat_type_auto_select` 與 `nodriver_ticket_seat_type_auto_select` 亦已對齊。
+
+#### 候選全數被排除時的行為（跨平台不一致）
+
+| 平台 | 行為 |
+|------|------|
+| TixCraft、Cityline、FanSiGo | 不選擇任何票種，回傳失敗並重新整理等待 |
+| iBon | 放棄排除，改從未過濾清單選擇（`nodriver_ibon_ticket_number_auto_select` 的逃生門） |
+
+iBon 的作法違反排除關鍵字的黑名單語意，與其他平台不一致，尚未定調。修改任一平台此段行為前請先確認預期語意。
 
 ### KKTIX — Angular 雙向綁定（`nodriver_kktix_assign_ticket_number`）
 
@@ -136,4 +157,5 @@ React 18 會將同步的多次 `setState` 合併為一次更新。因此不能�
 
 - **2026-03**: 補充核心實作內容、各平台差異表格與常見問題
 - **2026-06**: 補充拓元 `allow_less_tickets` 不足張數控制
+- **2026-08**: 補充票種名稱取值範圍、排除關鍵字套用位置、候選全數被排除的跨平台差異（#309）
 - **2025-11**: 初始文件建立

@@ -32,6 +32,7 @@ from nodriver_common import (
     CONST_FROM_TOP_TO_BOTTOM,
     CONST_MAXBOT_ANSWER_ONLINE_FILE,
     CONST_MAXBOT_INT28_FILE,
+    CONST_NATIVE_INPUT_SETTER_JS,
     CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS,
     CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER,
 )
@@ -2017,7 +2018,7 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
                     }, 100);
                 });
             }
-        ''')
+        ''', await_promise=True)
 
         wait_parsed = util.parse_nodriver_result(wait_result)
         if isinstance(wait_parsed, dict):
@@ -3350,16 +3351,13 @@ async def nodriver_ibon_card_vaildate(tab, config_dict):
             debug.log(f"[IBON VAILDATE] Input already has value, skipping")
             return False
 
-        # Use Angular-compatible prototype setter so ngModel picks up the change
+        # Use the shared native setter so ngModel picks up the change
         fill_ok = await tab.evaluate(f'''
             (function() {{
-                var input = document.querySelector("{INPUT_CSS}");
+                {CONST_NATIVE_INPUT_SETTER_JS}
+                const input = document.querySelector("{INPUT_CSS}");
                 if (!input) return false;
-                var setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-                setter.call(input, {prefix_js});
-                input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                return input.value === {prefix_js};
+                return setNativeInputValue(input, {prefix_js});
             }})()
         ''')
 

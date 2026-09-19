@@ -1,7 +1,7 @@
 # 機制 02：身份認證 (Stage 2)
 
 **文件說明**：說明搶票系統各平台的登入機制，包含 Cookie 注入、帳密登入與 OAuth 流程
-**最後更新**：2026-06-10
+**最後更新**：2026-09-08
 
 ---
 
@@ -88,7 +88,11 @@ Secure: True, HttpOnly: True
 4. 智慧輪詢：每 0.3 秒檢查 URL 是否離開 `/users/sign_in`，最多等待 10 秒
 5. 登入完成後，若停留在首頁/使用者頁面，自動跳轉至 `back_to` 目標
 
-**觸發時機**：主迴圈偵測到 URL 含 `/users/sign_in?` 時，以及 `nodriver_goto_homepage()` 中自動將首頁改為 `CONST_KKTIX_SIGN_IN_URL`。
+**觸發時機**：主迴圈以 `is_kktix_login_page()` 判定登入頁時，以及 `nodriver_goto_homepage()` 中自動將首頁改為 `CONST_KKTIX_SIGN_IN_URL`。
+
+該判定是登入頁的唯一真相源，涵蓋 kktix.com 與 kktix.cc 兩個網域，也接受不帶 query
+string 的裸登入 URL（session 過期時 KKTIX 會導向這種）。過去五處各自手寫字串比對，
+釘死 scheme 與 host 的漏掉 kktix.cc，要求結尾 `?` 的漏掉裸 URL。
 
 **實作位置**：`src/platforms/kktix.py`（nodriver_kktix_signin）
 
@@ -102,15 +106,28 @@ Secure: True, HttpOnly: True
 | 訪客彈窗「立刻成為 KKTIX 會員」| `nodriver_kktix_check_guest_modal`（`#guestModal`）| 點 `button[data-dismiss="modal"]` 關閉 |
 | 排隊後掉成訪客 session | `nodriver_kktix_redirect_to_signin_if_guest`（`li.not-signed-in:not(.hidden)`）| 導回 sign_in 頁，跳過本輪 |
 
-另有一道不在程式控制內：**Cloudflare challenge 會攔截登入表單的提交**。
-症狀是送出按鈕確實被點到，但 URL 始終停在 `/users/sign_in`，直到 challenge 被解掉為止。
-此時 log 會先出現 `[KKTIX SIGNIN] Login timeout after 10s; 0/33 URL checks failed`
-（`0/33` 表示 websocket 正常，純粹是頁面沒跳轉），隨後才出現 `[CLOUDFLARE] Challenge page detected`。
+第四道是 **Cloudflare Turnstile**，它現在由登入流程自己處理。
+
+主迴圈用 `is_kktix_login_page()` 把這頁排除在 Cloudflare 偵測之外（比照 Cityline
+登入頁）：那裡的 Turnstile 屬於登入表單，不是全頁阻擋，讓通用處理器插手會在填完
+帳密與送出之間把 widget 消耗掉。
+
+`nodriver_kktix_signin` 因此承接三件事：
+
+| 時機 | 行為 |
+|------|------|
+| 找不到 `#user_login` | 先跑 `detect_cloudflare_challenge`；是挑戰就處理一次再返回，讓下一輪重進 |
+| 送出前 | `_ensure_kktix_turnstile_token` 確認 token 到手，拿不到就**不送出**（見下） |
+| 輪詢中途 | 仍停在登入頁且無錯誤訊息時，清一次 Cloudflare 中繼頁 |
+
+送出後若頁面停在 `/users/sign_in` 不動，log 會是
+`[KKTIX SIGNIN] Login timeout after 10s; 0/33 URL checks failed`
+（`0/33` 表示 websocket 正常，純粹是頁面沒跳轉）。
 
 #### 送出按鈕的選擇器降級鏈
 
 送出按鈕曾以中文 `value="登入"` 綁定，非繁中 locale 會靜默失敗（找不到就什麼都不做，也不留 log）。
-現改為依序嘗試並回報實際命中者：
+現改為依序嘗試：
 
 ```
 form#new_user input[type="submit"]
@@ -119,16 +136,38 @@ input[type="submit"][value="登入"]
 button[type="submit"]
 ```
 
-命中時記錄 `[KKTIX SIGNIN] Submit clicked via <selector>`；全部落空則記錄候選數量並提前返回，
-不再對一個註定失敗的表單空等 10 秒。
+命中後**用 CDP 原生點擊座標**，不用 `btn.click()`：附在這張表單上的 Cloudflare
+腳本會把「頁面有沒有收到真實輸入」納入評分，而腳本點擊的 `isTrusted` 是 false。
+
+座標取自 `getBoundingClientRect`，但取之前先 `scrollIntoView`，並檢查中心點確實落在
+viewport 內。按鈕在摺線以下時 rect 仍會回傳值，對那個座標派送滑鼠事件會點到別的
+元素——此時降級為腳本點擊，log 記 `Submit clicked via script`；正常路徑記
+`Submit clicked via CDP at (x, y)`。全部落空才提前返回，不對註定失敗的表單空等。
 
 #### 診斷輸出的語意
 
 | 訊息 | 意義 |
 |------|------|
-| `#user_login not found; page may be a queue room, a Cloudflare challenge, or already signed in` | 欄位不存在。舊版此處靜默跳過，看起來就像「不填帳密」|
+| `#user_login not found; page may be a queue room or already signed in` | 欄位不存在，且已排除 Cloudflare（那條會先印 `A Cloudflare challenge is covering the login form`）。舊版此處靜默跳過，看起來就像「不填帳密」|
+| `Turnstile needs a click` / `Turnstile token acquired (len=N)` | 送出前的 token 取得過程 |
+| `No Turnstile token; not submitting this round` | 拿不到 token，這輪不送出（見下） |
+| `Login failed: <平台訊息>` | 平台回報登入失敗，立即退出不等滿逾時 |
+| `Holding off after a login failure: <訊息>` | 冷卻中，本輪直接返回 |
 | `URL check failed (attempt N/33): ...` | 輪詢第一次失敗（只印一次，避免洗版）|
 | `Login timeout after 10s; X/33 URL checks failed, last error: ...` | 逾時彙總。`X=0` 代表連線正常、純粹沒跳轉；`X` 接近 33 代表 websocket 有問題 |
+
+#### 兩道不送出的閘門
+
+**沒有 Turnstile token 就不送出**。帶著空 token 的表單伺服器一定拒絕，等於白費一次
+登入嘗試，還多一次帳密曝險。拿不到就直接返回，主迴圈下一輪會因 URL 未變而重進。
+
+**登入失敗後冷卻 60 秒**。帳密錯誤不會自己好，而主迴圈在 URL 停在登入頁時每一輪都
+會重新進入這個函式——沒有冷卻就會變成對 KKTIX 連續送出錯誤帳密。
+
+失敗訊息從 `.alert.alert-danger`、`#flash_alert`、`.flash-alert`、`.alert-error`
+依序找。**這幾個選擇器尚未經真實失敗頁驗證**（要故意打錯密碼才拿得到那份 DOM），
+所以邏輯寫成 best-effort：查無訊息就照常繼續等待，選擇器猜錯的後果是回到舊行為，
+絕不會把「沒找到訊息」誤判成失敗。
 
 #### 帳號啟用門檻
 

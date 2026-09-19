@@ -19,11 +19,17 @@ from zendriver import cdp
 
 import util
 from nodriver_common import (
+    cdp_click_at,
     check_and_handle_pause,
+    detect_cloudflare_challenge,
+    handle_cloudflare_challenge,
+    has_turnstile_token_field,
     nodriver_check_checkbox,
     play_sound_while_ordering,
     send_discord_notification,
     send_telegram_notification,
+    solve_turnstile_checkbox,
+    wait_for_turnstile_token,
     write_question_to_file,
     CONST_FROM_TOP_TO_BOTTOM,
     CONST_MAXBOT_ANSWER_ONLINE_FILE,
@@ -31,6 +37,7 @@ from nodriver_common import (
 )
 
 __all__ = [
+    "is_kktix_login_page",
     "nodriver_kktix_signin",
     "nodriver_kktix_paused_main",
     "nodriver_kktix_travel_price_list",
@@ -65,6 +72,23 @@ _state = {}
 # the submission to navigate, short enough that a failed press retries almost
 # immediately - this window is the whole reason the guard cannot latch.
 CONST_KKTIX_NEXT_BUTTON_COOLDOWN = 1.5
+
+
+def is_kktix_login_page(url):
+    """True for the KKTIX member sign-in page, on either domain.
+
+    KKTIX serves organizer sites from kktix.cc and account pages from
+    kktix.com, and a sign-in URL can carry either host, so both have to be
+    accepted. The back_to parameter is percent-encoded, so a target URL sitting
+    in the query string can never make this match by accident.
+
+    The Turnstile on this page belongs to the login form rather than to a
+    page-wide block, which is why the main loop skips its Cloudflare handling
+    here and nodriver_kktix_signin deals with the widget itself.
+    """
+    if not url:
+        return False
+    return ('kktix.com' in url or 'kktix.cc' in url) and '/users/sign_in' in url
 
 
 def is_kktix_account_configured(config_dict):
@@ -123,6 +147,137 @@ async def nodriver_kktix_check_queue_page(tab, config_dict):
     return is_queue_page
 
 
+# Scroll the submit button into view before reading its box, because the CDP
+# click below takes viewport coordinates: a button below the fold would
+# otherwise resolve to whatever happens to sit at those coordinates instead.
+CONST_KKTIX_SUBMIT_BUTTON_JS = '''
+    (function() {
+        const selectors = [
+            'form#new_user input[type="submit"]',
+            'form[action*="sign_in"] input[type="submit"]',
+            'input[type="submit"][value="登入"]',
+            'button[type="submit"]'
+        ];
+        for (const selector of selectors) {
+            const btn = document.querySelector(selector);
+            if (!btn || btn.disabled) continue;
+            btn.scrollIntoView({ block: 'center' });
+            const r = btn.getBoundingClientRect();
+            const cx = r.x + r.width / 2;
+            const cy = r.y + r.height / 2;
+            const inViewport = r.width > 0 && r.height > 0 &&
+                cx >= 0 && cy >= 0 &&
+                cx <= window.innerWidth && cy <= window.innerHeight;
+            return { found: true, inViewport: inViewport, x: cx, y: cy, selector: selector };
+        }
+        return { found: false };
+    })();
+'''
+
+CONST_KKTIX_SUBMIT_FALLBACK_CLICK_JS = '''
+    (function() {
+        const selectors = [
+            'form#new_user input[type="submit"]',
+            'form[action*="sign_in"] input[type="submit"]',
+            'input[type="submit"][value="登入"]',
+            'button[type="submit"]'
+        ];
+        for (const selector of selectors) {
+            const btn = document.querySelector(selector);
+            if (btn && !btn.disabled) {
+                btn.click();
+                return true;
+            }
+        }
+        return false;
+    })();
+'''
+
+# Best-effort only: these selectors are the conventional Rails/Bootstrap flash
+# containers, but KKTIX's actual failure markup has not been observed. A miss
+# must therefore never be read as "login succeeded" -- the caller keeps waiting
+# instead, exactly as it did before this check existed.
+CONST_KKTIX_LOGIN_ERROR_JS = '''
+    (function() {
+        const selectors = ['.alert.alert-danger', '#flash_alert', '.flash-alert', '.alert-error'];
+        for (const selector of selectors) {
+            const el = document.querySelector(selector);
+            const text = el && el.innerText ? el.innerText.trim() : '';
+            if (text.length > 0) return text;
+        }
+        return '';
+    })();
+'''
+
+# Bad credentials do not fix themselves, and the main loop re-enters sign-in on
+# every pass while the URL stays put. Without a cooldown that turns into a
+# stream of failed login attempts against KKTIX.
+CONST_KKTIX_SIGNIN_ERROR_COOLDOWN = 60
+
+
+async def _get_kktix_submit_target(tab, debug):
+    """Viewport coordinates of the login submit button, or None.
+
+    Returns None when the button is missing or cannot be brought into view, so
+    the caller can fall back to a scripted click rather than dispatching a
+    mouse event at coordinates that belong to some other element.
+    """
+    try:
+        info = await tab.evaluate(CONST_KKTIX_SUBMIT_BUTTON_JS)
+    except Exception as exc:
+        debug.log(f"[KKTIX SIGNIN] Submit button lookup failed: {exc}")
+        return None
+
+    if not isinstance(info, dict) or not info.get('found'):
+        return None
+    if not info.get('inViewport'):
+        debug.log("[KKTIX SIGNIN] Submit button is outside the viewport; using a scripted click")
+        return None
+    return (info['x'], info['y'])
+
+
+async def _get_kktix_login_error(tab):
+    """Text of a login failure message, or '' when none is showing."""
+    try:
+        message = await tab.evaluate(CONST_KKTIX_LOGIN_ERROR_JS)
+    except Exception:
+        return ''
+    return message.strip() if isinstance(message, str) else ''
+
+
+async def _ensure_kktix_turnstile_token(tab, config_dict, debug):
+    """Make sure the login form carries a Turnstile token before submitting.
+
+    Returns True when the form is safe to submit: either there is no Turnstile
+    on it, or a token is present. Submitting without one just burns a login
+    attempt, since KKTIX rejects it server-side.
+
+    The widget is solved here rather than by the main loop, which skips its
+    Cloudflare handling on this page (is_kktix_login_page) precisely so the two
+    do not race for the same checkbox.
+    """
+    if not await has_turnstile_token_field(tab):
+        return True
+
+    # A managed widget solves itself, so look before clicking. The short window
+    # covers one that is mid-flight; anything longer is dead time on an
+    # interactive widget, which is what KKTIX actually serves.
+    token = await wait_for_turnstile_token(tab, timeout=0.5, show_debug=debug.enabled)
+    if token:
+        debug.log(f"[KKTIX SIGNIN] Turnstile already solved (len={len(token)})")
+        return True
+
+    debug.log("[KKTIX SIGNIN] Turnstile needs a click")
+    await solve_turnstile_checkbox(tab, show_debug=debug.enabled)
+    token = await wait_for_turnstile_token(tab, show_debug=debug.enabled)
+    if token:
+        debug.log(f"[KKTIX SIGNIN] Turnstile token acquired (len={len(token)})")
+        return True
+
+    debug.log("[KKTIX SIGNIN] No Turnstile token; not submitting this round")
+    return False
+
+
 async def nodriver_kktix_signin(tab, url, config_dict):
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
@@ -132,13 +287,28 @@ async def nodriver_kktix_signin(tab, url, config_dict):
 
     debug.log("nodriver_kktix_signin:", url)
 
+    # Wrong credentials do not become right on the next pass, and the main loop
+    # comes back here every time while the URL sits on the login page. Report
+    # once, then stay quiet for a while instead of hammering KKTIX.
+    last_error = _state.get("signin_error")
+    if last_error:
+        message, failed_at = last_error
+        if time.time() - failed_at < CONST_KKTIX_SIGNIN_ERROR_COOLDOWN:
+            debug.log(f"[KKTIX SIGNIN] Holding off after a login failure: {message}")
+            return False
+        _state.pop("signin_error", None)
+
     # 解析 back_to 參數取得真正的目標頁面
-    target_url = config_dict["homepage"]  # 預設值
+    # Remember it: a trip through a Cloudflare interstitial can strip the query
+    # string, and by then config_dict["homepage"] is only the event page, not
+    # wherever the user was actually headed.
+    target_url = _state.get("signin_target_url", config_dict["homepage"])
     try:
         parsed_url = urllib.parse.urlparse(url)
         params = urllib.parse.parse_qs(parsed_url.query)
         if 'back_to' in params and len(params['back_to']) > 0:
             target_url = params['back_to'][0]
+            _state["signin_target_url"] = target_url
     except Exception as exc:
         debug.log(f"[KKTIX SIGNIN] Failed to parse back_to parameter: {exc}")
 
@@ -159,8 +329,14 @@ async def nodriver_kktix_signin(tab, url, config_dict):
             # in the log. Report it and stop instead of submitting a dead form.
             account = await tab.query_selector("#user_login")
             if account is None:
-                debug.log("[KKTIX SIGNIN] #user_login not found; page may be a queue room, "
-                          "a Cloudflare challenge, or already signed in")
+                # The main loop no longer looks at Cloudflare on this page, so
+                # an interstitial covering the form is ours to clear.
+                if await detect_cloudflare_challenge(tab, show_debug=debug.enabled):
+                    debug.log("[KKTIX SIGNIN] A Cloudflare challenge is covering the login form")
+                    await handle_cloudflare_challenge(tab, config_dict, max_retry=1)
+                    return False
+                debug.log("[KKTIX SIGNIN] #user_login not found; page may be a queue room "
+                          "or already signed in")
                 return False
             await account.send_keys(kktix_account)
             await asyncio.sleep(random.uniform(0.1, 0.2))
@@ -172,40 +348,30 @@ async def nodriver_kktix_signin(tab, url, config_dict):
             await password.send_keys(kktix_password)
             await asyncio.sleep(random.uniform(0.1, 0.2))
 
+            # Submitting without a Turnstile token only burns a login attempt.
+            if not await _ensure_kktix_turnstile_token(tab, config_dict, debug):
+                return False
+
             # The submit button used to be matched by its Chinese value only,
             # which fails silently on any other locale.
-            submit_result = await tab.evaluate('''
-                (function() {
-                    const selectors = [
-                        'form#new_user input[type="submit"]',
-                        'form[action*="sign_in"] input[type="submit"]',
-                        'input[type="submit"][value="登入"]',
-                        'button[type="submit"]'
-                    ];
-                    let candidateCount = 0;
-                    for (const sel of selectors) {
-                        const btn = document.querySelector(sel);
-                        if (btn) {
-                            candidateCount += 1;
-                            if (!btn.disabled) {
-                                btn.click();
-                                return { clicked: true, selector: sel, candidateCount: candidateCount };
-                            }
-                        }
-                    }
-                    return { clicked: false, selector: '', candidateCount: candidateCount };
-                })()
-            ''')
-            submit_result = util.parse_nodriver_result(submit_result)
-            if isinstance(submit_result, dict) and submit_result.get('clicked'):
-                debug.log(f"[KKTIX SIGNIN] Submit clicked via {submit_result.get('selector')}")
+            #
+            # Prefer a native CDP click over btn.click(): the Cloudflare script
+            # attached to this form scores whether the page saw real input, and
+            # a scripted click carries isTrusted=false. The scripted click stays
+            # as the fallback for when the button cannot be brought into view,
+            # where firing a mouse event at its coordinates would hit whatever
+            # else is sitting there.
+            submit_target = await _get_kktix_submit_target(tab, debug)
+            if submit_target:
+                target_x, target_y = submit_target
+                await cdp_click_at(tab, target_x, target_y)
+                debug.log(f"[KKTIX SIGNIN] Submit clicked via CDP at ({target_x:.0f}, {target_y:.0f})")
             else:
-                candidate_count = 0
-                if isinstance(submit_result, dict):
-                    candidate_count = submit_result.get('candidateCount', 0)
-                debug.log(f"[KKTIX SIGNIN] No clickable submit button found "
-                          f"(candidates={candidate_count}); locale may differ or form not rendered")
-                return False
+                if not await tab.evaluate(CONST_KKTIX_SUBMIT_FALLBACK_CLICK_JS):
+                    debug.log("[KKTIX SIGNIN] No clickable submit button found; "
+                              "locale may differ or form not rendered")
+                    return False
+                debug.log("[KKTIX SIGNIN] Submit clicked via script")
 
             # Smart polling: wait for login completion (URL change from sign_in page)
             #
@@ -214,16 +380,21 @@ async def nodriver_kktix_signin(tab, url, config_dict):
             # Cloudflare check only re-arms on a URL change, and returning during
             # the __cf_chl_rt_tk redirect means it runs before the challenge
             # target exists, finds nothing, and never looks again - the bot then
-            # idles forever. Sitting out the full 10s wastes time but gives the
-            # challenge time to render, which is what lets the main loop solve it.
-            # Fixing this properly needs event-driven detection
-            # (cdp.target.TargetCreated), not an earlier poll.
+            # idles forever.
+            #
+            # That trap is now worse rather than better, because the main loop
+            # skips Cloudflare entirely on this page (is_kktix_login_page): if
+            # we returned mid-redirect, nobody at all would clear a transit
+            # interstitial. So the wait stays, and the loop below solves such an
+            # interstitial itself, once, rather than waiting for a handler that
+            # is no longer listening.
             max_wait = 10
             check_interval = 0.3
             max_attempts = int(max_wait / check_interval)
             login_completed = False
             url_error_count = 0
             last_url_exc = ""
+            solved_transit_challenge = False
 
             for attempt in range(max_attempts):
                 # 登入後檢查暫停
@@ -234,10 +405,30 @@ async def nodriver_kktix_signin(tab, url, config_dict):
                     current_url = await tab.evaluate('window.location.href')
 
                     # Detect if left sign_in page (login completed)
-                    if '/users/sign_in' not in current_url:
+                    if not is_kktix_login_page(current_url):
                         login_completed = True
                         debug.log(f"[KKTIX SIGNIN] Login completed after {attempt * check_interval:.1f}s, redirected to: {current_url}")
                         break
+
+                    # Bad credentials show up within a second; there is nothing
+                    # to gain from sitting out the rest of the wait.
+                    if attempt >= 3:
+                        login_error = await _get_kktix_login_error(tab)
+                        if login_error:
+                            debug.log(f"[KKTIX SIGNIN] Login failed: {login_error}")
+                            print(f"[KKTIX] 登入失敗：{login_error}")
+                            _state["signin_error"] = (login_error, time.time())
+                            return False
+
+                    # Still on the login page well after submitting usually means
+                    # a Cloudflare transit page took over. Clear it once -- the
+                    # main loop will not, and repeated attempts during a redirect
+                    # are what used to break the challenge.
+                    if attempt == 10 and not solved_transit_challenge:
+                        if await detect_cloudflare_challenge(tab, show_debug=debug.enabled):
+                            debug.log("[KKTIX SIGNIN] Clearing the Cloudflare transit page")
+                            await handle_cloudflare_challenge(tab, config_dict, max_retry=1)
+                            solved_transit_challenge = True
                 except Exception as exc:
                     # Report the first failure with its attempt index, then only
                     # the summary below; printing every attempt floods the log.
@@ -259,7 +450,7 @@ async def nodriver_kktix_signin(tab, url, config_dict):
             try:
                 current_url = await tab.evaluate('window.location.href')
                 if current_url and ('kktix.com/' in current_url or 'kktix.cc/' in current_url):
-                    if '/users/sign_in' in current_url:
+                    if is_kktix_login_page(current_url):
                         # Still on sign_in page (login failed or queue intercepted);
                         # jumping to back_to here would enter the event as a guest
                         debug.log("[KKTIX SIGNIN] Still on sign_in page, will retry on next loop")
@@ -325,7 +516,7 @@ async def nodriver_kktix_paused_main(tab, url, config_dict):
     debug = util.create_debug_logger(config_dict)
 
     is_url_contain_sign_in = False
-    if '/users/sign_in?' in url:
+    if is_kktix_login_page(url):
         redirect_needed = await nodriver_kktix_signin(tab, url, config_dict)
         is_url_contain_sign_in = True
 
@@ -1601,6 +1792,29 @@ async def nodriver_kktix_select_qualification(tab, config_dict, qualification):
     return True
 
 
+def _kktix_selected_member_code_is_unfilled(qualification):
+    """True when the already-selected option is a member_code awaiting input.
+
+    KKTIX preselects the radio when an event offers a single qualification, so
+    there is never a click to hang the fill on. Tying the fill to "we clicked a
+    radio this round" stalled those events forever (#403).
+
+    Invitation-code variants stay excluded: that layout is still unverified, so
+    it keeps its existing hands-off behaviour.
+    """
+    if qualification.get("invitationPending"):
+        return False
+
+    selected_index = qualification.get("selectedIndex", -1)
+    if selected_index < 0:
+        return False
+
+    for option in qualification.get("options", []):
+        if option.get("index") == selected_index:
+            return option.get("type") == "member_code" and not option.get("codeFilled")
+    return False
+
+
 async def nodriver_kktix_handle_qualification_and_next(tab, config_dict,
                                                        button_clicked_in_captcha=False):
     """Satisfy any purchase qualification, then press next (#377 / #375).
@@ -1618,9 +1832,13 @@ async def nodriver_kktix_handle_qualification_and_next(tab, config_dict,
     qualification = await nodriver_kktix_check_qualification(tab, config_dict)
 
     if qualification.get("status") == "pending":
-        if await nodriver_kktix_select_qualification(tab, config_dict, qualification):
-            # The code field belongs to the option just selected, so fill it
-            # only now - filling it earlier targeted the wrong (or no) option.
+        clicked = await nodriver_kktix_select_qualification(tab, config_dict, qualification)
+        # Fill when this round selected an option, and also when KKTIX had
+        # already selected the only one for us - the code field is fillable
+        # either way, and requiring a click of our own deadlocked #403.
+        if clicked or _kktix_selected_member_code_is_unfilled(qualification):
+            # The code field belongs to the selected option, so fill it only
+            # now - filling it earlier targeted the wrong (or no) option.
             await nodriver_kktix_order_member_code(tab, config_dict)
             qualification = await nodriver_kktix_check_qualification(tab, config_dict)
 
@@ -2116,7 +2334,7 @@ def check_kktix_got_ticket(url, config_dict):
     if '/events/' in url and '/registrations/' in url and "-" in url:
         if not '/registrations/new' in url:
             if not '#/booking' in url:
-                if not 'https://kktix.com/users/sign_in?' in url:
+                if not is_kktix_login_page(url):
                     is_kktix_got_ticket = True
                     debug.log(f"[KKTIX] Success page detected: {url}")
 
@@ -2215,7 +2433,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
             debug.log(f"[KKTIX ALERT] Failed to register alert handler: {handler_exc}")
 
     is_url_contain_sign_in = False
-    if '/users/sign_in?' in url:
+    if is_kktix_login_page(url):
         # nodriver_kktix_signin already handles smart polling and redirect
         await nodriver_kktix_signin(tab, url, config_dict)
 

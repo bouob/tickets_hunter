@@ -3216,13 +3216,22 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
             debug.log("[KHAM SEAT TYPE] No ticket type buttons found")
             return False
 
-        # Step 4: Filter disabled buttons
-        enabled_buttons = [btn for btn in ticket_buttons if not btn['disabled']]
+        # Step 4: Filter disabled buttons, then apply keyword_exclude here so that
+        # keyword matching and the first-button fallback below share one clean
+        # candidate list -- an excluded seat type can never be auto-picked.
+        enabled_buttons = []
+        for btn in ticket_buttons:
+            if btn['disabled']:
+                continue
+            if util.reset_row_text_if_match_keyword_exclude(config_dict, btn.get('text', '')):
+                debug.log(f"[KHAM SEAT TYPE] Excluded by keyword_exclude: {btn.get('text', '')}")
+                continue
+            enabled_buttons.append(btn)
 
         debug.log(f"[KHAM SEAT TYPE] Found {len(enabled_buttons)} enabled button(s)")
 
         if len(enabled_buttons) == 0:
-            debug.log("[KHAM SEAT TYPE] All buttons are disabled")
+            debug.log("[KHAM SEAT TYPE] All buttons are disabled or excluded")
             return False
 
         # Step 5: Match and select button using Python logic
@@ -3231,11 +3240,6 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
         for btn in enabled_buttons:
             button_text = btn.get('text', '')
             if not button_text:
-                continue
-
-            # 使用 util 檢查是否應該排除（依據設定檔的 keyword_exclude）
-            if util.reset_row_text_if_match_keyword_exclude(config_dict, button_text):
-                debug.log(f"[KHAM SEAT TYPE] Excluded by keyword_exclude: {button_text}")
                 continue
 
             # 關鍵字匹配邏輯
@@ -4444,26 +4448,30 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
             debug.log("[TICKET SEAT TYPE] No ticket type buttons found")
             return False
 
-        # Step 4: Filter disabled buttons
-        enabled_buttons = [btn for btn in ticket_buttons if not btn['disabled']]
+        # Step 4: Filter disabled buttons, then apply keyword_exclude here so that
+        # keyword matching and the first-button fallback below share one clean
+        # candidate list -- an excluded seat type can never be auto-picked.
+        enabled_buttons = []
+        for btn in ticket_buttons:
+            if btn['disabled']:
+                continue
+            if util.reset_row_text_if_match_keyword_exclude(config_dict, btn['text']):
+                debug.log(f"[TICKET SEAT TYPE] Excluded by keyword_exclude: {btn['text']}")
+                continue
+            enabled_buttons.append(btn)
 
         debug.log(f"[TICKET SEAT TYPE] Found {len(enabled_buttons)} enabled button(s)")
 
         if len(enabled_buttons) == 0:
-            debug.log("[TICKET SEAT TYPE] All buttons are disabled")
+            debug.log("[TICKET SEAT TYPE] All buttons are disabled or excluded")
             return False
 
-        # Step 5: Match button using keyword and exclusion logic
+        # Step 5: Match button using keyword logic
         matched_button = None
 
         for button in enabled_buttons:
             button_text = button['text']
             if not button_text:
-                continue
-
-            # Check exclusion keywords from config
-            if util.reset_row_text_if_match_keyword_exclude(config_dict, button_text):
-                debug.log(f"[TICKET SEAT TYPE] Excluded by keyword_exclude: {button_text}")
                 continue
 
             # Keyword matching logic

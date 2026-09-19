@@ -206,7 +206,7 @@ const HELP_CONTENT = {
         <thead><tr><th>平台</th><th>用途</th></tr></thead>
         <tbody>
           <tr><td>KKTIX</td><td>會員序號（member_code）、粉絲驗證問題答案</td></tr>
-          <tr><td>TicketPlus（遠大）</td><td>優惠序號（exclusive_code）</td></tr>
+          <tr><td>TicketPlus（遠大）</td><td>優惠序號（exclusive_code）、信用卡卡友驗證（credit_card_prefix）</td></tr>
           <tr><td>TixCraft／Ticketmaster</td><td>驗證題的會員編號／序號類提示備援答案（例如 Weverse 預購 MY MEMBERSHIP）</td></tr>
         </tbody>
       </table>
@@ -1099,7 +1099,7 @@ const HELP_CONTENT_EN_META = {
         <thead><tr><th>Platform</th><th>Usage</th></tr></thead>
         <tbody>
           <tr><td>KKTIX</td><td>Member code and fan-verification answers</td></tr>
-          <tr><td>TicketPlus</td><td>Exclusive discount code</td></tr>
+          <tr><td>TicketPlus</td><td>Exclusive discount code, credit card prefix verification</td></tr>
           <tr><td>TixCraft / Ticketmaster</td><td>Fallback answer when a verification prompt explicitly asks for a membership number or serial number</td></tr>
         </tbody>
       </table>
