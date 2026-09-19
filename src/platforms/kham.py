@@ -39,6 +39,7 @@ __all__ = [
     "nodriver_kham_login",
     "nodriver_kham_go_buy_redirect",
     "nodriver_kham_check_realname_dialog",
+    "nodriver_kham_check_vip_priority_dialog",
     "nodriver_kham_allow_not_adjacent_seat",
     "nodriver_kham_switch_to_auto_seat",
     "nodriver_kham_check_captcha_text_error",
@@ -323,6 +324,132 @@ async def nodriver_kham_check_realname_dialog(tab, config_dict):
         debug.log("Check realname dialog exception:", exc)
 
     return is_realname_dialog_found
+
+async def nodriver_kham_check_vip_priority_dialog(tab, config_dict):
+    """
+    Check and handle KHAM VIP cardholder priority purchase dialog (.popoutBG).
+    Fills credit_card_prefix into #ID1 and triggers submit (DoVIPLogin).
+    Automatically detects whether the event requires 6 or 8 digits based on
+    keywords in the prompt label (#L_ID1) and title (#L_NAME_TITLE), and slices
+    the configured prefix accordingly.
+    Strictly uses contact.credit_card_prefix without falling back to other values.
+    """
+    debug = util.create_debug_logger(config_dict)
+
+    credit_card_prefix = config_dict.get("contact", {}).get("credit_card_prefix", "").strip()
+    if not credit_card_prefix:
+        debug.log("[KHAM VIP] credit_card_prefix is not configured, waiting for manual input")
+        return False
+
+    prefix_js = json.dumps(credit_card_prefix)
+
+    try:
+        result_raw = await tab.evaluate(f'''
+            (() => {{
+                const setNativeInputValue = (input, value) => {{
+                    const descriptor = Object.getOwnPropertyDescriptor(
+                        window.HTMLInputElement.prototype, 'value');
+                    if (descriptor && descriptor.set) {{
+                        descriptor.set.call(input, value);
+                    }} else {{
+                        input.value = value;
+                    }}
+                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    return input.value === value;
+                }};
+
+                const popup = document.querySelector('.popoutBG');
+                if (!popup) return {{ found: false, reason: 'no_popup' }};
+
+                const style = window.getComputedStyle(popup);
+                if (style.display === 'none' || style.visibility === 'hidden') {{
+                    return {{ found: false, reason: 'popup_hidden' }};
+                }}
+
+                const input1 = popup.querySelector('#ID1') || document.querySelector('#ID1');
+                if (!input1) return {{ found: true, filled: false, reason: 'no_id1_input' }};
+
+                // Check if submission is already in-flight (isClick flag in page script)
+                if (typeof isClick !== 'undefined' && isClick) {{
+                    return {{ found: true, filled: true, submitting: true }};
+                }}
+
+                // Inspect prompt text to determine expected digit length (6 or 8)
+                const labelEl = popup.querySelector('#L_ID1') || document.querySelector('#L_ID1');
+                const titleEl = popup.querySelector('#L_NAME_TITLE') || document.querySelector('#L_NAME_TITLE');
+                const labelText = labelEl ? (labelEl.textContent || '') : '';
+                const titleText = titleEl ? (titleEl.textContent || '') : '';
+                const combinedText = (labelText + ' ' + titleText).toLowerCase();
+
+                let targetLen = 0;
+                if (combinedText.includes('八') || combinedText.includes('8')) {{
+                    targetLen = 8;
+                }} else if (combinedText.includes('六') || combinedText.includes('6')) {{
+                    targetLen = 6;
+                }}
+
+                const rawPrefix = {prefix_js};
+                let valueToFill = rawPrefix;
+                if (targetLen > 0 && rawPrefix.length >= targetLen) {{
+                    valueToFill = rawPrefix.substring(0, targetLen);
+                }}
+
+                // Fill credit_card_prefix using native setter
+                const is_set = setNativeInputValue(input1, valueToFill);
+
+                // Trigger submit via button click or DoVIPLogin function
+                const submitBtn = popup.querySelector('button[onclick*="DoVIPLogin"], button.red');
+                if (submitBtn) {{
+                    submitBtn.click();
+                    return {{
+                        found: true,
+                        filled: is_set,
+                        submitted: true,
+                        method: 'btn_click',
+                        targetLen: targetLen,
+                        actualLen: valueToFill.length,
+                        hasShorterConfig: (targetLen > 0 && rawPrefix.length < targetLen)
+                    }};
+                }} else if (typeof DoVIPLogin === 'function') {{
+                    DoVIPLogin();
+                    return {{
+                        found: true,
+                        filled: is_set,
+                        submitted: true,
+                        method: 'func_call',
+                        targetLen: targetLen,
+                        actualLen: valueToFill.length,
+                        hasShorterConfig: (targetLen > 0 && rawPrefix.length < targetLen)
+                    }};
+                }}
+
+                return {{ found: true, filled: is_set, submitted: false, reason: 'no_submit_btn' }};
+            }})()
+        ''')
+
+        result = util.parse_nodriver_result(result_raw)
+        if isinstance(result, dict):
+            if result.get('submitting'):
+                debug.log("[KHAM VIP] VIP priority purchase request is already in-flight")
+                return True
+            if result.get('submitted'):
+                actual_len = result.get('actualLen', len(credit_card_prefix))
+                target_len = result.get('targetLen', 0)
+                masked_prefix = credit_card_prefix[:2] + "*" * (actual_len - 2) if actual_len >= 2 else "****"
+                len_info = f"target={target_len} digits, filled {actual_len} digits" if target_len > 0 else f"{actual_len} digits"
+                debug.log(f"[KHAM VIP] Card prefix filled ({masked_prefix}, {len_info}) and submitted via {result.get('method')}")
+                if result.get('hasShorterConfig'):
+                    debug.log(f"[KHAM VIP] WARNING: Event requested {target_len} digits, but credit_card_prefix only configured with {len(credit_card_prefix)} digits")
+                return True
+            if result.get('found'):
+                debug.log(f"[KHAM VIP] VIP popup found but not submitted: {result.get('reason')}")
+                return False
+
+    except Exception as exc:
+        debug.log(f"[KHAM VIP] Error checking VIP priority dialog: {exc}")
+
+    return False
 
 async def nodriver_kham_allow_not_adjacent_seat(tab, config_dict):
     """
@@ -1714,8 +1841,17 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
         # Check realname dialog first
         await nodriver_kham_check_realname_dialog(tab, config_dict)
 
-        # Stage 4: select the correct performance row (keyword_exclude + mode aware)
-        await nodriver_kham_date_auto_select(tab, domain_name, config_dict)
+        # Pre-check VIP priority dialog
+        is_vip_handled = await nodriver_kham_check_vip_priority_dialog(tab, config_dict)
+        if not is_vip_handled:
+            # Stage 4: select the correct performance row (keyword_exclude + mode aware)
+            is_date_selected = await nodriver_kham_date_auto_select(tab, domain_name, config_dict)
+            if is_date_selected:
+                # Post-check: wait briefly for VIP dialog to appear after clicking date
+                for _ in range(5):
+                    await tab.sleep(0.2)
+                    if await nodriver_kham_check_vip_priority_dialog(tab, config_dict):
+                        break
 
     # Product page (UTK0201_.aspx?product_id=)
     if 'utk0201_.aspx?product_id=' in url.lower():
@@ -1780,8 +1916,17 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
     if 'utk0201_00.aspx?product_id=' in url.lower():
         is_event_page = len(url.split('/')) == 6
 
-        if is_event_page and config_dict["date_auto_select"]["enable"]:
-            await nodriver_kham_product(tab, domain_name, config_dict)
+        if is_event_page:
+            # Pre-check: if VIP priority purchase dialog (.popoutBG) is already visible, handle it first
+            is_vip_handled = await nodriver_kham_check_vip_priority_dialog(tab, config_dict)
+            if not is_vip_handled and config_dict["date_auto_select"]["enable"]:
+                is_date_selected = await nodriver_kham_product(tab, domain_name, config_dict)
+                if is_date_selected:
+                    # Post-check: wait briefly for VIP dialog to appear after clicking date
+                    for _ in range(5):
+                        await tab.sleep(0.2)
+                        if await nodriver_kham_check_vip_priority_dialog(tab, config_dict):
+                            break
 
     # UDN specific handling
     if 'udnfunlife' in domain_name:

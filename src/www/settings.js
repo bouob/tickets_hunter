@@ -600,11 +600,11 @@ function renderAutofillTabTranslations() {
     applyOrRestore('#autofill-tab-pane .card-header h6', 'textContent', 'Shared personal information');
     setRowLabelForField('real_name', 'Full name');
     setRowLabelForField('phone', 'Mobile number');
-    setRowLabelForField('credit_card_prefix', 'First 6 digits of card');
+    setRowLabelForField('credit_card_prefix', 'Card prefix (6 or 8 digits)');
     applyOrRestore('#real_name', 'placeholder', 'Enter your legal name');
     applyOrRestore('#phone', 'placeholder', 'Example: 0912345678');
-    applyOrRestore('#credit_card_prefix', 'placeholder', 'Example: 412345');
-    setNearestFormText('credit_card_prefix', 'Some platforms may require the first 6 digits of the credit card for verification.');
+    applyOrRestore('#credit_card_prefix', 'placeholder', 'Example: 412345 or 41234567');
+    setNearestFormText('credit_card_prefix', 'Some platforms may require the first 6 or 8 digits of the credit card for verification.');
 
     setRowLabelForField('tixcraft_sid', fieldLabel('Tixcraft family cookie (TIXUISID / IVUISID / TIXPUISID)', 'tixcraft_sid'));
     setRowLabelForField('ibonqware', fieldLabel('iBon cookie ibonqware', 'ibonqware'));
