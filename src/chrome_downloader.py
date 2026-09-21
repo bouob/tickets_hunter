@@ -12,6 +12,8 @@ import json
 import logging
 import os
 import platform
+import shutil
+import stat
 import sys
 import zipfile
 from io import BytesIO
@@ -104,6 +106,78 @@ def get_chrome_executable_name() -> str:
         return "chrome"
 
 
+def extract_zip(content: bytes, dest_dir: str) -> bool:
+    """
+    Extract a zip archive, preserving symlinks and Unix permission bits.
+
+    zipfile.extractall() drops both. On macOS that silently breaks the .app
+    bundle: framework symlinks (Versions/Current, Helpers, Libraries) become
+    plain text files and the helper binaries lose their executable bit, so the
+    bundle's code signature no longer validates and Chrome dies on launch with
+    EXC_BREAKPOINT (SIGTRAP).
+
+    Args:
+        content: Raw bytes of the zip archive
+        dest_dir: Directory to extract into
+
+    Returns:
+        True on success, False if the archive could not be extracted
+    """
+    try:
+        with zipfile.ZipFile(BytesIO(content), 'r') as zip_file:
+            for info in zip_file.infolist():
+                target = zip_file.extract(info, dest_dir)
+
+                if sys.platform.startswith("win"):
+                    continue
+
+                mode = info.external_attr >> 16
+                if not mode:
+                    continue
+
+                if stat.S_ISLNK(mode):
+                    # zipfile wrote the link target out as a regular file
+                    with open(target, 'rb') as link_file:
+                        link_target = link_file.read().decode('utf-8')
+                    os.remove(target)
+                    os.symlink(link_target, target)
+                else:
+                    os.chmod(target, stat.S_IMODE(mode))
+    except (zipfile.BadZipFile, OSError, UnicodeDecodeError) as e:
+        logger.error(f"Failed to extract Chrome archive: {e}")
+        return False
+
+    return True
+
+
+def is_bundle_intact(chrome_exe: str) -> bool:
+    """
+    Check that a downloaded macOS Chrome bundle still has its framework symlinks.
+
+    Guards against installs left behind by earlier versions that extracted the
+    archive with zipfile.extractall() and flattened those symlinks into files.
+
+    Args:
+        chrome_exe: Path to the Chrome executable inside the bundle
+
+    Returns:
+        True if the bundle looks usable (always True off macOS)
+    """
+    if sys.platform != "darwin":
+        return True
+
+    # <...>.app/Contents/MacOS/<exe> -> <...>.app
+    app_dir = os.path.abspath(os.path.join(chrome_exe, os.pardir, os.pardir, os.pardir))
+    framework_current = os.path.join(
+        app_dir,
+        "Contents", "Frameworks",
+        "Google Chrome for Testing Framework.framework",
+        "Versions", "Current",
+    )
+
+    return os.path.islink(framework_current)
+
+
 def get_downloaded_chrome_path(base_dir: str) -> Optional[str]:
     """
     Get the path to downloaded Chrome executable if it exists.
@@ -121,7 +195,9 @@ def get_downloaded_chrome_path(base_dir: str) -> Optional[str]:
     chrome_exe = os.path.join(chrome_dir, get_chrome_executable_name())
 
     if os.path.exists(chrome_exe):
-        return chrome_exe
+        if is_bundle_intact(chrome_exe):
+            return chrome_exe
+        logger.warning(f"Downloaded Chrome at {chrome_exe} is damaged, ignoring it")
 
     return None
 
@@ -204,22 +280,20 @@ def download_chrome(download_dir: Optional[str] = None, no_ssl: bool = False) ->
                 logger.error("All download attempts failed")
                 return None
 
+    # Remove any damaged install left behind by a previous download
+    chrome_dir = os.path.join(download_dir, f"chrome-{platform_id}")
+    if os.path.exists(chrome_dir):
+        print(f"[Chrome Downloader] Removing existing {chrome_dir}...")
+        shutil.rmtree(chrome_dir, ignore_errors=True)
+
     # Extract zip file
     print(f"[Chrome Downloader] Extracting to {download_dir}...")
-    try:
-        archive = BytesIO(content)
-        with zipfile.ZipFile(archive, 'r') as zip_file:
-            zip_file.extractall(download_dir)
-    except zipfile.BadZipFile as e:
-        logger.error(f"Failed to extract Chrome archive: {e}")
+    if not extract_zip(content, download_dir):
         return None
 
     # Verify extraction
     chrome_path = get_downloaded_chrome_path(download_dir)
     if chrome_path:
-        # Make executable on Unix systems
-        if not sys.platform.startswith("win"):
-            os.chmod(chrome_path, 0o755)
         print(f"[Chrome Downloader] Chrome installed successfully: {chrome_path}")
         return chrome_path
 
