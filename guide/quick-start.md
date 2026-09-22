@@ -3,7 +3,7 @@
 分類：Getting Started (level: 1)
 目標受眾：初學者
 版本：1.3
-最後更新：2026-06-10
+最後更新：2026-09-15
 -->
 
 # 快速入門指南
@@ -25,7 +25,7 @@
 ## 📋 前置準備
 
 ### 1. 確認已安裝
-- Python 3.10-3.11（建議使用 3.10；3.12 僅部分支援，3.13 以上不支援）
+- Python 3.10-3.11（建議使用 3.11.9；3.12 僅部分支援，3.13 以上不支援）
 - Chrome 瀏覽器
 - Tickets Hunter 程式 (已下載或 git clone)
 
@@ -264,7 +264,7 @@ python nodriver_tixcraft.py --input settings.json
 ### Q1: 程式啟動後瀏覽器沒有開啟
 **可能原因**：
 - Chrome 瀏覽器未安裝
-- Python 版本不相容（需 3.9-3.11，建議 3.10）
+- Python 版本不相容（需 3.9-3.11，建議 3.11.9）
 - 相依套件未安裝
 
 **解決方法**：
@@ -364,7 +364,7 @@ python --version
 
 **方法 1：降級 Python 版本（推薦）**
 ```bash
-# 安裝 Python 3.10（推薦）或 3.11
+# 安裝 Python 3.10 或 3.11（推薦 3.11.9）
 # 下載網址：https://www.python.org/downloads/
 
 # 確認版本
@@ -387,7 +387,7 @@ pip uninstall ddddocr onnxruntime onnxruntime-gpu -y
 pip install ddddocr
 ```
 
-**支援的 Python 版本**：3.9、3.10（推薦）、3.11、3.12
+**支援的 Python 版本**：3.9、3.10、3.11（推薦 3.11.9）、3.12
 
 **參考**：[Issue #7](https://github.com/bouob/tickets_hunter/issues/7)
 
@@ -462,4 +462,4 @@ pip install ddddocr
 
 **祝您搶票成功！** 🎉
 
-*最後更新：2025-12-08 | 版本：1.3*
+*最後更新：2026-09-15 | 版本：1.3*
