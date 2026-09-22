@@ -54,6 +54,7 @@ __all__ = [
     "nodriver_kham_seat_type_auto_select",
     "nodriver_kham_seat_auto_select",
     "nodriver_kham_seat_main",
+    "nodriver_kham_handle_seat_unavailable",
     "nodriver_udn_seat_auto_select",
     "nodriver_udn_seat_select_ticket_type",
     "nodriver_udn_seat_main",
@@ -3770,6 +3771,129 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
 
     return is_seat_assigned
 
+# 追蹤每個票區的刷新次數：{area_key: reload_count}
+KHAM_SEAT_RELOAD_TRACKER = {}
+
+def clear_kham_seat_reload_tracker(url):
+    """清除指定票區或網址的刷新次數記錄"""
+    global KHAM_SEAT_RELOAD_TRACKER
+    try:
+        import urllib.parse
+        parsed = urllib.parse.urlparse(str(url))
+        params = urllib.parse.parse_qs(parsed.query)
+        area_id = params.get("PERFORMANCE_PRICE_AREA_ID", [None])[0]
+        if area_id:
+            KHAM_SEAT_RELOAD_TRACKER.pop(area_id, None)
+        KHAM_SEAT_RELOAD_TRACKER.pop(str(url), None)
+    except Exception:
+        pass
+
+async def nodriver_kham_handle_seat_unavailable(tab, config_dict):
+    """
+    寬宏售票 UTK0205 座位頁面空位不足時的處理機制：
+    1. 首次發現無位時：最多點擊「更新座位」(.btn-update / top.location.reload) 刷新一次。
+    2. 刷新一次後仍無位時：點擊「切換票區」(button.change / showPic) 返回上一頁重新找其他位置。
+    """
+    global KHAM_SEAT_RELOAD_TRACKER
+    debug = util.create_debug_logger(config_dict)
+
+    current_url = str(tab.target.url) if tab and tab.target else ""
+    area_key = current_url
+
+    # 嘗試由網址取得 PERFORMANCE_PRICE_AREA_ID
+    import urllib.parse
+    try:
+        parsed_url = urllib.parse.urlparse(current_url)
+        params = urllib.parse.parse_qs(parsed_url.query)
+        area_id = params.get("PERFORMANCE_PRICE_AREA_ID", [None])[0]
+        if area_id:
+            area_key = area_id
+    except Exception:
+        pass
+
+    # 取得票區名稱以利記錄日誌
+    area_name = ""
+    try:
+        name_res = await tab.evaluate('''
+            (() => {
+                const el = document.querySelector('#AREA_NAME');
+                return el ? el.textContent.trim() : '';
+            })()
+        ''')
+        parsed_name = util.parse_nodriver_result(name_res)
+        if isinstance(parsed_name, str):
+            area_name = parsed_name
+    except Exception:
+        pass
+
+    area_display = f"「{area_name}」({area_key})" if area_name else f"({area_key})"
+    reload_count = KHAM_SEAT_RELOAD_TRACKER.get(area_key, 0)
+
+    if reload_count == 0:
+        # 第一次發現空位不足：最多更新座位刷新一次
+        KHAM_SEAT_RELOAD_TRACKER[area_key] = 1
+        debug.log(f"[KHAM SEAT] 票區 {area_display} 可用空位不足，嘗試點擊「更新座位」刷新一次...")
+
+        try:
+            await tab.evaluate('''
+                (() => {
+                    const btnUpdate = document.querySelector('.btn-update, div[onclick*="reload"]');
+                    if (btnUpdate) {
+                        btnUpdate.click();
+                        return { success: true, method: 'btn_click' };
+                    }
+                    if (typeof top !== 'undefined' && top.location) {
+                        top.location.reload();
+                        return { success: true, method: 'top_reload' };
+                    }
+                    window.location.reload();
+                    return { success: true, method: 'window_reload' };
+                })()
+            ''')
+        except Exception as exc:
+            debug.log(f"[KHAM SEAT] 更新座位失敗: {exc}")
+
+        reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0.1)
+        wait_sec = reload_interval if reload_interval > 0 else 0.5
+        await asyncio_sleep_with_pause_check(wait_sec)
+        return True
+
+    else:
+        # 刷新一次後依然無位：切換票區重新尋找其他位置
+        KHAM_SEAT_RELOAD_TRACKER.pop(area_key, None)
+        debug.log(f"[KHAM SEAT] 票區 {area_display} 刷新一次後仍無空位，按下[切換票區]重新找其他位置...")
+
+        try:
+            await tab.evaluate('''
+                (() => {
+                    // 1. 優先點擊切換票區按鈕
+                    const changeBtn = document.querySelector('button.change, button[onclick*="showPic"]');
+                    if (changeBtn) {
+                        changeBtn.click();
+                        return { success: true, method: 'btn_click' };
+                    }
+                    // 2. 點擊縮圖
+                    const thumbImg = document.querySelector('img#IMG_THUMB, img.change');
+                    if (thumbImg) {
+                        thumbImg.click();
+                        return { success: true, method: 'thumb_click' };
+                    }
+                    // 3. 呼叫 showPic()
+                    if (typeof showPic === 'function') {
+                        showPic();
+                        return { success: true, method: 'showPic' };
+                    }
+                    // 4. 備援：返回上一頁
+                    window.history.back();
+                    return { success: true, method: 'history_back' };
+                })()
+            ''')
+        except Exception as exc:
+            debug.log(f"[KHAM SEAT] 點擊切換票區失敗: {exc}")
+
+        await asyncio_sleep_with_pause_check(0.8)
+        return True
+
 async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
     """
     寬宏售票座位選擇主流程：票別選擇 -> 座位選擇 -> 驗證碼 -> 提交
@@ -3802,6 +3926,7 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
         debug.log(f"[KHAM SEAT] Already have {already_selected_count} seats (need {ticket_number}), skipping to submit")
         is_seat_type_assigned = True
         is_seat_assigned = True
+        clear_kham_seat_reload_tracker(tab.target.url)
     else:
         # Step 1: Select seat type
         area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
@@ -3813,6 +3938,12 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
         is_seat_assigned = False
         if is_seat_type_assigned:
             is_seat_assigned = await nodriver_kham_seat_auto_select(tab, config_dict)
+
+        if not is_seat_assigned:
+            await nodriver_kham_handle_seat_unavailable(tab, config_dict)
+            return False
+        else:
+            clear_kham_seat_reload_tracker(tab.target.url)
 
     # Step 3: Handle captcha (reuse KHAM OCR)
     is_captcha_sent = False
