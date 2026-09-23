@@ -22,7 +22,7 @@ CONST_RANDOM = "random"
 # Keyword delimiter constants (Issue #23)
 CONST_KEYWORD_DELIMITER = ';'  # New delimiter (semicolon)
 
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36"
 
 def get_ip_address():
     gethostname = None

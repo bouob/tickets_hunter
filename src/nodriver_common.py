@@ -28,7 +28,7 @@ except Exception:
 
 # ===== Constants =====
 
-CONST_APP_VERSION = "TicketsHunter (2026.09.16)"
+CONST_APP_VERSION = "TicketsHunter (2026.09.22)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -320,9 +320,13 @@ async def nodriver_force_check_checkbox(tab, checkbox_element):
 
     if checkbox_element:
         try:
-            # Use JavaScript to check and set checkbox state
-            result = await tab.evaluate('''
-                (function(element) {
+            # Element.apply is what hands the element to the script. The old
+            # form passed it as tab.evaluate's second positional argument,
+            # which is await_promise -- so the element never arrived, and
+            # arguments[0] inside the IIFE was undefined, making this return
+            # false on every platform that called it.
+            result = await checkbox_element.apply('''
+                (element) => {
                     if (!element) return false;
 
                     // Check if already checked
@@ -337,8 +341,8 @@ async def nodriver_force_check_checkbox(tab, checkbox_element):
                         element.checked = true;
                         return element.checked;
                     }
-                })(arguments[0]);
-            ''', checkbox_element)
+                }
+            ''')
 
             is_finish_checkbox_click = bool(result)
 
@@ -348,34 +352,52 @@ async def nodriver_force_check_checkbox(tab, checkbox_element):
     return is_finish_checkbox_click
 
 async def nodriver_check_checkbox_enhanced(tab, select_query, config_dict=None):
-    """Enhanced checkbox function using direct JavaScript"""
+    """Tick a checkbox, falling back to setting the property when a click will not.
+
+    The fallback is the point of this function. Clicking is tried first because
+    it goes through the page's own handlers, but click() does not throw on a
+    checkbox, so an earlier try/except around it could never catch anything --
+    a handler calling preventDefault, or an element that is not interactive
+    yet, both returned a bare False with the fallback unreachable. Setting
+    .checked directly and dispatching change covers those, which is what the
+    TicketPlus flow has always done.
+
+    Returns a bool so existing callers are unaffected; the reason a call failed
+    is logged rather than returned, because "not found", "the click did not
+    stick" and "the page refused it" need different responses from a human
+    reading the log and none from the caller.
+    """
     debug = util.create_debug_logger(config_dict)
     is_checkbox_checked = False
 
     try:
         debug.log(f"Checking checkbox: {select_query}")
 
-        # Direct JavaScript find and check
+        selector_js = json.dumps(select_query)
         result = await tab.evaluate(f'''
             (function() {{
-                const checkbox = document.querySelector('{select_query}');
-                if (!checkbox) return false;
+                const checkbox = document.querySelector({selector_js});
+                if (!checkbox) return {{ok: false, reason: 'not found'}};
+                if (checkbox.checked) return {{ok: true, reason: 'already checked'}};
 
-                if (checkbox.checked) return true;
+                checkbox.click();
+                if (checkbox.checked) return {{ok: true, reason: 'click'}};
 
-                try {{
-                    checkbox.click();
-                    return checkbox.checked;
-                }} catch(e) {{
-                    checkbox.checked = true;
-                    return checkbox.checked;
-                }}
+                checkbox.checked = true;
+                checkbox.dispatchEvent(new Event('change', {{bubbles: true}}));
+                return {{
+                    ok: checkbox.checked,
+                    reason: checkbox.checked ? 'forced' : 'refused'
+                }};
             }})();
         ''')
 
-        is_checkbox_checked = bool(result)
-
-        debug.log(f"Checkbox result: {is_checkbox_checked}")
+        if isinstance(result, dict):
+            is_checkbox_checked = bool(result.get('ok'))
+            debug.log(f"Checkbox result: {is_checkbox_checked} ({result.get('reason')})")
+        else:
+            is_checkbox_checked = bool(result)
+            debug.log(f"Checkbox result: {is_checkbox_checked}")
 
     except Exception as exc:
         debug.log(f"Checkbox error: {exc}")

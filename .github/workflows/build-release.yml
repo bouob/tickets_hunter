@@ -33,7 +33,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirement.txt
-          pip install pyinstaller
+          pip install pyinstaller==6.22.3
 
       - name: Verify dependencies
         run: |
@@ -75,6 +75,12 @@ jobs:
           if exist CHANGELOG.md copy CHANGELOG.md dist\tickets_hunter\CHANGELOG.txt
 
           echo Unified directory created successfully!
+
+      - name: Verify the frozen bundle starts
+        # Nothing else in this job ever runs what it ships. --skip-build checks
+        # the assembled layout and runs the frozen binary's --help, which loads
+        # every platform module; --keep leaves build/ for the failure upload.
+        run: python build_scripts/build_local.py --skip-build --keep
 
       - name: Create ZIP archive
         shell: pwsh
@@ -194,3 +200,160 @@ jobs:
 
           rm -f discord_payload.json
           echo "Discord notification sent!"
+
+  build-macos:
+    # Runs after build-windows so the draft release already exists: this job
+    # only uploads assets to it and never touches the release notes.
+    needs: build-windows
+
+    # Apple Silicon only. Intel Macs are not a supported target - anyone on one
+    # can still run from source. (macos-13 is retired; macos-15-intel, the last
+    # x86_64 image, expires August 2027, so an Intel job would be temporary.)
+    runs-on: macos-15
+
+    permissions:
+      contents: write      # upload release assets
+      id-token: write      # sign the build provenance attestation
+      attestations: write  # publish it
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.9'
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION for macOS arm64"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirement.txt
+          pip install pyinstaller==6.22.3
+
+      - name: Verify dependencies
+        run: |
+          python -c "import platform; print('Interpreter arch:', platform.machine())"
+          python -c "import ddddocr; import zendriver; import tornado; print('All core packages installed!')"
+          python -m PyInstaller --version
+
+      - name: Smoke-test captcha OCR on this architecture
+        id: ocr_smoke
+        # Non-blocking on purpose: a bot with broken OCR still works with manual
+        # captcha entry, so this does not withhold the build. continue-on-error
+        # leaves the job green either way, which is why the next step exists.
+        continue-on-error: true
+        run: python build_scripts/macos/ocr_smoke_test.py
+
+      - name: Flag an OCR smoke-test failure
+        if: steps.ocr_smoke.outcome == 'failure'
+        run: |
+          echo "::warning::Captcha OCR smoke test failed on arm64. Check it before promoting the release."
+          echo "### WARNING: captcha OCR smoke test failed on arm64" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build executables with PyInstaller
+        run: |
+          echo "Building nodriver_tixcraft..."
+          python -m PyInstaller build_scripts/nodriver_tixcraft.spec --clean --noconfirm
+
+          echo "Building settings..."
+          python -m PyInstaller build_scripts/settings.spec --clean --noconfirm
+
+          echo "All executables built successfully!"
+
+      - name: Create unified directory structure
+        run: |
+          set -euo pipefail
+          mkdir -p dist/tickets_hunter
+
+          echo "Copying executables..."
+          cp dist/nodriver_tixcraft/nodriver_tixcraft dist/tickets_hunter/
+          cp dist/settings/settings dist/tickets_hunter/
+
+          echo "Merging _internal directories..."
+          cp -R dist/nodriver_tixcraft/_internal dist/tickets_hunter/_internal
+          cp -R dist/settings/_internal/. dist/tickets_hunter/_internal/
+
+          echo "Copying shared resources from src/..."
+          cp -R src/assets dist/tickets_hunter/assets
+          cp -R src/www dist/tickets_hunter/www
+
+          echo "Copying launchers and documentation..."
+          cp build_scripts/macos/start-bot.command dist/tickets_hunter/
+          cp build_scripts/macos/start-settings.command dist/tickets_hunter/
+          chmod +x dist/tickets_hunter/start-bot.command
+          chmod +x dist/tickets_hunter/start-settings.command
+          chmod +x dist/tickets_hunter/nodriver_tixcraft
+          chmod +x dist/tickets_hunter/settings
+          cp build_scripts/README_Release_macOS.txt dist/tickets_hunter/README.txt
+          if [ -f CHANGELOG.md ]; then cp CHANGELOG.md dist/tickets_hunter/CHANGELOG.txt; fi
+
+          echo "Unified directory created successfully!"
+
+      - name: Report code signature status
+        # PyInstaller ad-hoc signs macOS binaries by default. This records what
+        # the artifact actually carries; it is informational, not a gate.
+        continue-on-error: true
+        run: |
+          codesign -dv dist/tickets_hunter/nodriver_tixcraft 2>&1 || true
+          codesign -dv dist/tickets_hunter/settings 2>&1 || true
+
+      - name: Verify the frozen bundle starts
+        # This job has never run on Actions before, and the local build that
+        # was verified copies _internal with shutil.copytree while this job
+        # uses cp -R, so a local pass says little about this artifact.
+        # --keep leaves build/ for the failure upload below.
+        run: python build_scripts/build_local.py --skip-build --keep
+
+      - name: Create ZIP archive
+        id: package
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          ZIP_NAME="tickets_hunter_macos_arm64_v${VERSION}.zip"
+          SUMS_NAME="SHA256SUMS-macos-arm64.txt"
+
+          # ditto, not zip: it preserves the executable bit that the .command
+          # launchers and the binaries need to survive the round trip.
+          ditto -c -k --sequesterRsrc --keepParent dist/tickets_hunter "$ZIP_NAME"
+
+          shasum -a 256 "$ZIP_NAME" > "$SUMS_NAME"
+
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_OUTPUT
+          echo "SUMS_NAME=$SUMS_NAME" >> $GITHUB_OUTPUT
+          ls -lh "$ZIP_NAME"
+          cat "$SUMS_NAME"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ steps.package.outputs.ZIP_NAME }}
+
+      - name: Upload assets to the draft release
+        # gh release upload only adds assets - it cannot overwrite the release
+        # notes that build-windows wrote.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release upload "v${{ steps.get_version.outputs.VERSION }}" \
+            "${{ steps.package.outputs.ZIP_NAME }}" \
+            "${{ steps.package.outputs.SUMS_NAME }}" \
+            --clobber
+
+      - name: Upload build artifacts (for debugging)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-macos-arm64
+          path: |
+            build/
+            dist/*/warn-*.txt
+          retention-days: 7

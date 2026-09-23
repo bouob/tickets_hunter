@@ -1,0 +1,5 @@
+# Shell entry points must stay LF: a CRLF shebang makes macOS/Linux report
+# "bad interpreter". Scoped to these patterns on purpose - a repo-wide
+# "text=auto" would renormalize every existing file.
+*.command text eol=lf
+*.sh text eol=lf

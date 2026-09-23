@@ -69,11 +69,11 @@
 
 ---
 
-## 核心函數索引
+## 核心函式索引
 
-### Type 01 (傳統架構) 函數
+### Type 01 (傳統架構) 函式
 
-| 階段 | 函數名稱 | 行數 | 說明 |
+| 階段 | 函式名稱 | 行數 | 說明 |
 |------|---------|------|------|
 | Stage 2 | `nodriver_hkticketing_login()` | 21052 | 帳號登入 |
 | Stage 3 | `nodriver_hkticketing_accept_cookie()` | 21212 | Cookie 接受 |
@@ -87,12 +87,11 @@
 | Stage 10 | `nodriver_hkticketing_go_to_payment()` | 21997 | 前往付款 |
 | Stage 11 | `nodriver_hkticketing_performance()` | 23309 | 整合處理 |
 
-### Type 02 (SPA 架構) 函數
+### Type 02 (SPA 架構) 函式
 
-| 階段 | 函數名稱 | 行數 | 說明 |
+| 階段 | 函式名稱 | 行數 | 說明 |
 |------|---------|------|------|
 | Stage 2 | `nodriver_hkticketing_type02_login()` | 22266 | SPA 登入 |
-| Stage 2 | `nodriver_hkticketing_type02_check_login_status()` | 22205 | 登入狀態檢查 |
 | Stage 3 | `nodriver_hkticketing_type02_check_traffic_overload()` | 22142 | 流量過載偵測 |
 | Stage 3 | `nodriver_hkticketing_type02_clear_session()` | 22079 | 清除 Session |
 | Stage 4 | `nodriver_hkticketing_type02_event_page()` | 22546 | 活動頁面處理 |
@@ -102,12 +101,12 @@
 | Stage 8 | `nodriver_hkticketing_type02_performance()` | 22978 | 整合處理 |
 | Stage 10 | `nodriver_hkticketing_type02_next_button_press()` | 22937 | 下一步按鈕 |
 | Stage 10 | `nodriver_hkticketing_type02_confirm_order()` | 23029 | 確認訂單 |
-| Util | `nodriver_hkticketing_type02_dismiss_modal()` | 22425 | 關閉模態對話框 |
+| Util | `nodriver_hkticketing_type02_dismiss_modal()` | 22425 | 關閉模態對話方塊 |
 | Util | `nodriver_hkticketing_type02_event_page_buy_button()` | 22480 | 活動頁購買按鈕 |
 
-### 共用函數
+### 共用函式
 
-| 階段 | 函數名稱 | 行數 | 說明 |
+| 階段 | 函式名稱 | 行數 | 說明 |
 |------|---------|------|------|
 | Main | `nodriver_hkticketing_main()` | 23524 | 主控制流程 |
 | Util | `nodriver_hkticketing_url_redirect()` | 23362 | URL 重導向處理 |
@@ -124,7 +123,7 @@
 
 ### Type 01 (傳統架構)
 
-| URL 模式 | 頁面類型 | 處理函數 |
+| URL 模式 | 頁面型別 | 處理函式 |
 |---------|---------|---------|
 | `/Secure/ShowLogin.aspx` | 登入頁面 | `nodriver_hkticketing_login()` |
 | `/Membership/Login.aspx` | 登入頁面 | `nodriver_hkticketing_login()` |
@@ -133,7 +132,7 @@
 
 ### Type 02 (SPA 架構)
 
-| URL 模式 | 頁面類型 | 處理函數 |
+| URL 模式 | 頁面型別 | 處理函式 |
 |---------|---------|---------|
 | `#/login` | 登入頁面 | `nodriver_hkticketing_type02_login()` |
 | `#/allEvents/detail/{id}` | 活動頁面 | `nodriver_hkticketing_type02_event_page()` |
@@ -214,7 +213,7 @@ async def nodriver_hkticketing_url_redirect(tab, url, config_dict):
     # 檢查是否在排隊頁面
     for pattern in QUEUE_URL_PATTERNS:
         if pattern in url.lower():
-            print("[HKTICKETING] Queue page detected, waiting...")
+            debug.log("[HKTICKETING] Queue page detected, waiting...")
             await asyncio.sleep(5)  # 等待 5 秒後重新檢查
 
             # 嘗試重導向回目標頁面
@@ -241,7 +240,7 @@ async def nodriver_hkticketing_type02_login(tab, config_dict):
     """Type 02 SPA 登入流程"""
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
-    print("[HKTICKETING TYPE02] Waiting for login to complete (max 180 seconds)...")
+    debug.log("[HKTICKETING TYPE02] Waiting for login to complete (max 180 seconds)...")
 
     timeout = 180
     start_time = time.time()
@@ -249,18 +248,18 @@ async def nodriver_hkticketing_type02_login(tab, config_dict):
     while True:
         elapsed = time.time() - start_time
         if elapsed > timeout:
-            print("[HKTICKETING TYPE02] Login timeout")
+            debug.log("[HKTICKETING TYPE02] Login timeout")
             return False
 
         # 檢查登入狀態
-        login_status = await nodriver_hkticketing_type02_check_login_status(tab, config_dict)
+        login_status = await nodriver_hkticketing_type02_login(tab, config_dict)
 
         if login_status:
-            print("[HKTICKETING TYPE02] Login successful")
+            debug.log("[HKTICKETING TYPE02] Login successful")
             return True
 
         if elapsed % 30 == 0:
-            print(f"[HKTICKETING TYPE02] Waiting for login... ({elapsed}s / {timeout}s)")
+            debug.log(f"[HKTICKETING TYPE02] Waiting for login... ({elapsed}s / {timeout}s)")
 
         await asyncio.sleep(2)
 ```
@@ -272,7 +271,7 @@ async def nodriver_hkticketing_type02_login(tab, config_dict):
 ### 流程
 
 1. **配送方式選擇**：選擇取票方式
-2. **同意條款**：勾選同意複選框
+2. **同意條款**：勾選同意核取方塊
 3. **點擊提交**：點擊提交訂單按鈕
 
 ### 核心程式碼片段
@@ -398,7 +397,7 @@ async def nodriver_hkticketing_type02_confirm_order(tab, config_dict):
 
 - 📋 [Stage 11: 排隊與付款機制](../../03-mechanisms/11-queue-payment.md) - 排隊偵測詳解
 - 📋 [Stage 4: 日期選擇機制](../../03-mechanisms/04-date-selection.md) - 日期選擇邏輯
-- 🏗️ [程式碼結構分析](../../02-development/structure.md) - HKTicketing 函數索引
+- 🏗️ [程式碼結構分析](../../02-development/structure.md) - HKTicketing 函式索引
 - 📖 [12-Stage 標準](../../02-development/ticket_automation_standard.md) - 完整流程規範
 
 ---
@@ -409,7 +408,7 @@ async def nodriver_hkticketing_type02_confirm_order(tab, config_dict):
 |------|------|---------|
 | v1.0 | 2024 | 初版：Type 01 基本支援 |
 | v1.1 | 2025-08 | Type 02 SPA 支援 |
-| v1.2 | 2025-10 | 排隊頁面處理優化 |
+| v1.2 | 2025-10 | 排隊頁面處理最佳化 |
 | **v1.3** | **2025-12** | **流量過載偵測 + 完整文件** |
 
 **v1.3 亮點**：

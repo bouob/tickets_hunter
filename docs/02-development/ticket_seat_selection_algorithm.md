@@ -1,16 +1,16 @@
 # 年代售票座位選擇演算法 (Ticket.com.tw Seat Selection Algorithm)
 
 **文件說明**：記錄年代售票平台的座位選擇演算法、兩階段選擇流程與自動回退機制
-**最後更新**：2025-11-12
+**最後更新**：2026-09-16
 
 ---
 
 **版本**: 2025-10-17 (T005 重構 + T007-T008 功能增強)
 **平台**: 年代售票 (ticket.com.tw)
 **實作檔案**:
-  - 主函數: `src/nodriver_tixcraft.py:15940-15981` (`nodriver_ticket_seat_auto_select`)
-  - 子函數: `src/nodriver_tixcraft.py:15653-15937` (3 個協調器函數)
-  - 票別選擇: `src/nodriver_tixcraft.py:15280-15558` (`nodriver_ticket_seat_type_auto_select`)
+  - 主函式：`src/platforms/kham.py` → `nodriver_ticket_seat_auto_select()`
+  - 協調器：`src/platforms/kham.py` → `_analyze_seat_quality()`、`_find_best_seats_in_row()`、`_execute_seat_selection()`
+  - 票別選擇：`src/platforms/kham.py` → `nodriver_ticket_seat_type_auto_select()`
 
 ---
 
@@ -107,7 +107,7 @@
 
 ### 概述 [T007 新增]
 
-年代售票自動座位選擇支援舞台方向感知，根據舞台在演廳的位置（上/下/左/右）自動調整座位優先級排序。
+年代售票自動座位選擇支援舞台方向感知，根據舞台在演廳的位置（上/下/左/右）自動調整座位優先順序排序。
 
 ### 舞台方向偵測
 
@@ -119,7 +119,7 @@
 <i class="fa-arrow-circle-right"> <!-- 舞台在右 -->
 ```
 
-**實作位置**: `src/nodriver_tixcraft.py:15676-15683` (`_analyze_seat_quality()`)
+**實作位置**：`src/platforms/kham.py` → `_analyze_seat_quality()`
 
 ### 方向感知排序
 
@@ -133,7 +133,7 @@
 | **Right** (右) | seatNum ↓ | 座號大 = 更靠近舞台 |
 | **Default** | up | 若無法偵測，預設舞台在上 |
 
-**實作位置**: `src/nodriver_tixcraft.py:15791-15796` (`_find_best_seats_in_row()`)
+**實作位置**：`src/platforms/kham.py` → `_find_best_seats_in_row()`
 
 ### 排序優先度完整流程
 
@@ -152,7 +152,7 @@ if (stageDirection === 'up') {
 
 ### 設定示例
 
-舞台方向由系統自動偵測，無需用戶設定。可透過 `verbose: true` 驗證：
+舞台方向由系統自動偵測，無需使用者設定。可透過 `verbose: true` 驗證：
 
 ```json
 {
@@ -420,11 +420,11 @@ else {
 
 ### 概述 [T008 新增]
 
-年代售票票別選擇支援排除特定關鍵字的票種，符合 FR-022 需求。例如，可排除身障票、陪同票、敬老票等不需要的票別類型。
+年代售票票別選擇支援排除特定關鍵字的票種，符合 FR-022 需求。例如，可排除身障票、陪同票、敬老票等不需要的票別型別。
 
 ### 功能描述
 
-**目的**: 自動跳過不符合需求的票別類型，優先選擇目標票別。
+**目的**: 自動跳過不符合需求的票別型別，優先選擇目標票別。
 
 **工作流程**:
 ```
@@ -467,7 +467,7 @@ else {
 
 ### 實作位置
 
-**函數**: `nodriver_ticket_seat_type_auto_select()` (Line 15280+)
+**函式**: `nodriver_ticket_seat_type_auto_select()` (Line 15280+)
 
 **排除邏輯** (Line 15405):
 ```python
@@ -478,9 +478,9 @@ if util.reset_row_text_if_match_keyword_exclude(config_dict, button_text):
     continue
 ```
 
-### 測試場景
+### 測試情境
 
-#### 場景 1: 排除身障票別
+#### 情境 1: 排除身障票別
 
 **設定**:
 ```json
@@ -497,7 +497,7 @@ if util.reset_row_text_if_match_keyword_exclude(config_dict, button_text):
 
 **結果**: 選擇 "原價"
 
-#### 場景 2: 多個排除關鍵字
+#### 情境 2: 多個排除關鍵字
 
 **設定**:
 ```json
@@ -516,9 +516,9 @@ if util.reset_row_text_if_match_keyword_exclude(config_dict, button_text):
 
 **結果**: 選擇 "原價"
 
-### 調試訊息
+### 除錯訊息
 
-啟用 `verbose: true` 查看排除過程:
+啟用 `verbose: true` 檢視排除過程:
 
 ```
 [TICKET SEAT TYPE] Found 6 ticket type button(s)
@@ -528,9 +528,9 @@ if util.reset_row_text_if_match_keyword_exclude(config_dict, button_text):
 [TICKET SEAT TYPE] Matched: 原價
 ```
 
-### 與 KHAM 實現對比
+### 與 KHAM 實作對比
 
-Ticket.com.tw 和 KHAM 都使用相同的 util 函數實現排除邏輯：
+Ticket.com.tw 和 KHAM 都使用相同的 util 函式實作排除邏輯：
 
 **KHAM** (Line 13095):
 ```python
@@ -544,11 +544,11 @@ if util.reset_row_text_if_match_keyword_exclude(config_dict, button_text):
     continue
 ```
 
-**結論**: 實現完全一致 ✅
+**結論**: 實作完全一致 ✅
 
 ### 規格合規度
 
-- ✅ FR-022: 排除關鍵字支援 **100% 實現**
+- ✅ FR-022: 排除關鍵字支援 **100% 實作**
 - ✅ SC-008: 排除邏輯正確 **已驗證**
 - ✅ 與 KHAM 一致 **確認**
 
@@ -572,7 +572,7 @@ if util.reset_row_text_if_match_keyword_exclude(config_dict, button_text):
 
 **影響**:
 - `false`: 執行連續座位策略（策略 1 → 策略 2）
-- `true`: 執行不連續座位策略（從中間區域選中央）
+- `true`: 執行不連續座位策略（從中間區域選取央）
 
 #### 2. ticket_number
 
@@ -607,7 +607,7 @@ if util.reset_row_text_if_match_keyword_exclude(config_dict, button_text):
 ```
 
 **影響**:
-- `area_keyword`: 票別選擇時優先匹配的關鍵字
+- `area_keyword`: 票別選擇時優先比對的關鍵字
 - `keyword_exclude`: 票別選擇時要排除的關鍵字（空列表表示不排除）
 
 #### 4. verbose
@@ -726,7 +726,7 @@ Step 3: 選座 (Row 19)
 | Row X: middle | 排 X 的中間座位數 | 11 |
 | Row X: ratio | 排 X 的中間座位比例 | 0.52 |
 | [SKIP]/[OK]/[BEST] | 排品質狀態 | [BEST] 表示最佳排 |
-| Selected row | 選中的排 | 19 |
+| Selected row | 選取的排 | 19 |
 | Middle area seats | 該排的中間座位號 | 8,9,10,...,18 |
 
 ---
@@ -744,12 +744,12 @@ Step 3: 選座 (Row 19)
 6. ✅ disable_adjacent_seat 設定支援
 
 #### T005 重構改進 (2025-10-17)
-7. ✅ 函數分解為 3 個協調器
+7. ✅ 函式分解為 3 個協調器
    - `_analyze_seat_quality()`: 分析座位品質 (~32 行)
    - `_find_best_seats_in_row()`: 尋找最佳座位 (~35 行)
    - `_execute_seat_selection()`: 執行座位選擇 (~28 行)
-8. ✅ 主函數簡化為 15 行協調器
-9. ✅ 代碼可維護性提升 80%
+8. ✅ 主函式簡化為 15 行協調器
+9. ✅ 程式碼可維護性提升 80%
 
 #### T007 舞台方向智慧 (2025-10-17)
 10. ✅ 自動偵測舞台方向 (up/down/left/right)
@@ -760,23 +760,23 @@ Step 3: 選座 (Row 19)
 #### T008 排除關鍵字支援 (2025-10-17)
 14. ✅ 票別選擇中實作排除關鍵字邏輯
 15. ✅ 支援多個排除關鍵字
-16. ✅ FR-022 需求 100% 實現
-17. ✅ 與 KHAM 實現一致
+16. ✅ FR-022 需求 100% 實作
+17. ✅ 與 KHAM 實作一致
 
 ### 測試結果
 
 - **修正前**: B區-17排-2號（左邊緣座位）
 - **修正後**: B區-19排-8號（中間區域座位）
-- **T005 後**: 更清晰的代碼結構 + 相同算法結果
+- **T005 後**: 更清晰的程式碼結構 + 相同演算法結果
 - **T007 後**: 根據舞台方向自動調整優先度
-- **T008 後**: 自動排除不需要的票別類型
-- **整體改進**: 功能完整 + 代碼優質 + 可維護性高 ✅
+- **T008 後**: 自動排除不需要的票別型別
+- **整體改進**: 功能完整 + 程式碼優質 + 可維護性高 ✅
 
 ### 規格合規度
 
-| 需求 | 狀態 | 實現版本 |
+| 需求 | 狀態 | 實作版本 |
 |------|------|--------|
-| FR-017 關鍵字匹配 | ✅ | 基礎 |
+| FR-017 關鍵字比對 | ✅ | 基礎 |
 | FR-018 自動座位選擇 | ✅ | 基礎 |
 | FR-022 排除關鍵字 | ✅ | T008 |
 | SC-003 座位選擇成功率 95% | ✅ | 基礎 |
@@ -785,11 +785,11 @@ Step 3: 選座 (Row 19)
 
 ### 相關文件
 
-- `src/nodriver_tixcraft.py:15653-15981` - 實作程式碼 (T005 重構)
+- `src/platforms/kham.py` - 實作程式碼（座位演算法三件套，寬宏／年代／UDN 共用）
 
 ### 下一步工作
 
-- [ ] T010: 測試狀態標記 (函數註解)
+- [ ] T010: 測試狀態標記 (函式註解)
 - [ ] T011: 規格驗證報告
 - [ ] T012: 端到端測試
 - [ ] T013: 文件同步更新

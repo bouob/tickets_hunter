@@ -1,7 +1,7 @@
 # 搶票自動化標準功能定義
 
 **文件說明**：定義完整搶票程式的 12 階段標準架構、功能模組拆分規範與開發評估標準
-**最後更新**：2025-11-12
+**最後更新**：2026-09-16
 
 ---
 
@@ -14,9 +14,9 @@
 
 ### 回退策略 (Fallback Strategy)
 每個功能都有明確的優先策略與回退方案：
-1. **優先策略**：使用使用者指定的關鍵字或參數
+1. **優先策略**：採用使用者指定的關鍵字或參數
 2. **回退策略 1**：關鍵字未命中時使用自動選擇模式
-3. **回退策略 2**：功能禁用時跳過或等待手動操作
+3. **回退策略 2**：功能停用時跳過或等待手動操作
 
 ### 函式拆分原則
 - **原子化**：每個函式只負責一個明確的任務
@@ -26,47 +26,94 @@
 
 ---
 
+## 架構前提（先讀這兩點）
+
+### 一、12 階段不會在一輪裡跑完
+
+主迴圈是 **URL 驅動的狀態機**，不是從頭跑到尾的管線：
+
+```
+main() while True:
+  │
+  ├─ 暫停檢查 ─► 設定熱重載 ─► 取得當前 URL
+  │
+  ├─ URL 路由分派（12 家平台）
+  │     'kktix.com' in url ?  'ibon.com' in url ?  ...
+  │
+  ├─ nodriver_{platform}_main(tab, url, config_dict)
+  │     └─ 平台內再依 URL 判斷「現在停在哪一頁」
+  │           └─ 只執行該頁對應的那一個階段
+  │
+  └─ return ─► 回到 while True（頁面沒換就重跑同一階段）
+```
+
+每輪只執行一個階段。頁面沒有前進，下一輪就重跑同一階段——這正是
+「自動刷新頁面間隔」在做的事。
+
+因此「某平台跳過某階段」在本架構下**不算缺陷**：沒有走到那一頁，
+就不會執行。判斷實作是否完整，要看的是「該平台會經過的頁面，是否
+都有對應的處理」，而不是 12 個階段是否都有函式。
+
+### 二、新機制走橫切維度，不往序列加編號
+
+功能架構是二維的：
+
+| 維度 | 內容 | 增長方式 |
+|------|------|----------|
+| **階段序列** | 1~12，對應票務網站的頁面流轉順序 | 幾乎不變 |
+| **跨階段機制** | Turnstile、多開隔離、OCR 模型選擇、購買資格… | 新需求往這裡長 |
+
+跨階段機制注入多個階段，不屬於任何單一階段，也不佔用階段編號。
+文件編號 13 以後（`docs/03-mechanisms/13~19`）全部屬於此類。
+
+要新增「階段 13」，前提是票務平台在購票流程裡出現一種全新頁面類型——
+這是罕見的事。絕大多數新需求應該做成跨階段機制。
+
+---
+
 ## 🎯 完整功能架構（12 階段）
 
 ### 階段 1：環境初始化
 
-#### 功能模組：WebDriver 初始化
+#### 功能模組：瀏覽器初始化
+
+本階段全部在主檔與共用模組完成，平台模組不參與。
 
 **設定來源**：
 ```python
-config_dict["webdriver_type"]                  # 驅動類型 (nodriver/chrome)
-config_dict["browser"]                         # 瀏覽器類型
-config_dict["advanced"]["headless"]            # 是否無頭模式
+config_dict["advanced"]["headless"]            # 無頭模式
 config_dict["advanced"]["window_size"]         # 視窗大小
 config_dict["advanced"]["proxy_server_port"]   # 代理伺服器
-config_dict["advanced"]["chrome_extension"]    # 是否載入擴充功能
+config_dict["advanced"]["homepage"]            # 起始頁
+config_dict["advanced"]["auto_reload_page_interval"]  # 自動刷新間隔
 ```
 
-**函式拆分**：
+**實際流程**：
+
 ```
-init_driver()
-├── read_driver_config(config_dict) -> dict
-│   └── 讀取驅動相關設定，返回設定字典
-├── setup_chrome_options(config_dict) -> ChromeOptions
-│   ├── set_headless_mode(headless: bool)
-│   ├── set_window_size(size: str)
-│   └── set_proxy(proxy_port: str)
-├── load_extensions(extension_path: str) -> bool
-│   └── 載入瀏覽器擴充功能
-└── start_driver(webdriver_type: str, options: ChromeOptions) -> WebDriver
-    ├── 根據 webdriver_type 啟動對應驅動
-    └── 返回 WebDriver 實例
+main()                                    src/nodriver_tixcraft.py
+├── get_nodriver_browser_args()           nodriver_common.py
+│   └── 組裝 browser_args（禁止用 Config(lang=...)，zendriver 的
+│       validator 會擋掉，語系一律走 browser_args）
+├── get_extension_config()                nodriver_common.py
+│   └── 擴充功能設定
+├── nodriver_overwrite_prefs()            nodriver_common.py
+│   └── 覆寫瀏覽器 preferences
+├── uc.start(...) 啟動瀏覽器
+├── nodrver_block_urls()                  nodriver_tixcraft.py
+│   └── 套用網路封鎖清單（注意：函式名少一個 i，為既有拼字錯誤）
+└── nodriver_goto_homepage()              nodriver_tixcraft.py
+    └── 導向起始頁，依平台決定是否先走登入頁
 ```
 
 **回退策略**：
-- **無自動回退**：當 `webdriver_type` 已指定時，僅使用該驅動類型
-- 若指定的驅動初始化失敗 → 拋出錯誤並終止（不自動切換到其他驅動）
-- **原因**：尊重使用者的明確選擇，不同驅動行為差異大，自動切換可能導致非預期結果
-- **例外**：除非使用者在設定中明確啟用 `auto_fallback_driver` 選項
+
+引擎只有 zendriver 一種，沒有切換選項。初始化失敗即終止，不做降級。
 
 **函式命名規範**：
-- 通用初始化：`init_driver()`
-- 平台無關，不加 platform 前綴
+
+本階段的函式屬共用基礎設施，使用 `nodriver_{action}` 或一般動詞-名詞
+形式，不加平台字首（見 `code-boundaries.md` 第 3 節）。
 
 ---
 
@@ -151,9 +198,9 @@ auto_reload_page(driver, config_dict, state_dict) -> bool
 
 **函式命名規範**：
 - 通用功能：`auto_reload_page()`
-- 平台無關，不加前綴
+- 平台無關，不加字首
 
-#### 功能模組：彈窗處理
+#### 功能模組：彈出視窗處理
 
 **函式拆分**：
 ```
@@ -216,10 +263,10 @@ config_dict["tixcraft"]["pass_date_is_sold_out"]  # 是否跳過售完日期
 ```
 
 **回退策略** (v1.2 更新為條件式遞補)：
-1. **優先策略**：使用 `date_keyword` 匹配（早期返回模式）
+1. **優先策略**：使用 `date_keyword` 比對（早期返回模式）
    - 支援多關鍵字：`"10/03;10/04;10/05"`（分號分隔）
-   - 依序嘗試每個關鍵字，**第一個匹配成功即停止**
-   - 支援精確與模糊匹配
+   - 依序嘗試每個關鍵字，**第一個比對成功即停止**
+   - 支援精確與模糊比對
    - 關鍵字順序決定優先權
 
 2. **條件式遞補策略** (v1.2+)：關鍵字全部失敗時
@@ -230,10 +277,10 @@ config_dict["tixcraft"]["pass_date_is_sold_out"]  # 是否跳過售完日期
      - 使用 `mode` 自動選擇可用日期
      - `"from top to bottom"` → 選第一個可用日期
      - `"from bottom to top"` → 選最後一個可用日期
-     - `"center"` → 選中間的日期
+     - `"center"` → 選取間的日期
      - `"random"` → 隨機選擇
 
-3. **功能禁用策略**：若 `enable=false` → 跳過日期選擇，等待使用者手動操作
+3. **功能停用策略**：若 `enable=false` → 跳過日期選擇，等待使用者手動操作
 
 **重要變更 (v1.2)**：
 - 舊版本：關鍵字失敗時**無條件自動遞補**至 mode 選擇
@@ -247,7 +294,7 @@ config_dict["tixcraft"]["pass_date_is_sold_out"]  # 是否跳過售完日期
 **輸入輸出規範**：
 - **輸入**：
   - `driver` (WebDriver): 瀏覽器驅動實例
-  - `url` (str): 當前頁面 URL
+  - `url` (str): 目前頁面 URL
   - `config_dict` (dict): 設定字典
 - **輸出**：
   - `bool`: 是否成功選擇日期
@@ -306,12 +353,12 @@ config_dict["advanced"]["disable_adjacent_seat"]    # 是否禁用相鄰座位
 ```
 
 **回退策略** (v1.2 更新為條件式遞補)：
-1. **優先策略**：使用 `area_keyword` 匹配（早期返回模式）
+1. **優先策略**：使用 `area_keyword` 比對（早期返回模式）
    - 先套用 `keyword_exclude` 排除不要的區域（輪椅、身障、視線不良等）
    - 支援多關鍵字：`"搖滾A;搖滾B;VIP"`（分號分隔）
-   - 依序嘗試每個關鍵字，**第一個匹配成功即停止**
+   - 依序嘗試每個關鍵字，**第一個比對成功即停止**
    - 關鍵字順序決定優先權
-   - 若有多個匹配，可根據價格排序
+   - 若有多個比對，可根據價格排序
 
 2. **條件式遞補策略** (v1.2+)：關鍵字全部失敗時
    - **若 `area_auto_fallback=false`（預設嚴格模式）**：
@@ -321,10 +368,10 @@ config_dict["advanced"]["disable_adjacent_seat"]    # 是否禁用相鄰座位
      - 使用 `mode` 自動選擇可用區域
      - `"from top to bottom"` → 選第一個可用區域（通常最貴）
      - `"from bottom to top"` → 選最後一個（通常最便宜）
-     - `"center"` → 選中間區域
+     - `"center"` → 選取間區域
      - `"random"` → 隨機選擇
 
-3. **功能禁用策略**：若 `enable=false` → 跳過區域選擇
+3. **功能停用策略**：若 `enable=false` → 跳過區域選擇
 
 **重要變更 (v1.2)**：
 - 舊版本：關鍵字失敗時**無條件自動遞補**至 mode 選擇
@@ -568,7 +615,7 @@ config_dict["kktix"]["max_dwell_time"]              # 最大停留時間（KKTIX
 
 **設定來源**：
 ```python
-config_dict["cityline"]["cityline_queue_retry"]  # 是否在排隊時自動重試（Cityline）
+config_dict["advanced"]["auto_reload_page_interval"]  # 是否在排隊時自動重試（Cityline）
 ```
 
 **函式拆分**：
@@ -590,8 +637,8 @@ config_dict["cityline"]["cityline_queue_retry"]  # 是否在排隊時自動重�
 ```
 
 **回退策略**：
-1. 若 `cityline_queue_retry=true` → 排隊失敗時自動重試
-2. 若 `cityline_queue_retry=false` → 排隊失敗時停止
+偵測到排隊頁時不操作頁面，直接回到主迴圈等待下一輪，避免被踢出佇列。
+重試節奏由 `config_dict["advanced"]["auto_reload_page_interval"]` 控制。
 
 **函式命名規範**：
 - 主函式：`{platform}_handle_queue()`, `{platform}_paused_main()`
@@ -630,14 +677,14 @@ global_error_handler(driver, error, config_dict) -> bool
 ```
 
 **函式命名規範**：
-- 通用錯誤處理，不加平台前綴
+- 通用錯誤處理，不加平台字首
 - 特定錯誤檢查：`{platform}_check_sold_out()`, `{platform}_toast()`
 
 ---
 
 ## 🔧 跨階段通用工具函式
 
-### 工具模組 1：元素查找與操作
+### 工具模組 1：元素尋找與操作
 
 **檔案位置**：`util.py`（已存在）
 
@@ -662,12 +709,12 @@ element_utils
 ```
 
 **命名規範**：
-- 通用工具函式，不加平台前綴
+- 通用工具函式，不加平台字首
 - 名稱以動詞開頭：`find_`, `wait_for_`, `click_`, `input_`
 
 ---
 
-### 工具模組 2：關鍵字匹配引擎
+### 工具模組 2：關鍵字比對引擎
 
 **檔案位置**：`util.py`（部分已存在，需擴充）
 
@@ -748,18 +795,18 @@ state_manager
 
 ### 基礎設定
 
-| 設定項目 | 設定路徑 | 類型 | 預設值 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
 | homepage | `config_dict["homepage"]` | str | "" | 目標網址 |
-| webdriver_type | `config_dict["webdriver_type"]` | str | "nodriver" | 驅動類型 (nodriver/chrome) |
-| browser | `config_dict["browser"]` | str | "chrome" | 瀏覽器類型 |
+| webdriver_type | `config_dict["webdriver_type"]` | str | "nodriver" | 驅動型別 (nodriver/chrome) |
+| browser | `config_dict["browser"]` | str | "chrome" | 瀏覽器型別 |
 | language | `config_dict["language"]` | str | "繁體中文" | 語言設定 |
 | ticket_number | `config_dict["ticket_number"]` | int | 1 | 購票張數 |
 | refresh_datetime | `config_dict["refresh_datetime"]` | str | "" | 刷新時間 |
 
 ### 日期選擇設定
 
-| 設定項目 | 設定路徑 | 類型 | 預設值 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
 | enable | `config_dict["date_auto_select"]["enable"]` | bool | true | 是否啟用自動選擇日期 |
 | date_keyword | `config_dict["date_auto_select"]["date_keyword"]` | str | "" | 日期關鍵字（支援多個，分號分隔） |
@@ -773,7 +820,7 @@ state_manager
 
 ### 區域選擇設定
 
-| 設定項目 | 設定路徑 | 類型 | 預設值 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
 | enable | `config_dict["area_auto_select"]["enable"]` | bool | true | 是否啟用自動選擇區域 |
 | area_keyword | `config_dict["area_auto_select"]["area_keyword"]` | str | "" | 區域關鍵字（支援多個，分號分隔） |
@@ -781,13 +828,13 @@ state_manager
 
 ### 關鍵字排除設定
 
-| 設定項目 | 設定路徑 | 類型 | 預設值 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
 | keyword_exclude | `config_dict["keyword_exclude"]` | str | "" | 排除關鍵字（分號分隔），如"輪椅;身障" |
 
 ### 驗證碼設定
 
-| 設定項目 | 設定路徑 | 類型 | 預設值 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
 | enable | `config_dict["ocr_captcha"]["enable"]` | bool | true | 是否啟用 OCR 自動辨識 |
 | beta | `config_dict["ocr_captcha"]["beta"]` | bool | true | 是否使用 ddddocr beta 模型（fallback 時） |
@@ -800,7 +847,7 @@ state_manager
 
 #### KKTIX 設定
 
-| 設定項目 | 設定路徑 | 類型 | 預設值 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
 | auto_press_next_step_button | `config_dict["kktix"]["auto_press_next_step_button"]` | bool | true | 是否自動按下一步 |
 | auto_fill_ticket_number | `config_dict["kktix"]["auto_fill_ticket_number"]` | bool | true | 是否自動填寫票數 |
@@ -808,22 +855,21 @@ state_manager
 
 #### Tixcraft 設定
 
-| 設定項目 | 設定路徑 | 類型 | 預設值 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
 | pass_date_is_sold_out | `config_dict["tixcraft"]["pass_date_is_sold_out"]` | bool | true | 是否跳過售完日期 |
 | auto_reload_coming_soon_page | `config_dict["tixcraft"]["auto_reload_coming_soon_page"]` | bool | true | 是否自動重載即將開賣頁面 |
 
 #### Cityline 設定
 
-| 設定項目 | 設定路徑 | 類型 | 預設值 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
-| cityline_queue_retry | `config_dict["cityline"]["cityline_queue_retry"]` | bool | true | 排隊失敗時是否重試 |
 
 ### 進階設定
 
 #### 音效通知
 
-| 設定項目 | 設定路徑 | 類型 | 預設值 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
 | ticket | `config_dict["advanced"]["play_sound"]["ticket"]` | bool | true | 選到票時播放音效 |
 | order | `config_dict["advanced"]["play_sound"]["order"]` | bool | true | 送出訂單時播放音效 |
@@ -831,7 +877,7 @@ state_manager
 
 #### 帳號密碼（各平台）
 
-| 設定項目 | 設定路徑 | 類型 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 說明 |
 |---------|---------|------|------|
 | {platform}_account | `config_dict["accounts"]["{platform}_account"]` | str | 平台帳號 |
 | {platform}_password | `config_dict["accounts"]["{platform}_password"]` | str | 密碼 |
@@ -840,7 +886,7 @@ state_manager
 
 #### Cookie 設定
 
-| 設定項目 | 設定路徑 | 類型 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 說明 |
 |---------|---------|------|------|
 | tixcraft_sid | `config_dict["accounts"]["tixcraft_sid"]` | str | 拓元 Cookie SID |
 | ibonqware | `config_dict["accounts"]["ibonqware"]` | str | ibon Cookie qware |
@@ -849,10 +895,9 @@ state_manager
 
 #### 瀏覽器設定
 
-| 設定項目 | 設定路徑 | 類型 | 預設值 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
-| chrome_extension | `config_dict["advanced"]["chrome_extension"]` | bool | true | 是否載入擴充功能 |
-| disable_adjacent_seat | `config_dict["advanced"]["disable_adjacent_seat"]` | bool | false | 是否禁用相鄰座位 |
+| disable_adjacent_seat | `config_dict["advanced"]["disable_adjacent_seat"]` | bool | false | 是否停用相鄰座位 |
 | hide_some_image | `config_dict["advanced"]["hide_some_image"]` | bool | false | 是否隱藏部分圖片 |
 | block_facebook_network | `config_dict["advanced"]["block_facebook_network"]` | bool | false | 是否阻擋 Facebook 網路請求 |
 | headless | `config_dict["advanced"]["headless"]` | bool | false | 是否無頭模式 |
@@ -860,23 +905,23 @@ state_manager
 
 #### 自動重載設定
 
-| 設定項目 | 設定路徑 | 類型 | 預設值 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
 | auto_reload_page_interval | `config_dict["advanced"]["auto_reload_page_interval"]` | float | 3.0 | 自動重載間隔（秒） |
-| auto_reload_overheat_count | `config_dict["advanced"]["auto_reload_overheat_count"]` | int | 4 | 過熱計數閾值 |
-| auto_reload_overheat_cd | `config_dict["advanced"]["auto_reload_overheat_cd"]` | float | 1.0 | 過熱冷卻時間（秒） |
+| auto_reload_overheat_count | `config_dict["advanced"]["auto_reload_overheat_count"]` | int | 4 | 過熱計數門檻值 （**目前未接線**：settings.json 有值但無程式讀取）|
+| auto_reload_overheat_cd | `config_dict["advanced"]["auto_reload_overheat_cd"]` | float | 1.0 | 過熱冷卻時間（秒） （**目前未接線**：settings.json 有值但無程式讀取）|
 | reset_browser_interval | `config_dict["advanced"]["reset_browser_interval"]` | int | 0 | 重置瀏覽器間隔（分鐘，0=不重置） |
 
 #### 除錯設定
 
-| 設定項目 | 設定路徑 | 類型 | 預設值 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
 | verbose | `config_dict["advanced"]["verbose"]` | bool | false | 是否顯示詳細除錯訊息 |
 | show_timestamp | `config_dict["advanced"]["show_timestamp"]` | bool | false | 除錯訊息是否顯示時間戳記 `[HH:MM:SS]` |
 
 #### 通知設定
 
-| 設定項目 | 設定路徑 | 類型 | 預設值 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
 | discord_webhook_url | `config_dict["advanced"]["discord_webhook_url"]` | str | "" | Discord Webhook URL |
 | telegram_bot_token | `config_dict["advanced"]["telegram_bot_token"]` | str | "" | Telegram Bot Token |
@@ -884,13 +929,13 @@ state_manager
 
 #### 其他進階設定
 
-| 設定項目 | 設定路徑 | 類型 | 預設值 | 說明 |
+| 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
 | server_port | `config_dict["advanced"]["server_port"]` | int | 16888 | 設定介面 Web Server 埠號 |
 | discount_code | `config_dict["advanced"]["discount_code"]` | str | "" | 優惠序號（TicketPlus、KKTIX）；亦作為 TixCraft 家族驗證題的最終 fallback |
 | auto_guess_options | `config_dict["advanced"]["auto_guess_options"]` | bool | false | 是否自動猜測選項 |
 | user_guess_string | `config_dict["advanced"]["user_guess_string"]` | str | "" | 使用者自訂答案字串 |
-| proxy_server_port | `config_dict["advanced"]["proxy_server_port"]` | str | "" | 代理伺服器端口 |
+| proxy_server_port | `config_dict["advanced"]["proxy_server_port"]` | str | "" | 代理伺服器連接埠 |
 | remote_url | `config_dict["advanced"]["remote_url"]` | str | "" | 遠端 WebDriver URL |
 | idle_keyword | `config_dict["advanced"]["idle_keyword"]` | str | "" | 閒置關鍵字 |
 | resume_keyword | `config_dict["advanced"]["resume_keyword"]` | str | "" | 恢復關鍵字 |
@@ -901,14 +946,15 @@ state_manager
 
 ### 命名模式
 
-1. **平台特定函式**：`{platform}_{function_name}()`
-   - 例如：`tixcraft_date_auto_select()`, `kktix_login()`, `ticketplus_order()`
+1. **平台動作函式**（`platforms/*.py`）：`nodriver_{platform}_{action}()`
+   - 例如：`async nodriver_tixcraft_date_auto_select()`、`async nodriver_kktix_signin()`
+   - 簽章以 `tab` 為首，接 `config_dict`，再接可選參數
 
-2. **通用工具函式**：直接使用功能名稱，不加平台前綴
-   - 例如：`find_element_safe()`, `click_element_safe()`, `init_driver()`
+2. **共用 DOM 工具**（`nodriver_common.py`）：`nodriver_{action}()`，無平台字首
+   - 例如：`nodriver_press_button()`、`nodriver_check_checkbox()`
 
-3. **NoDriver 版本**：加上 `nodriver_` 前綴
-   - 例如：`async nodriver_tixcraft_date_auto_select()`, `async nodriver_kktix_login()`
+3. **共用工具函式**（`util.py`）：動詞-名詞，無 `nodriver_` 字首
+   - 謂詞用 `is_` / `has_` 開頭並回傳 `bool`；工廠用 `create_` / `get_` 開頭
 
 ### 動詞選擇
 
@@ -920,16 +966,24 @@ state_manager
 
 ### 常見函式名稱
 
-| 功能 | 函式名稱模式 | 範例 |
-|-----|------------|------|
-| 主流程 | `{platform}_main()` | `tixcraft_main()` |
-| 日期選擇 | `{platform}_date_auto_select()` | `kktix_date_auto_select()` |
-| 區域選擇 | `{platform}_area_auto_select()` | `ticketplus_area_auto_select()` |
-| 票數設定 | `{platform}_assign_ticket_number()` | `tixcraft_assign_ticket_number()` |
-| 驗證碼 | `{platform}_auto_ocr()` | `kham_auto_ocr()` |
-| 登入 | `{platform}_login()` | `cityline_login()` |
-| 同意條款 | `{platform}_ticket_agree()` | `ibon_ticket_agree()` |
-| 送出訂單 | `{platform}_ticket_main()` | `tixcraft_ticket_main()` |
+主迴圈依函式名稱路由，新增平台時務必沿用下列字尾：
+
+| 階段 | 字尾 | 實例 |
+|------|------|------|
+| 2 身分驗證 | `_signin` / `_login` | `nodriver_kktix_signin()` |
+| 3 頁面監控 | `_main` | `nodriver_tixcraft_main()` |
+| 4 日期選擇 | `_date_auto_select` | `nodriver_ibon_date_auto_select()` |
+| 5 區域選擇 | `_area_auto_select` | `nodriver_cityline_area_auto_select()` |
+| 6 票數設定 | `_assign_ticket_number` | `nodriver_kktix_assign_ticket_number()` |
+| 7 CAPTCHA | `_verify` / `_captcha` | `nodriver_ibon_captcha()` |
+| 8 表單填寫 | `_auto_fill` / `_keyin` | `nodriver_ibon_keyin_captcha_code()` |
+| 9 條款同意 | `_agree` | `nodriver_ibon_ticket_agree()` |
+| 10 訂單送出 | `_confirm_order` | `nodriver_kktix_confirm_order_button()` |
+| 11 排隊／付款 | `_check_queue_status` / `_booking` | `nodriver_ticketplus_check_queue_status()` |
+
+> 現況提醒：階段 9、10 有數個平台尚未抽出具名函式，動作內嵌在其他函式的
+> JS 裡；階段 6 有三個平台沿用了非規範字尾 `_ticket_number_auto_select`。
+> 新增平台請依本表命名，不要照抄那些既有偏離。
 
 ---
 
@@ -940,25 +994,25 @@ state_manager
 
 **良好範例**：
 ```python
-def get_all_date_options(driver):
+async def get_all_date_options(tab):
     """只負責取得所有日期選項"""
-    return driver.find_elements(By.CSS_SELECTOR, ".date-option")
+    return await tab.query_selector_all(".date-option")
 
-def filter_sold_out_dates(dates, config_dict):
-    """只負責過濾售完日期"""
+def filter_sold_out_dates(rows, config_dict):
+    """只負責過濾售完日期（純函式，可單元測試）"""
     if config_dict["tixcraft"]["pass_date_is_sold_out"]:
-        return [d for d in dates if "售完" not in d.text]
-    return dates
+        return [r for r in rows if "售完" not in r]
+    return rows
 ```
 
 **不良範例**：
 ```python
-def get_and_filter_dates(driver, config_dict):
-    """混合了取得和過濾兩個職責"""
-    dates = driver.find_elements(By.CSS_SELECTOR, ".date-option")
+async def get_and_filter_dates(tab, config_dict):
+    """混合了取得與過濾兩個職責，且無法單獨測試過濾邏輯"""
+    rows = await tab.query_selector_all(".date-option")
     if config_dict["tixcraft"]["pass_date_is_sold_out"]:
-        return [d for d in dates if "售完" not in d.text]
-    return dates
+        return [r for r in rows if "售完" not in r]
+    return rows
 ```
 
 ### 2. 可組合性 (Composability)
@@ -979,7 +1033,7 @@ def tixcraft_date_auto_select(driver, url, config_dict):
 ```
 
 ### 3. 明確的輸入輸出 (Clear I/O)
-函式的輸入參數和返回值應該明確且有文檔。
+函式的輸入參數和回傳值應該明確且有文件。
 
 **範例**：
 ```python
@@ -1062,18 +1116,18 @@ def select_item(items):
 ### 重要功能 (Should Have)
 - [ ] 登入功能：`{platform}_login()`
 - [ ] 驗證碼處理：`{platform}_auto_ocr()`, `{platform}_captcha()`
-- [ ] 彈窗處理：`{platform}_close_popup_windows()`
+- [ ] 彈出視窗處理：`{platform}_close_popup_windows()`
 - [ ] 頁面重載：`{platform}_auto_reload()` 或 `auto_reload_page()`
 
 ### 選擇性功能 (Nice to Have)
 - [ ] 表單填寫：`{platform}_form_auto_fill()`
 - [ ] 排隊處理：`{platform}_handle_queue()`
-- [ ] 座位圖選座：`{platform}_seat_auto_select()`
+- [ ] 座點陣圖選座：`{platform}_seat_auto_select()`
 - [ ] 問卷調查：`{platform}_auto_survey()`
 
 ### 平台特定功能 (Platform Specific)
 - [ ] 實名制處理：`{platform}_accept_realname_card()`
-- [ ] 特殊對話框：`{platform}_accept_other_activity()`
+- [ ] 特殊對話方塊：`{platform}_accept_other_activity()`
 - [ ] 密碼輸入：`{platform}_date_password_input()`
 - [ ] iframe 處理：`{platform}_travel_iframe()`
 
@@ -1095,8 +1149,8 @@ def select_item(items):
 | 同意條款 | 5 分 | 能自動勾選條款 |
 | 訂單送出 | 10 分 | 能找到並點擊送出按鈕 |
 | 登入功能 | 10 分 | 支援帳密或 Cookie 登入 |
-| 錯誤處理 | 5 分 | 有完整的 try-except 和錯誤日誌 |
-| 彈窗處理 | 5 分 | 能處理常見彈窗 |
+| 錯誤處理 | 5 分 | 有完整的 try-except 和錯誤記錄 |
+| 彈出視窗處理 | 5 分 | 能處理常見彈出視窗 |
 | 頁面重載 | 5 分 | 支援自動重載與過熱保護 |
 
 ### 評分等級

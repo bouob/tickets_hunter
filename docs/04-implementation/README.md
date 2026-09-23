@@ -100,7 +100,7 @@
 
 **核心特性**：
 - ASP.NET 傳統架構，頁面結構穩定
-- 完整的座位圖選擇支援
+- 完整的座點陣圖選擇支援
 - OCR 驗證碼辨識
 - 支援 UDN 聯合報系統
 
@@ -146,7 +146,7 @@
 **特點**：香港最大票務平台（城市電腦售票）
 
 **核心特性**：
-- 多域名處理（cityline.com / shows / venue）
+- 多網域處理（cityline.com / shows / venue）
 - Cloudflare Turnstile 驗證
 - 多分頁自動關閉
 - 廣告自動清除
@@ -208,7 +208,7 @@
 ### 快速找到平台文件
 
 1. **我要添加新平台** → 先讀 TixCraft 文件學習基本流程
-2. **我要修復特定平台的問題** → 查找該平台的參考文件
+2. **我要修復特定平台的問題** → 尋找該平台的參考文件
 3. **我要了解平台差異** → 對比不同平台的實作參考
 4. **我要完整了解 12 階段** → 先讀 `docs/03-mechanisms/` 中的機制文件
 
@@ -225,9 +225,8 @@
 #### 有經驗的開發者
 ```
 1. docs/04-implementation/tixcraft-reference.md  <- 快速複習
-2. docs/05-validation/platform-checklist.md      <- 查看實作缺口
-3. docs/05-validation/fr-to-code-mapping.md      <- 查找具體實作
-4. docs/03-mechanisms/[related-stage].md        <- 根據需要查看機制文件
+2. docs/02-development/structure.md              <- 查找現有函式
+3. docs/03-mechanisms/[related-stage].md         <- 根據需要查看機制文件
 ```
 
 ---
@@ -252,7 +251,7 @@
 ### 跨平台問題
 
 **Q：如何適配新平台？**
-A：查看 TixCraft 參考文件了解基本結構，根據該平台的特性進行調整。
+A：檢視 TixCraft 參考文件了解基本結構，根據該平台的特性進行調整。
 
 **Q：不同平台的選擇器如何維護？**
 A：為每個平台創建獨立的選擇器配置文件，見各平台參考文件。
@@ -280,7 +279,7 @@ A：FunOne 使用傳統 Web 架構加 OCR 驗證碼；FANSI GO 使用 Next.js SP
 - [ ] 已在測試環境驗證實作
 - [ ] 已針對該平台的特性進行調整
 - [ ] 已通過所有相關的單位測試
-- [ ] 已更新 `docs/05-validation/` 中的驗證文件
+- [ ] 已更新 `docs/02-development/structure.md` 的平台實作狀態
 
 ---
 
@@ -292,11 +291,6 @@ A：FunOne 使用傳統 Web 架構加 OCR 驗證碼；FANSI GO 使用 Next.js SP
 - `docs/03-mechanisms/03-page-monitoring.md`
 - ... 及其他 12 個階段文件
 
-### 驗證文件
-- `docs/05-validation/spec-validation-matrix.md` - FR 追溯表
-- `docs/05-validation/platform-checklist.md` - 平台完成度評分
-- `docs/05-validation/fr-to-code-mapping.md` - 代碼對應表
-
 ### 故障排除
 - 平台特定的故障排除指南 - 詳見內部疑難排解文件
 
@@ -304,7 +298,7 @@ A：FunOne 使用傳統 Web 架構加 OCR 驗證碼；FANSI GO 使用 Next.js SP
 
 ## 版本與更新
 
-**當前支持的平台數**：10 個票務平台 + 1 個 Facebook 登入輔助模組
+**目前支持的平台數**：10 個票務平台 + 1 個 Facebook 登入輔助模組
 
 | 區域 | 平台 |
 |------|------|
@@ -320,7 +314,7 @@ A：FunOne 使用傳統 Web 架構加 OCR 驗證碼；FANSI GO 使用 Next.js SP
 
 1. 複製 `tixcraft-reference.md` 作為範本
 2. 根據新平台的特性進行調整
-3. 更新 `platform-checklist.md` 的統計數據
+3. 更新 `platform-checklist.md` 的統計資料
 4. 更新本 README 的平台列表
 5. 提交合併請求
 
@@ -328,7 +322,6 @@ A：FunOne 使用傳統 Web 架構加 OCR 驗證碼；FANSI GO 使用 Next.js SP
 
 ## 快速連結
 
-- 📋 [規格驗證矩陣](../05-validation/spec-validation-matrix.md) - FR-001 至 FR-064 追溯
-- 📊 [平台完成度評分](../05-validation/platform-checklist.md) - 各平台的實作狀態
-- 🔗 [代碼對應表](../05-validation/fr-to-code-mapping.md) - FR 到函數的映射
 - 🏗️ [機制文件](../03-mechanisms/README.md) - 12 個階段的詳細說明
+- 📐 [12 階段標準](../02-development/ticket_automation_standard.md) - 平台開發規格
+- 🔎 [函式索引](../02-development/structure.md) - 各平台實作狀態與函式位置

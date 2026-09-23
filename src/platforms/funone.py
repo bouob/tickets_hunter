@@ -15,6 +15,7 @@ except Exception:
 import util
 from nodriver_common import (
     check_and_handle_pause,
+    nodriver_current_url_safe,
     play_sound_while_ordering,
     send_discord_notification,
     send_telegram_notification,
@@ -42,7 +43,43 @@ __all__ = [
     "nodriver_funone_main",
 ]
 
+# How long after a successful order submit to stop re-running the ticket flow
+# on that same URL. The POST navigation is still in flight during this window:
+# the page has already torn down its ticket rows, so any re-check reads as
+# "sold out". Longer than the kktix equivalent because FunOne's purchase POST
+# was measured taking several seconds to land on purchase_fill_form.
+CONST_FUNONE_SUBMIT_COOLDOWN = 5.0
+
 _state = {}
+
+
+def _is_submit_cooldown(url, submitted_url, submitted_time, now):
+    """True while the submit issued for `url` is still in flight.
+
+    Bounded by both URL and time: it releases as soon as the page moves on, and
+    expires on its own if the submit failed, so it can never latch.
+    """
+    if not submitted_url or submitted_url != url:
+        return False
+    return (now - submitted_time) < CONST_FUNONE_SUBMIT_COOLDOWN
+
+
+def _is_past_ticket_selection(url):
+    """The order is already placed - never submit or reload from here.
+
+    Reloading a POST result raises the native form-resubmission dialog, which
+    blocks every later tab.evaluate() call and strands the run.
+
+    Deliberately a blocklist: step 2 is identified by DOM shape rather than by
+    URL, so an allowlist would refuse its submit as well.
+    """
+    if not url:
+        return False
+    return any(marker in url for marker in (
+        '/purchase_fill_form/',
+        '/purchase_checkout',
+        '/purchase_waiting_jump/',
+    ))
 
 
 async def nodriver_funone_inject_cookie(tab, config_dict):
@@ -1556,6 +1593,14 @@ async def nodriver_funone_order_submit(tab, config_dict):
     """
     debug = util.create_debug_logger(config_dict)
 
+    # Read the live URL rather than trusting the caller's: the flow can reach
+    # here on a stale URL while an earlier submit is still navigating. Stamping
+    # the cooldown in here covers both call sites (step 1 and step 2) at once.
+    current_url = await nodriver_current_url_safe(tab)
+    if _is_past_ticket_selection(current_url):
+        debug.log("[FUNONE] Already past ticket selection, skipping submit click")
+        return False
+
     try:
         # Find and click submit button
         submit_js = '''
@@ -1588,6 +1633,10 @@ async def nodriver_funone_order_submit(tab, config_dict):
         if result and isinstance(result, dict) and result.get('clicked'):
             debug.log(f"[FUNONE] Submit button clicked: {result.get('buttonText')}")
             _state["submit_notfound"] = False  # Reset flag on success
+            # Feeds the cooldown guard so the next loop does not re-run the
+            # ticket steps against a DOM this submit is about to tear down.
+            _state["order_submitted_url"] = current_url
+            _state["order_submitted_time"] = time.time()
             return True
         else:
             # Only print once when submit button not found
@@ -1810,6 +1859,9 @@ async def nodriver_funone_main(tab, url, config_dict):
             "last_sold_out_logged": False,
             "max_retry_logged": False,
             "last_homepage_redirect_time": 0,
+            # Cooldown guard: which page we last submitted an order on, and when.
+            "order_submitted_url": "",
+            "order_submitted_time": 0,
         })
 
     debug = util.create_debug_logger(config_dict)
@@ -1843,6 +1895,9 @@ async def nodriver_funone_main(tab, url, config_dict):
         _state["refresh_retry_count"] = 0
         _state["last_sold_out_logged"] = False
         _state["max_retry_logged"] = False
+        # Was missing here, so the sold-out line stayed deduplicated for the
+        # rest of the run once the page type had changed even once.
+        _state["qty_sold_out_refreshing"] = False
         # Reset OCR retry state
         _state["ocr_retry_count"] = 0
         _state["ocr_exhausted"] = False
@@ -1910,8 +1965,26 @@ async def nodriver_funone_main(tab, url, config_dict):
                 _state["last_step"] = step
 
             if step == 1:
+                # A submit from this same URL is still in flight: the POST has
+                # not navigated yet, so the ticket rows are already gone and any
+                # re-check reads as sold out, which then triggers a reload of a
+                # page that has in fact already been ordered. Bounded by URL and
+                # time so it always expires.
+                if _is_submit_cooldown(url,
+                                       _state.get("order_submitted_url", ""),
+                                       _state.get("order_submitted_time", 0),
+                                       time.time()):
+                    await tab.sleep(0.3)
+                    return tab
+
                 # Step 1: Ticket type/quantity selection
                 # FunOne: purchase_choose_ticket_no_map is a combined ticket selection + quantity page
+
+                # Read once here, not inside the no_map branch below: the
+                # sold-out path further down uses it even when step 1 was
+                # entered through a plain purchase_choose_ticket URL or by DOM
+                # detection, which used to raise UnboundLocalError.
+                auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 2)
 
                 # Check if on purchase_choose_ticket_no_map page - apply sold-out detection
                 if '/purchase_choose_ticket_no_map/' in url:
@@ -1944,7 +2017,6 @@ async def nodriver_funone_main(tab, url, config_dict):
                     # Check sold-out status first
                     is_sold_out, remaining, ticket_info = await nodriver_funone_check_sold_out(tab, config_dict)
                     ticket_number = config_dict.get("ticket_number", 2)
-                    auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 2)
 
                     # Handle sold-out or insufficient tickets
                     if is_sold_out or (remaining > 0 and remaining < ticket_number):
@@ -1998,7 +2070,16 @@ async def nodriver_funone_main(tab, url, config_dict):
                                 await asyncio.sleep(auto_reload_interval)
                             else:
                                 await asyncio.sleep(auto_reload_interval)
-                                await tab.reload()
+                                # Never reload a page we have already navigated
+                                # away from: reloading a POST result raises a
+                                # native resubmission dialog, which blocks all
+                                # JS evaluation and strands the run.
+                                live_url = await nodriver_current_url_safe(tab)
+                                if _is_past_ticket_selection(live_url):
+                                    debug.log("[FUNONE] Page already moved on, "
+                                              "skipping sold-out reload")
+                                else:
+                                    await tab.reload()
                         return tab
 
                     _state["qty_sold_out_refreshing"] = False

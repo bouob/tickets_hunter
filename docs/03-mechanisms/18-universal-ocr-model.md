@@ -54,7 +54,7 @@ path/custom.onnx 或 charsets.json 不存在 → 記 log，return None
 4. 其餘情況                                         → universal
 ```
 
-決策中以淺拷貝 `config_dict` 覆寫 `ocr_captcha.path` 為 tixcraft_tm 路徑後再交給 `create_universal_ocr`，不改動原設定。
+決策中以淺複製 `config_dict` 覆寫 `ocr_captcha.path` 為 tixcraft_tm 路徑後再交給 `create_universal_ocr`，不改動原設定。
 
 ---
 
