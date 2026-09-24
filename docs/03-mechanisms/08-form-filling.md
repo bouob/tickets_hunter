@@ -11,7 +11,7 @@
 1. **驗證問題表單** — 主辦方設定的文字問答（最常見）
 2. **驗證碼輸入表單** — OCR 辨識結果的填寫與提交
 
-**核心目標**：自動偵測表單類型、填入正確答案並提交，為訂單送出做準備。
+**核心目標**：自動偵測表單型別、填入正確答案並提交，為訂單送出做準備。
 
 **關鍵技術**：
 - **答案推論**：從 `auto_guess_options` 自動猜測或從使用者預設答案填入
@@ -67,7 +67,7 @@ KKTIX 的驗證問題出現在票種選擇頁面。填寫流程：
 - 偵測 `div.custom-captcha-inner > div > div > input` 輸入框
 - 模擬人類打字：逐字寫入 `input.value += answer[i]`，每字觸發 `input` 事件
 - 填寫前加入 0.3-1 秒隨機延遲，填寫後 0.5-1.2 秒再點擊按鈕
-- 問題文字寫入檔案（`write_question_to_file`），供使用者查看
+- 問題文字寫入檔案（`write_question_to_file`），供使用者檢視
 
 #### 會員序號的時序約束（`nodriver_kktix_order_member_code`）
 
@@ -75,7 +75,7 @@ KKTIX 的驗證問題出現在票種選擇頁面。填寫流程：
 
 - **必須在資格 radio 選定之後才填。** 序號欄位隸屬於某一個資格選項，
   選定之前填寫會寫到錯誤的（或不存在的）選項上。詳見 `19-purchase-qualification.md`。
-- **必須綁定作用域。** 欄位位於各自的 `.ticket-unit` 內，
+- **必須繫結作用域。** 欄位位於各自的 `.ticket-unit` 內，
   全域 `document.querySelectorAll` 在多票種頁面會填到別的票種去。
   作法是先找出張數 > 0 的 ticket-unit 再查詢。
 
@@ -93,7 +93,7 @@ iBon 驗證表單可能同時出現兩個輸入框（例如同時填寫身分證
 
 ### FamiTicket — 獨立驗證頁面（`nodriver_fami_verify`）
 
-FamiTicket 的驗證問題出現在獨立頁面（非彈窗）：
+FamiTicket 的驗證問題出現在獨立頁面（非彈出視窗）：
 
 - 選擇器為 `#verifyPrefAnswer`
 - 填入答案後模擬 Enter 鍵提交，或直接 `form.submit()`
@@ -114,7 +114,7 @@ TicketPlus 的表單填寫集中在登入階段而非購票階段：
 
 ## 問題文字紀錄機制
 
-所有平台的驗證問題文字都會透過 `write_question_to_file()`（`src/nodriver_common.py`）寫入檔案，讓使用者能在外部查看當前題目：
+所有平台的驗證問題文字都會透過 `write_question_to_file()`（`src/nodriver_common.py`）寫入檔案，讓使用者能在外部檢視目前題目：
 
 - 呼叫 `util.write_string_to_file(target_path, question_text)` 寫入磁碟
 - 搭配 `auto_guess_options` 設定自動推論答案

@@ -20,7 +20,7 @@
 > **重要**：所有平台的冷卻重載順序統一為 **Sleep → Reload**，
 > 確保 reload 後取得的最新資料能立即被檢查，不被冷卻等待浪費。
 
-### 標準模板
+### 標準範本
 
 ```python
 # Simple Wait Pattern - 標準模板（所有平台統一）
@@ -41,7 +41,7 @@ except Exception:
 #### Stage 4: 日期選擇
 
 **檔案**：`src/platforms/tixcraft.py`
-**函數**：`nodriver_tixcraft_date_auto_select()`
+**函式**：`nodriver_tixcraft_date_auto_select()`
 
 ```python
 # Auto refresh if no date was selected (for strict mode or sold out scenarios)
@@ -62,7 +62,7 @@ if not is_date_clicked:
 #### Stage 5: 區域選擇
 
 **檔案**：`src/platforms/tixcraft.py`
-**函數**：`nodriver_tixcraft_area_auto_select()`
+**函式**：`nodriver_tixcraft_area_auto_select()`
 
 ```python
 # Auto refresh if needed (simple wait mode, consistent with TicketPlus/iBon/FamiTicket)
@@ -92,14 +92,14 @@ if is_need_refresh:
 ## 設計概念：Active Polling Pattern（待實作）
 
 > 以下描述的 Active Polling 機制為**設計概念**，目前尚未在任何平台實作。
-> 保留作為未來優化方向的參考。
+> 保留作為未來最佳化方向的參考。
 
 ### 問題背景
 
 在搶票過程中，當頁面需要刷新重試時，通常會有一個冷卻間隔（`auto_reload_page_interval`）。Simple Wait 使用單一 `sleep()` 等待整個間隔，導致：
 
 - **錯過快速出現的票**：票可能在等待期間出現，但 bot 在睡眠中
-- **反應延遲**：必須等完整個間隔才能檢測
+- **反應延遲**：必須等完整個間隔才能偵測
 - **時機流失**：熱門票券可能在幾秒內售罄
 
 ### 設計方案
@@ -135,7 +135,7 @@ poll_count = int(interval * 5)  # interval 秒 / 0.2 秒 = 輪詢次數
 | 10s | 50 次 | 每 0.2s 檢查 |
 | 15s | 75 次 | 每 0.2s 檢查 |
 
-### 概念模板
+### 概念範本
 
 ```python
 # Active Polling Pattern - 概念模板（待實作）

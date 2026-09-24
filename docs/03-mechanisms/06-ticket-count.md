@@ -41,14 +41,14 @@
 | Ticketmaster | `nodriver_ticketmaster_assign_ticket_number` | `platforms/tixcraft.py` | `<select>` 下拉選單 | 設定後自動點擊 `#autoMode` 按鈕 |
 | FamiTicket | `nodriver_fami_ticket_select` | `platforms/famiticket.py` | `<select>` 下拉選單 | 票數設定整合於票種選擇流程中 |
 | TicketPlus | `nodriver_ticketplus_unified_select` | `platforms/ticketplus.py` | 平台自訂 UI | 透過統一選擇函式處理 |
-| FunOne | `nodriver_funone_assign_ticket_number` | `platforms/funone.py` | `<input>` + `+` 按鈕 | 遍歷輸入框找匹配票種，用 JS 操作 |
+| FunOne | `nodriver_funone_assign_ticket_number` | `platforms/funone.py` | `<input>` + `+` 按鈕 | 走訪輸入框找比對票種，用 JS 操作 |
 | FanSiGo | `nodriver_fansigo_assign_ticket_number` | `platforms/fansigo.py` | `+` 按鈕點擊 | React 18 批次更新問題，每次點擊間隔 0.2 秒 |
 
 ---
 
 ## 平台關鍵差異
 
-### TixCraft — 票種關鍵字匹配（`nodriver_tixcraft_assign_ticket_number`）
+### TixCraft — 票種關鍵字比對（`nodriver_tixcraft_assign_ticket_number`）
 
 TixCraft 的票頁可能有多個 `<select>`（對應不同票種/價位）。系統先根據 `area_keyword` 篩選目標票種，再對該 select 設定票數：
 
@@ -80,11 +80,11 @@ TixCraft 的票頁可能有多個 `<select>`（對應不同票種/價位）。�
 
 iBon 的作法違反排除關鍵字的黑名單語意，與其他平台不一致，尚未定調。修改任一平台此段行為前請先確認預期語意。
 
-### KKTIX — Angular 雙向綁定（`nodriver_kktix_assign_ticket_number`）
+### KKTIX — Angular 雙向繫結（`nodriver_kktix_assign_ticket_number`）
 
 KKTIX 使用 `<input>` 文字框而非 `<select>`。設定流程：
 
-- 查找 `div.display-table-row input` 或 `div.ticket-item input.number-step-input-core`
+- 尋找 `div.display-table-row input` 或 `div.ticket-item input.number-step-input-core`
 - 清空後寫入 `ticket_number`
 - 必須觸發 `input`、`change`、`blur` 三個事件
 - 若偵測到 Angular，額外呼叫 `scope.$apply()` 確保模型同步

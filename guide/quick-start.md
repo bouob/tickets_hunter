@@ -156,8 +156,8 @@ https://kktix.com/events/example-event
 - 輸出詳細除錯訊息：打勾
 
 **說明**：
-- 方便查看搶票過程和除錯
-- **警告**：輸出大量日誌可能影響效能
+- 方便檢視搶票過程和除錯
+- **警告**：輸出大量記錄可能影響效能
 - **建議**：除非需要除錯，否則保持關閉
 
 #### 3.3 優惠代碼設定（特定活動需要）⭐ 新增功能
@@ -264,7 +264,7 @@ python nodriver_tixcraft.py --input settings.json
 ### Q1: 程式啟動後瀏覽器沒有開啟
 **可能原因**：
 - Chrome 瀏覽器未安裝
-- Python 版本不相容（需 3.9-3.11，建議 3.11.9）
+- Python 版本不相容（需 3.10-3.11，建議 3.11.9）
 - 相依套件未安裝
 
 **解決方法**：
@@ -286,7 +286,7 @@ python --version
 
 **解決方法**：
 1. 檢查圖形介面中「日期關鍵字」欄位是否正確
-   - 手動打開活動頁面，複製日期文字，確認關鍵字匹配
+   - 手動打開活動頁面，複製日期文字，確認關鍵字比對
 2. 開啟「日期自動遞補」
    - 在「基本設定」頁籤中勾選「日期自動遞補」
    - 確保「日期排序方式」已設定
@@ -322,7 +322,7 @@ python --version
 ### Q5: 程式執行到一半停住
 **可能原因**：
 - 網站載入速度慢
-- 暫停機制觸發（NoDriver）
+- 暫停機制觸發
 
 **解決方法**：
 1. 等待一段時間，程式會自動重試
@@ -354,9 +354,9 @@ python --version
 
 ---
 
-### Q7: 出現「ddddocr 組件無法使用，您可能在 ARM 環境下運行」
+### Q7: 出現「ddddocr 元件無法使用，您可能在 ARM 環境下執行」
 **可能原因**：
-- **Python 版本過新**（3.13+）：ddddocr 依賴的 onnxruntime 尚不支援
+- **Python 版本過新**（3.13+）：ddddocr 限定 Python 3.12 以下
 - **ARM 環境**：Apple Silicon Mac（M1/M2/M3）未安裝 Rosetta
 - **套件安裝不完整**：onnxruntime 安裝失敗
 
@@ -372,7 +372,7 @@ python --version
 # 應顯示 Python 3.10.x 或 3.11.x
 ```
 
-**方法 2：Apple Silicon Mac 用戶**
+**方法 2：Apple Silicon Mac 使用者**
 ```bash
 # 使用 Rosetta 執行 x86 版 Python
 arch -x86_64 python3 nodriver_tixcraft.py --input settings.json
@@ -387,7 +387,7 @@ pip uninstall ddddocr onnxruntime onnxruntime-gpu -y
 pip install ddddocr
 ```
 
-**支援的 Python 版本**：3.9、3.10、3.11（推薦 3.11.9）、3.12
+**支援的 Python 版本**：3.10-3.11（推薦 3.11.9）；3.12 相容性待驗證，3.13 以上不支援
 
 **參考**：[Issue #7](https://github.com/bouob/tickets_hunter/issues/7)
 
@@ -408,7 +408,7 @@ pip install ddddocr
    ```
 
 **提示**：
-- 查看 [CHANGELOG.md](../CHANGELOG.md) 了解版本更新內容
+- 檢視 [CHANGELOG.md](../CHANGELOG.md) 了解版本更新內容
 - 設定檔 `settings.json` 通常可直接沿用
 - 如遇問題，可參考新版本的 `settings.json.default` 範本
 
@@ -442,7 +442,7 @@ pip install ddddocr
 
 **用途**：方便了解程式執行過程，出問題時可快速定位。
 
-**警告**：輸出大量日誌可能影響效能，僅在需要除錯時使用。
+**警告**：輸出大量記錄可能影響效能，僅在需要除錯時使用。
 
 ### 技巧 4：提前測試設定
 在正式開搶前，用其他活動測試您的設定是否正確。

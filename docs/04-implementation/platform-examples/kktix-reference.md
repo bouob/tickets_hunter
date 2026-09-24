@@ -9,7 +9,7 @@
 
 **平台名稱**：KKTIX
 **主要特色**：
-- **問答式驗證碼**：最具挑戰性的驗證碼類型
+- **問答式驗證碼**：最具挑戰性的驗證碼型別
 - **價格列表模式**：兩階段區域選擇（價格表 + 票數輸入）
 - **Register Status 區域**：支援預售/一般售票的雙區域模式
 - **自動下一步**：可設定自動/手動按下一步按鈕
@@ -19,9 +19,9 @@
 
 ---
 
-## 核心函數索引
+## 核心函式索引
 
-| 階段 | 函數名稱 | 行數 | 說明 |
+| 階段 | 函式名稱 | 行數 | 說明 |
 |------|---------|------|------|
 | Main | `nodriver_kktix_main()` | - | 主控制流程（URL 路由）|
 | Stage 2 | `nodriver_kktix_signin()` | - | 登入處理 |
@@ -31,7 +31,7 @@
 | Stage 5 | `nodriver_kktix_assign_ticket_number()` | - | 區域選擇 + 票數輸入 |
 | Stage 7 | `nodriver_kktix_reg_captcha()` | - | 問答式驗證碼處理 |
 | Stage 8 | `nodriver_kktix_reg_new_main()` | - | 註冊頁面主處理 |
-| Stage 9 | `nodriver_kktix_check_guest_modal()` | - | 訪客模式對話框 |
+| Stage 9 | `nodriver_kktix_check_guest_modal()` | - | 訪客模式對話方塊 |
 | Stage 10 | `nodriver_kktix_press_next_button()` | - | 下一步按鈕點擊 |
 | Stage 10 | `nodriver_kktix_events_press_next_button()` | - | Events 頁面下一步 |
 | Stage 10 | `nodriver_kktix_confirm_order_button()` | - | 確認訂單按鈕 |
@@ -49,7 +49,7 @@
 KKTIX 使用**問答式驗證碼**,而非傳統圖形驗證碼:
 - 問題範例：「請問演唱會地點是？」
 - 答案選項：台北小巨蛋 / 台中洲際 / 高雄巨蛋 / 其他
-- 需要**關鍵字匹配** + **fail_list 機制**
+- 需要**關鍵字比對** + **fail_list 機制**
 
 ### 解決方案
 
@@ -238,11 +238,11 @@ general_areas = await registrationsNewApp_div.query_selector_all('div.register-s
 if len(presale_areas) > 0:
     ticket_areas = presale_areas
     if show_debug_message:
-        print(f"[KKTIX] Using presale area (found {len(presale_areas)} presale tickets)")
+        debug.log(f"[KKTIX] Using presale area (found {len(presale_areas)} presale tickets)")
 elif len(general_areas) > 0:
     ticket_areas = general_areas
     if show_debug_message:
-        print(f"[KKTIX] Using general sale area (found {len(general_areas)} general tickets)")
+        debug.log(f"[KKTIX] Using general sale area (found {len(general_areas)} general tickets)")
 ```
 
 ---
@@ -270,11 +270,11 @@ if auto_press_next_step_button:
 
         await next_buttons[0].click()
         if show_debug_message:
-            print("[KKTIX] Auto pressed next step button")
+            debug.log("[KKTIX] Auto pressed next step button")
 else:
     # Wait for manual confirmation
     if show_debug_message:
-        print(f"[KKTIX] Waiting for manual confirmation (max {max_dwell_time}s)")
+        debug.log(f"[KKTIX] Waiting for manual confirmation (max {max_dwell_time}s)")
     await asyncio.sleep(max_dwell_time)
 ```
 
@@ -296,8 +296,8 @@ else:
 async def kktix_purchase_flow_example():
     """KKTIX 完整購票流程示範"""
 
-    # Stage 3: 監控頁面 + 日期選擇
-    await nodriver_kktix_presale_home(tab, url, config_dict)
+    # Stage 3+4: 監控頁面 + 日期選擇
+    await nodriver_kktix_date_auto_select(tab, config_dict)
     # → 選擇演唱會日期（button[data-href]）
 
     # Stage 5: 區域選擇 + 票數輸入（兩階段）
@@ -339,7 +339,7 @@ async def kktix_purchase_flow_example():
 
 **使用者行動**：
 1. 準備常見答案關鍵字（地點、樂團名、日期）
-2. 監控問題日誌（`question.txt`）
+2. 監控問題記錄（`question.txt`）
 3. 根據失敗問題補充答案庫
 
 ### 2. 價格列表關鍵字
@@ -353,7 +353,7 @@ async def kktix_purchase_flow_example():
 }
 ```
 
-**優先級策略**：
+**優先順序策略**：
 - 第 1 個：最想要的票種（VIP票）
 - 第 2 個：次要選擇（早鳥票）
 - 第 3 個：最後選擇（全票）
@@ -373,8 +373,8 @@ async def kktix_purchase_flow_example():
 **A**: 檢查並補充答案庫。
 
 **步驟**：
-1. 查看問題日誌：`question.txt` 或 `MAXBOT_QUESTION.txt`
-2. 找出常見問題類型（地點/樂團/日期）
+1. 檢視問題記錄：`question.txt` 或 `MAXBOT_QUESTION.txt`
+2. 找出常見問題型別（地點/樂團/日期）
 3. 補充到 `user_guess_string`:
 ```json
 {
@@ -405,7 +405,7 @@ async def kktix_purchase_flow_example():
 
 - 📋 [Stage 7: 驗證碼處理機制](../../03-mechanisms/07-captcha-handling.md) - 問答式驗證碼詳解
 - 📋 [Stage 5: 區域選擇機制](../../03-mechanisms/05-area-selection.md) - Early Return Pattern
-- 🏗️ [程式碼結構分析](../../02-development/structure.md) - KKTIX 函數索引
+- 🏗️ [程式碼結構分析](../../02-development/structure.md) - KKTIX 函式索引
 - 📖 [12-Stage 標準](../../02-development/ticket_automation_standard.md) - 完整流程規範
 
 ---

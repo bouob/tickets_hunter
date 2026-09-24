@@ -26,7 +26,7 @@
 
 ⚠️ **挑戰**：
 - 某些活動有排隊機制（FIFO 排隊）
-- 可能使用進階選擇界面
+- 可能使用進階選擇介面
 - JavaScript 執行可能需要
 - 某些動態元素需要監控
 
@@ -68,23 +68,25 @@
 **狀態**：✅ 完全實作
 
 **TixCraft 特定步驟**：
+
+環境初始化由主檔與共用模組負責，平台模組不參與。實際流程：
+
 ```python
-# 1. 平台識別
+# src/nodriver_tixcraft.py
+# 1. URL 路由識別（main() 的 while True 內）
 if 'tixcraft.com' in url:
-    platform = 'tixcraft'
+    is_quit_bot = await nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser)
 
-# 2. Cookie 注入 (如有)
-if cookies:
-    await inject_cookies(page, cookies['tixcraft'])
+# 2. Cookie 注入：拓元靠 SID / TIXUISID，於平台模組內以 CDP 寫入
+#    設定來源 config_dict["accounts"]["tixcraft_sid"]
 
-# 3. 導航並驗證
-await page.goto(config['url'])
-await verify_page_loaded(page)
+# 3. 導向起始頁
+await nodriver_goto_homepage(tab, config_dict)
 ```
 
 **常見問題**：
-- Cookie 過期 → 重新取得並更新
-- 頁面未完全加載 → 增加等待時間
+- Cookie 過期 → 重新取得並更新 `tixcraft_sid`
+- 拓元刻意不做自動登入，靠 chrome profile 保持 session
 
 ---
 
@@ -93,25 +95,26 @@ await verify_page_loaded(page)
 
 **TixCraft 特點**：
 - Cookie 通常有效，無需重新登入
-- 頁面加載相對快速
-- 監控按鈕變化（從禁用到可用）
+- 頁面載入相對快速
+- 監控按鈕變化（從停用到可用）
 
 **關鍵監控點**：
 ```python
-# 監控「選擇」按鈕
-select_btn = await page.query_selector('[id*="select"]')
-if await select_btn.is_enabled():
-    print("Ticket released!")
+# 監控「選擇」按鈕（zendriver 用 tab，元素無 is_enabled()，
+# 改查 disabled 屬性或直接嘗試點擊）
+select_btn = await tab.query_selector('[id*="select"]')
+if select_btn and not select_btn.attrs.get('disabled'):
+    debug.log("Ticket released!")
 ```
 
 ---
 
 ### Stage 4-5: 日期 + 區域選擇
-**狀態**：✅ 完全實作 (已優化 Feature 003 - 早期返回)
+**狀態**：✅ 完全實作 (已最佳化 Feature 003 - 早期返回)
 
 **TixCraft 特點**：
 - 支援多個日期/座位區域
-- 可能需要點擊「展開」查看隱藏選項
+- 可能需要點擊「展開」檢視隱藏選項
 - 支援 AND 邏輯與條件回退
 
 **範例選擇器**：
@@ -125,10 +128,10 @@ area_selector = '.area-option'
 ### Stage 6: 票數設定
 **狀態**：✅ 完全實作
 
-**TixCraft 實現**：
+**TixCraft 實作**：
 - 通常使用 `<input type="number">`
 - 某些活動可能有動態限制
-- 總金額實時更新
+- 總金額即時更新
 
 ---
 
@@ -144,9 +147,9 @@ area_selector = '.area-option'
 ### Stage 8-9: 表單填寫 + 同意條款
 **狀態**：✅ 實作 / 🔄 部分實作
 
-**TixCraft 實現**：
+**TixCraft 實作**：
 - 購買人信息欄位相對簡單
-- 有「同意服務條款」複選框
+- 有「同意服務條款」核取方塊
 
 **表單選擇器**：
 ```python
@@ -177,14 +180,14 @@ terms_checkbox = 'input[name="agreeTerms"]'
 
 **常見錯誤**：
 1. **Cookie 過期** → 無法進行購票
-   - 檢測：嘗試進行操作，若被導向登入頁
+   - 偵測：嘗試進行操作，若被導向登入頁
    - 處理：提示使用者更新 Cookie
 
 2. **庫存已售完** → 無票可買
-   - 檢測：頁面訊息或無可選選項
+   - 偵測：頁面訊息或無可選選項
    - 處理：停止並報告
 
-3. **網路超時** → 暫時性問題
+3. **網路逾時** → 暫時性問題
    - 處理：自動重試 (最多 3 次)
 
 ---
@@ -230,11 +233,11 @@ terms_checkbox = 'input[name="agreeTerms"]'
 ### Q1: Cookie 如何取得？
 
 **步驟**：
-1. 訪問 https://tixcraft.com
+1. 存取 https://tixcraft.com
 2. 登入您的帳號
 3. F12 開啟開發者工具 → Application → Cookies
 4. 複製 `tixcraft_sessionid` 的值
-5. 粘貼到 `settings.json`
+5. 貼上到 `settings.json`
 
 ### Q2: 為什麼選擇失敗？
 
@@ -250,7 +253,7 @@ terms_checkbox = 'input[name="agreeTerms"]'
 2. 自動等待
 3. 進入購票頁面後繼續
 
-如果排隊超時，可調整 `monitor_timeout` 設定。
+如果排隊逾時，可調整 `monitor_timeout` 設定。
 
 ### Q4: 能否自動填寫支付信息？
 
@@ -274,7 +277,7 @@ terms_checkbox = 'input[name="agreeTerms"]'
 | 座位區域 | `.area-option` | 根據活動而異 |
 | 票數輸入 | `input[type="number"]` | 設定數量 |
 | 確認按鈕 | `button[id*="confirm"]` | 提交訂單 |
-| 條款複選框 | `input[name="agreeTerms"]` | 必須勾選 |
+| 條款核取方塊 | `input[name="agreeTerms"]` | 必須勾選 |
 
 ---
 
@@ -294,9 +297,8 @@ terms_checkbox = 'input[name="agreeTerms"]'
 ## 相關文件
 
 - 機制文件：`docs/03-mechanisms/[01-12].md`
-- 驗證矩陣：`docs/05-validation/spec-validation-matrix.md`
-- 平台檢查清單：`docs/05-validation/platform-checklist.md`
-- 代碼對應表：`docs/05-validation/fr-to-code-mapping.md`
+- 12 階段標準：`docs/02-development/ticket_automation_standard.md`
+- 函式索引：`docs/02-development/structure.md`
 
 ---
 

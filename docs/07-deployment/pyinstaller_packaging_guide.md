@@ -23,7 +23,7 @@
 | 目標 | 使用方法 | 時間 | 說明 |
 |------|---------|------|------|
 | **本地測試打包** | `build_scripts\build_and_test.bat` | 10-20 分鐘 | 開發階段驗證打包結果 |
-| **正式發布版本** | 推送 Git tag (`v2026.03.09`) | 15-25 分鐘 | GitHub Actions 自動打包並發布 |
+| **正式發布版本** | 推送 Git tag (`v2026.03.09`) | 15-25 分鐘 | GitHub Actions 自動打包並行布 |
 | **了解技術細節** | 閱讀本文件 | 30 分鐘 | 深入理解 PyInstaller 配置 |
 
 ### ⚡ 最快方式
@@ -36,17 +36,14 @@ build_and_test.bat
 
 **正式發布**（生產環境）：
 ```bash
-# 1. 更新版本號（5 個檔案的 CONST_APP_VERSION）
-/gupdate
+# 1. 更新 src/nodriver_tixcraft.py 與 src/settings.py 的 CONST_APP_VERSION
 
 # 2. 更新 CHANGELOG.md
-# （手動編輯）
 
 # 3. 提交並推送 tag
-/gsave
-/gpush
+git commit -am "chore(release): update version to 2026.03.09"
 git tag v2026.03.09
-git push private v2026.03.09
+git push origin main v2026.03.09
 
 # 4. GitHub Actions 自動執行（15-25 分鐘）
 # 前往 GitHub → Actions → Build and Release 查看進度
@@ -135,7 +132,7 @@ dist/
    - 建立 Draft Release（需手動 Publish）
    - 上傳 ZIP 檔案
 
-### 📋 配置檔案
+### 📋 設定檔案
 
 **位置**：`.github/workflows/build-release.yml`
 
@@ -171,17 +168,17 @@ jobs:
 
 ### 🔍 監控與驗證
 
-**查看打包進度**：
-1. 前往 GitHub 倉庫
+**檢視打包進度**：
+1. 前往 GitHub 儲存庫
 2. 點擊 **Actions** 標籤
 3. 選擇 **Build and Release** workflow
-4. 查看執行狀態（約 15-25 分鐘）
+4. 檢視執行狀態（約 15-25 分鐘）
 
 **驗證 Release**：
-1. 前往 GitHub 倉庫
+1. 前往 GitHub 儲存庫
 2. 點擊 **Releases** 標籤
 3. 下載最新版本的 ZIP 檔案
-4. 在乾淨環境（Windows Sandbox 或虛擬機）測試所有 exe
+4. 在乾淨環境（Windows Sandbox 或虛擬機器）測試所有 exe
 
 ---
 
@@ -257,8 +254,8 @@ build_scripts\build_and_test.bat
 # 4. 驗證是否缺少 DLL 或模組
 ```
 
-**虛擬機測試**：
-- 使用乾淨的 Windows 10/11 虛擬機（無 Python 環境）
+**虛擬機器測試**：
+- 使用乾淨的 Windows 10/11 虛擬機器（無 Python 環境）
 - 安裝 [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe)
 - 測試所有功能是否正常
 
@@ -266,11 +263,11 @@ build_scripts\build_and_test.bat
 
 ## PyInstaller 配置說明
 
-### 📋 .spec 配置檔案
+### 📋 .spec 設定檔案
 
-Tickets Hunter 使用 **3 個獨立的 .spec 配置檔**，每個對應一個 exe：
+Tickets Hunter 使用 **3 個獨立的 .spec 設定檔**，每個對應一個 exe：
 
-| 配置檔 | 對應程式 | 說明 |
+| 設定檔 | 對應程式 | 說明 |
 |--------|---------|------|
 | `nodriver_tixcraft.spec` | `nodriver_tixcraft.exe` | ZenDriver 版本主程式（最大） |
 | `settings.spec` | `settings.exe` | 網頁設定介面 |
@@ -379,9 +376,9 @@ coll = COLLECT(
 - PyInstaller 的 `datas` 會將檔案壓縮到 `_internal/`
 - 直接複製目錄更可靠，使用者也可自行修改
 
-#### 2. `hiddenimports` - 隱藏導入
+#### 2. `hiddenimports` - 隱藏匯入
 
-**目的**：明確指定動態導入的模組（PyInstaller 無法自動偵測）
+**目的**：明確指定動態匯入的模組（PyInstaller 無法自動偵測）
 
 **Tickets Hunter 必要模組**：
 ```python
@@ -427,7 +424,7 @@ excludes=[
 
 **優點**：
 - ✅ 啟動速度快（無需解壓縮）
-- ✅ 易於除錯（可直接查看依賴檔案）
+- ✅ 易於除錯（可直接檢視依賴檔案）
 - ✅ 支援多個 exe 共用依賴（節省空間）
 
 **缺點**：
@@ -435,11 +432,11 @@ excludes=[
 
 #### 5. `console=True` - 保留命令列視窗
 
-**目的**：顯示執行日誌，方便使用者查看進度
+**目的**：顯示執行記錄，方便使用者檢視進度
 
 **Tickets Hunter 策略**：
-- ✅ `nodriver_tixcraft.exe` - 保留 console（查看搶票日誌）
-- ✅ `settings.exe` - 保留 console（查看伺服器日誌）
+- ✅ `nodriver_tixcraft.exe` - 保留 console（檢視搶票記錄）
+- ✅ `settings.exe` - 保留 console（檢視伺服器記錄）
 - ❌ `config_launcher.exe` - 隱藏 console（GUI 程式）
 
 ### 🔍 常見問題
@@ -449,7 +446,7 @@ excludes=[
 **原因**：
 1. **啟動慢**：單一 exe 需要先解壓縮到暫存目錄（5-10 秒）
 2. **檔案大**：無法共用依賴，每個 exe 都包含完整 runtime（總大小 1GB+）
-3. **不易除錯**：無法直接查看依賴檔案
+3. **不易除錯**：無法直接檢視依賴檔案
 
 **Tickets Hunter 選擇**：
 - 使用資料夾模式（`exclude_binaries=True`）
@@ -460,7 +457,7 @@ excludes=[
 
 **原因**：
 - `ddddocr` 依賴 ONNX Runtime 進行模型推論
-- ONNX Runtime 使用動態導入載入 C++ 擴充套件
+- ONNX Runtime 使用動態匯入載入 C++ 擴充套件
 - PyInstaller 無法自動偵測，必須明確指定
 
 **症狀**：
@@ -573,9 +570,9 @@ ModuleNotFoundError: No module named 'onnxruntime.capi.onnxruntime_pybind11_stat
 
 ### 🔧 除錯技巧
 
-#### 1. 查看打包日誌
+#### 1. 檢視打包記錄
 
-**PyInstaller 會生成詳細日誌**：
+**PyInstaller 會生成詳細記錄**：
 ```bash
 python -m PyInstaller build_scripts/nodriver_tixcraft.spec --clean --noconfirm --log-level DEBUG
 ```
@@ -604,11 +601,11 @@ exe = EXE(
 #### 4. 在乾淨環境測試
 
 **Windows Sandbox**（推薦）：
-- 無需安裝虛擬機
+- 無需安裝虛擬機器
 - 啟動快速（30 秒）
 - 關閉後自動清理
 
-**虛擬機**：
+**虛擬機器**：
 - 使用 VirtualBox 或 VMware
 - 安裝乾淨的 Windows 10/11
 - 不安裝 Python 或任何開發工具
@@ -617,7 +614,7 @@ exe = EXE(
 
 ## 進階主題
 
-### 🚀 優化打包大小
+### 🚀 最佳化打包大小
 
 #### 1. 排除不需要的套件
 
@@ -671,13 +668,13 @@ for /d /r . %d in (__pycache__) do @if exist "%d" rd /s /q "%d"
 del /s /q *.pyc
 ```
 
-### ⚡ 優化啟動速度
+### ⚡ 最佳化啟動速度
 
 #### 1. 使用資料夾模式
 
 **已採用**：Tickets Hunter 使用 `exclude_binaries=True`
 
-#### 2. 延遲導入大型模組
+#### 2. 延遲匯入大型模組
 
 **修改程式碼**：
 ```python
@@ -760,7 +757,7 @@ nuitka --standalone ^
 
 **Tickets Hunter 策略**：
 - 目前使用 PyInstaller（成熟、相容性好）
-- Nuitka 作為未來優化選項
+- Nuitka 作為未來最佳化選項
 
 ---
 

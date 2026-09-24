@@ -23,9 +23,9 @@
 
 每個實例 = 一個獨立的 `nodriver_tixcraft.py` 行程 + 一個 Chrome。隔離由作業系統保證。
 
-**為何不用單行程多瀏覽器**：各平台模組（`src/platforms/*.py`）的執行狀態都放在模組層級 `_state` dict（如 tixcraft 的 `area_retry_count`、ibon 的 `queue_it_enter_time`）。若改成單行程內 asyncio 同時控多個瀏覽器，所有平台的模組狀態都要重構成 per-browser 實例化，等於重寫全部平台邏輯。OS 多行程讓平台模組完全不必改。
+**為何不用單行程多瀏覽器**：各平台模組（`src/platforms/*.py`）的執行狀態都放在模組層級 `_state` dict（如 tixcraft 的 `area_retry_count`、ibon 的 `queue_it_enter_time`）。若改成單行程內 asyncio 同時控多個瀏覽器，所有平台的模組狀態都要重構成 per-browser 實體化，等於重寫全部平台邏輯。OS 多行程讓平台模組完全不必改。
 
-代價：每實例一個 Chrome 約 400MB+ 記憶體（搶票場景通常 2–4 開，可接受）。
+代價：每實例一個 Chrome 約 400MB+ 記憶體（搶票情境通常 2–4 開，可接受）。
 
 ---
 
@@ -98,11 +98,11 @@ src/（或 EXE 目錄，= util.get_app_root()）
 - default 實例的暫停檔 = 根目錄 `MAXBOT_INT28_IDLE.txt` → 既有 UI 暫停鈕、`maxbot_idle` / `maxbot_resume` 語意自然變為「只控制 default 實例」
 - 具名實例 → `instances/<id>/MAXBOT_INT28_IDLE.txt`
 - 不保留「根目錄檔存在 = 全部暫停」的全域層
-- 「全部暫停」由 UI 對所有存活實例逐一建各自的暫停檔實現
+- 「全部暫停」由 UI 對所有存活實例逐一建各自的暫停檔實作
 
 ### idle_keyword 定時排程 per-instance
 
-`change_maxbot_status_by_keyword()`（`src/settings.py`，由 `settgins_gui_timer` 每 0.4s 驅動）遍歷 `list_profile_names()`，對每個 profile `load_json(profile)` 讀其 `advanced.idle_keyword` / `resume_keyword` / `idle_keyword_second` / `resume_keyword_second`，命中時呼叫 `maxbot_idle(profile)` / `maxbot_resume(profile)`。每個實例依**自己 profile** 的關鍵字暫停／恢復自己。
+`change_maxbot_status_by_keyword()`（`src/settings.py`，由 `settgins_gui_timer` 每 0.4s 驅動）走訪 `list_profile_names()`，對每個 profile `load_json(profile)` 讀其 `advanced.idle_keyword` / `resume_keyword` / `idle_keyword_second` / `resume_keyword_second`，命中時呼叫 `maxbot_idle(profile)` / `maxbot_resume(profile)`。每個實例依**自己 profile** 的關鍵字暫停／恢復自己。
 
 > 序號／自訂 `--instance` 實例（無對應 profile json）不納入關鍵字排程，因其 backing profile 僅啟動器記憶體知道。
 
@@ -120,11 +120,11 @@ src/（或 EXE 目錄，= util.get_app_root()）
 
 - 來源 = `list_instance_ids()`：所有 profile（含 default）∪ `instances/` 下實際存在的目錄（涵蓋 CLI `--instance` 實例）
 - `get_instance_status(profile)` 回傳 `{id, alive, paused, last_url}`：
-  - `alive` = `heartbeat.txt` 的 mtime 在 **30 秒**內（閾值寬鬆，因 Cloudflare 處理可能卡主迴圈 >10s，太緊會誤判死亡）
+  - `alive` = `heartbeat.txt` 的 mtime 在 **30 秒**內（門檻值寬鬆，因 Cloudflare 處理可能卡主迴圈 >10s，太緊會誤判死亡）
   - `paused` = 暫停檔存在
   - `last_url` = 讀 `MAXBOT_LAST_URL.txt`
 
-前端「執行階段」頁籤的「執行中實例」面板每 2 秒輪詢 `/instances`，渲染每列的存活／運行／暫停狀態與執行網址，提供每列暫停／繼續鈕與「全部暫停」（逐一對存活實例打 `/pause?profile=<id>`）。
+前端「執行階段」頁籤的「執行中實例」面板每 2 秒輪詢 `/instances`，渲染每列的存活／執行／暫停狀態與執行網址，提供每列暫停／繼續鈕與「全部暫停」（逐一對存活實例打 `/pause?profile=<id>`）。
 
 ---
 
@@ -141,17 +141,17 @@ src/（或 EXE 目錄，= util.get_app_root()）
 
 對已有存活實例的 profile 再按「搶票」：前端偵測 `/instances` 中該 profile 已存活 → 跳確認框（警告 session 互踢）→ 算出下一個空序號（`kktix-2`）→ 呼叫 `/run?profile=<name>&instance=<newid>`。
 
-後端 `RunHandler` 收 `?instance=` → `launch_maxbot(profile, instance_override)` → `util.launch_maxbot(instance=...)` 轉成 `--instance`；`--input` 仍給 profile json，故 bot 以 override 當 instance id、以 profile 設定運行。
+後端 `RunHandler` 收 `?instance=` → `launch_maxbot(profile, instance_override)` → `util.launch_maxbot(instance=...)` 轉成 `--instance`；`--input` 仍給 profile json，故 bot 以 override 當 instance id、以 profile 設定執行。
 
 ### 孤兒清理
 
-`clean_tmp_file()`（settings 啟動時）清除 `instances/` 下「無對應 profile json」的目錄。語意：刪 profile 當下**不**刪 `instances/<id>/`（避免運行中實例因暫停檔消失而意外恢復）；settings 重啟才清。用自訂 `--instance` 名稱（無對應 profile）的 CLI 實例若在 settings 重啟時未運行，其狀態目錄會被當孤兒清掉——CLI 使用者應讓 instance 名與 profile 檔名一致。
+`clean_tmp_file()`（settings 啟動時）清除 `instances/` 下「無對應 profile json」的目錄。語意：刪 profile 當下**不**刪 `instances/<id>/`（避免執行中實例因暫停檔消失而意外恢復）；settings 重啟才清。用自訂 `--instance` 名稱（無對應 profile）的 CLI 實例若在 settings 重啟時未執行，其狀態目錄會被當孤兒清掉——CLI 使用者應讓 instance 名與 profile 檔名一致。
 
 ---
 
 ## 平台限制與風險
 
-- **KKTIX**：2024 後多開多視窗會打亂自身 CF Waiting Room 排隊順序（CF 用 cookie 時間戳排序），且可能被導入 Infinite Queue（假排隊頁）。UI 於偵測 ≥2 個 KKTIX profile 時顯示警告 badge。
+- **KKTIX**：2024 後多開多視窗會打亂自身 CF Waiting Room 排隊順序（CF 用 cookie 時間戳排序），且可能被匯入 Infinite Queue（假排隊頁）。UI 於偵測 ≥2 個 KKTIX profile 時顯示警告 badge。
 - **同帳號 session 互踢**：同帳號同活動多開會被平台踢登入（TixCraft 已知）。安全用法是「一實例一帳號」。UI 對拓元家族（含 ticketmaster）、iBon（Queue-it）等亦顯示對應風險 badge。
 - **記憶體**：每實例一個 Chrome 約 400MB+，依機器規格控制開數。
 - **改帳號需重啟實例**：帳號/Cookie 不在熱載白名單。

@@ -19,19 +19,19 @@
 
 | 項目 | 決策 | 原因 |
 |------|------|------|
-| 時間格式 | `[HH:MM:SS]` | 搶票場景秒級足夠，簡潔 |
+| 時間格式 | `[HH:MM:SS]` | 搶票情境秒級足夠，簡潔 |
 | 替換範圍 | 僅受 `show_debug_message` 保護的 ~1300 處 | 無保護的 print 保持原樣 |
-| 硬編碼處理 | 5 種模式全部統一：util.py 10 函數 + nodriver 11 參數 + 13 區域硬編碼 | 消除不一致 |
+| 硬編碼處理 | 5 種模式全部統一：util.py 10 函式 + nodriver 11 參數 + 13 區域硬編碼 | 消除不一致 |
 | 多行處理 | 每次 `debug.log()` 都加時間戳 | API 簡潔、每行可獨立追蹤 |
 | 架構方案 | 方案 C：DebugLogger 類放 util.py | 不新增檔案、簡潔 API |
 | **[v3.0] 設定分離** | `verbose` 和 `show_timestamp` 為兩個獨立開關 | 時間戳可用於所有輸出，不限 debug |
-| **[v3.0] 全域時間戳** | `show_timestamp` 啟用時所有 print 都加時間戳 | 入口覆寫 print 實現，零改動 |
+| **[v3.0] 全域時間戳** | `show_timestamp` 啟用時所有 print 都加時間戳 | 入口覆寫 print 實作，零改動 |
 
 ---
 
 ## 2. 現狀分析
 
-### 2.1 數據統計
+### 2.1 資料統計
 
 | 項目 | 數量 |
 |------|------|
@@ -40,17 +40,17 @@
 | 無保護的 print（不在本次範圍） | ~600 |
 | `nodriver_tixcraft.py` 中的 debug print | ~1268 |
 | `util.py` 中的 debug print | ~35 |
-| 帶前綴標籤的 print（如 `[KKTIX]`） | ~111 |
+| 帶字首標籤的 print（如 `[KKTIX]`） | ~111 |
 | 多行 print 區塊（2+ prints 同一 if） | 75 |
 | 巢狀條件（業務邏輯 + debug 混合） | 56 |
-| 條件組合（or/and 賦值） | 3 |
-| **模式 2**：util.py True/False 配對（開發者切換） | 10 函數 |
-| **模式 3**：函數參數預設值（`show_debug_message=True/False`） | 11 函數 |
+| 條件組合（or/and 指派） | 3 |
+| **模式 2**：util.py True/False 配對（開發者切換） | 10 函式 |
+| **模式 3**：函式參數預設值（`show_debug_message=True/False`） | 11 函式 |
 | **模式 4**：nodriver 區域硬編碼 | 13 處 |
-| 使用 `show_debug` 變數名（非 `show_debug_message`） | 2 函數 |
+| 使用 `show_debug` 變數名（非 `show_debug_message`） | 2 函式 |
 | print 多位置參數如 `print("key:", value)` | 82 |
 
-### 2.2 現有賦值模式（5 種）
+### 2.2 現有指派模式（5 種）
 
 ```python
 # 模式 1：從 config 讀取（標準，最常見）
@@ -73,7 +73,7 @@ if config_dict:
     show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
 
 # 模式 5：條件組合（3 處）
-# A. Cloudflare bypass + 模式覆蓋（nodriver_cloudflare_challenge）
+# A. Cloudflare bypass + 模式覆蓋（handle_cloudflare_challenge）
 show_debug_message = (config_dict["advanced"]["verbose"] or
                      CLOUDFLARE_BYPASS_MODE == "debug")
 if CLOUDFLARE_BYPASS_MODE == "auto":
@@ -93,7 +93,7 @@ if show_debug_message and is_in_queue and force_show_debug:
 開發者的「手動開關」——開發時改 `True` 除錯，上線前改回 `False`。
 實際效果：**永遠等於 False**（因為第二行覆蓋第一行）。
 
-| # | 函數名 | 設計意圖 |
+| # | 函式名 | 設計意圖 |
 |---|--------|----------|
 | 1 | `guess_answer_list_from_multi_options` | 多選項猜答案 |
 | 2 | `get_offical_hint_string_from_symbol` | 官方提示解析 |
@@ -106,14 +106,14 @@ if show_debug_message and is_in_queue and force_show_debug:
 | 9 | `get_answer_string_from_web_time` | 從網頁時間推答案 |
 | 10 | `get_answer_list_from_question_string` | 核心樞紐：題目字串解析 |
 
-**特殊**：#5 `get_matched_blocks_by_keyword_item_set` 已有 `config_dict` 參數，且函數內有 `if config_dict["advanced"]["verbose"]: show_debug_message = True` 邏輯，是唯一已正確讀取設定的函數。
+**特殊**：#5 `get_matched_blocks_by_keyword_item_set` 已有 `config_dict` 參數，且函式內有 `if config_dict["advanced"]["verbose"]: show_debug_message = True` 邏輯，是唯一已正確讀取設定的函式。
 
-#### 模式 3：nodriver 函數參數預設值（10 處）
+#### 模式 3：nodriver 函式參數預設值（10 處）
 
-函數簽名帶 `show_debug_message` 參數，內部又用 `config_dict` 覆蓋。
+函式簽名帶 `show_debug_message` 參數，內部又用 `config_dict` 覆蓋。
 效果：**參數預設值被覆蓋，實際由 config 控制**。參數是冗餘的。
 
-| # | 函數名 | 預設值 | 有 config_dict |
+| # | 函式名 | 預設值 | 有 config_dict |
 |---|--------|--------|---------------|
 | 1 | `nodriver_check_checkbox_enhanced` | `False` | 無（純參數控制） |
 | 2 | `nodriver_kktix_check_ticket_page_status` | `False` | 無（純參數控制） |
@@ -134,11 +134,11 @@ if show_debug_message and is_in_queue and force_show_debug:
 
 #### 模式 4：nodriver 區域硬編碼（12 處）
 
-函數內部直接寫死 `show_debug_message = True/False`。
+函式內部直接寫死 `show_debug_message = True/False`。
 
-| # | 函數名 | 硬編碼值 | 設計意圖 | 轉換方式 |
+| # | 函式名 | 硬編碼值 | 設計意圖 | 轉換方式 |
 |---|--------|----------|----------|----------|
-| 1 | `nodriver_cloudflare_challenge` | `False` | auto 模式靜默 | 見模式 5-A |
+| 1 | `handle_cloudflare_challenge` | `False` | auto 模式靜默 | 見模式 5-A |
 | 2 | `nodriver_tixcraft_get_ocr_answer` | `False` | OCR 靜默（效能考量） | `enabled=False` |
 | 3 | `nodriver_kham_login` | `True` | 開發中永遠開啟 | `config_dict` |
 | 4 | `nodriver_hkticketing_login` | `True` | 開發中永遠開啟 | `config_dict` |
@@ -147,17 +147,17 @@ if show_debug_message and is_in_queue and force_show_debug:
 | 7 | `nodriver_hkticketing_next_button_press` | `False` → config | 已正確讀取 config | 直接替換 |
 | 8 | `nodriver_hkticketing_go_to_payment` | `False` → config | 已正確讀取 config | 直接替換 |
 | 9 | `nodriver_hkticketing_type02_clear_session` | `False` → config | 已正確讀取 config | 直接替換 |
-| 10 | `nodriver_hkticketing_traffic_overload` | `False` → config | 已正確讀取 config | 直接替換 |
-| 11 | `nodriver_hkticketing_dismiss_modal` | `False` → config | 已正確讀取 config | 直接替換 |
-| 12 | `nodriver_hkticketing_buy_button` | `False` → config | 已正確讀取 config | 直接替換 |
-| 13 | `nodriver_hkticketing_type02_next_step` | `False` → config | 已正確讀取 config | 直接替換 |
+| 10 | `nodriver_hkticketing_type02_check_traffic_overload` | `False` → config | 已正確讀取 config | 直接替換 |
+| 11 | `nodriver_hkticketing_type02_dismiss_modal` | `False` → config | 已正確讀取 config | 直接替換 |
+| 12 | `nodriver_hkticketing_type02_event_page_buy_button` | `False` → config | 已正確讀取 config | 直接替換 |
+| 13 | `nodriver_hkticketing_type02_next_button_press` | `False` → config | 已正確讀取 config | 直接替換 |
 
 **分類**：
 - #2：刻意靜默（OCR 高頻呼叫）→ 保持 `enabled=False`
 - #3, #4：永遠開啟（開發中功能）→ 改為從 config_dict 讀取
 - #5-#13：已有正確 config 讀取邏輯 → 直接替換為 DebugLogger
 
-### 2.4 前綴標籤清單
+### 2.4 字首標籤清單
 
 | 標籤 | 出現次數 | 用途 |
 |------|----------|------|
@@ -181,7 +181,7 @@ if show_debug_message and is_in_queue and force_show_debug:
 
 ### 3.1 DebugLogger 類
 
-**位置**：`src/util.py`，在 `get_debug_mode()` 函數之後
+**位置**：`src/util.py`，在 `get_debug_mode()` 函式之後
 
 ```python
 class DebugLogger:
@@ -225,7 +225,7 @@ def create_debug_logger(config_dict=None, enabled=None):
 | `DebugLogger(enabled=True)` | 強制啟用 | `debug = DebugLogger(enabled=cf_debug)` |
 | `debug.log(*args)` | 輸出（加時間戳，同 print 行為） | `debug.log("[TAG] msg")` |
 | `debug.log("key:", val)` | 多參數空格串接（同 print） | `debug.log("count:", 5)` |
-| `create_debug_logger(config_dict)` | 便利建構函數 | `debug = util.create_debug_logger(config_dict)` |
+| `create_debug_logger(config_dict)` | 便利建構函式 | `debug = util.create_debug_logger(config_dict)` |
 
 ### 3.3 關鍵 API 決策
 
@@ -385,7 +385,7 @@ def get_matched_blocks_by_keyword_item_set(config_dict, auto_select_mode, ...):
     debug = create_debug_logger(config_dict)
 ```
 
-### 4.8 模式 3：nodriver 函數參數預設值（11 處）
+### 4.8 模式 3：nodriver 函式參數預設值（11 處）
 
 **4.8a Fami 系列（8 處）— 移除 show_debug_message 參數**
 
@@ -405,7 +405,7 @@ async def nodriver_fami_login(tab, config_dict):
 
 > **注意**：需同步修改所有呼叫端，移除傳入的 `show_debug_message` 參數。
 
-**4.8b 無 config_dict 的函數（2 處）— 改接收 config_dict**
+**4.8b 無 config_dict 的函式（2 處）— 改接收 config_dict**
 
 ```python
 # 替換前
@@ -419,7 +419,7 @@ async def nodriver_check_checkbox_enhanced(tab, select_query, config_dict=None):
     debug.log(f"Checking checkbox: {select_query}")
 ```
 
-**4.8c 有 config_dict 但未覆蓋的函數（1 處）**
+**4.8c 有 config_dict 但未覆蓋的函式（1 處）**
 
 ```python
 # 替換前
@@ -462,7 +462,7 @@ async def nodriver_kham_login(tab, account, password, config_dict=None, ocr=None
     debug = util.create_debug_logger(config_dict)
 ```
 
-> **注意**：`nodriver_kham_login` 和 `nodriver_hkticketing_login` 目前函數簽名沒有 `config_dict`，需新增參數並更新呼叫端。
+> **注意**：`nodriver_kham_login` 和 `nodriver_hkticketing_login` 目前函式簽名沒有 `config_dict`，需新增參數並更新呼叫端。
 
 **4.9c 刻意靜默（1 處：OCR）— 保持 enabled=False**
 
@@ -476,7 +476,7 @@ async def nodriver_tixcraft_get_ocr_answer(...):
     debug = util.create_debug_logger(enabled=False)  # OCR: intentionally silent
 ```
 
-### 4.10 show_debug 變數名差異（2 函數）
+### 4.10 show_debug 變數名差異（2 函式）
 
 ```python
 # 替換前（detect_cloudflare_challenge）
@@ -496,14 +496,14 @@ async def detect_cloudflare_challenge(tab, show_debug=False):
 
 ### 5.1 修改檔案
 
-| 檔案 | 改動類型 | 預估改動量 |
+| 檔案 | 改動型別 | 預估改動量 |
 |------|----------|-----------|
-| `src/util.py` | 新增 DebugLogger 類 + 改造 10 函數 | +40 行新增、~35 處替換 |
+| `src/util.py` | 新增 DebugLogger 類 + 改造 10 函式 | +40 行新增、~35 處替換 |
 | `src/nodriver_tixcraft.py` | 替換 debug print | ~1268 處替換 |
 
-### 5.2 util.py 需改造的函數（含呼叫鏈分析）
+### 5.2 util.py 需改造的函式（含呼叫鏈分析）
 
-| 函數名 | 改動 | 呼叫端 | 風險 |
+| 函式名 | 改動 | 呼叫端 | 風險 |
 |--------|------|--------|------|
 | `guess_answer_list_from_multi_options` | 加 `config_dict` | util 內部 1 處 | 低 |
 | `get_offical_hint_string_from_symbol` | 加 `config_dict` | util 內部 2 處 | 低 |
@@ -514,11 +514,11 @@ async def detect_cloudflare_challenge(tab, show_debug=False):
 | `kktix_get_web_datetime` | 加 `config_dict` | util 內部 2 處 | 低 |
 | `get_answer_string_from_web_date` | 加 `config_dict` | util 內部 1 處 | 中 |
 
-### 5.3 額外需修改的函數（呼叫鏈分析發現）
+### 5.3 額外需修改的函式（呼叫鏈分析發現）
 
-| 函數名 | 原因 | 風險 |
+| 函式名 | 原因 | 風險 |
 |--------|------|------|
-| `get_answer_list_from_question_string` | **核心樞紐**：被多個外部函數呼叫，需加 `config_dict` | 中 |
+| `get_answer_list_from_question_string` | **核心樞紐**：被多個外部函式呼叫，需加 `config_dict` | 中 |
 | `get_answer_string_from_web_time` | 與 `get_answer_string_from_web_date` 對稱 | 低 |
 
 ### 5.4 呼叫鏈圖
@@ -570,7 +570,7 @@ nodriver_tixcraft_input_       ----->  guess_tixcraft_question()
 
 使用 `enabled` 參數建立 DebugLogger。
 
-### 6.3 show_debug 變數名（2 函數）
+### 6.3 show_debug 變數名（2 函式）
 
 - `detect_cloudflare_challenge(tab, show_debug=False)` → 使用 `enabled=show_debug`
 - `debug_kktix_page_state(tab, show_debug=True)` → 使用 `enabled=show_debug`
@@ -593,11 +593,11 @@ nodriver_tixcraft_input_       ----->  guess_tixcraft_question()
 ### 7.1 Phase 1：基礎建設（PR #1）
 
 **範圍**：
-- 在 `util.py` 新增 `DebugLogger` 類和 `create_debug_logger()` 函數
-- 改造 `util.py` 中 10 個函數（8 原始 + 2 呼叫鏈發現）
+- 在 `util.py` 新增 `DebugLogger` 類和 `create_debug_logger()` 函式
+- 改造 `util.py` 中 10 個函式（8 原始 + 2 呼叫鏈發現）
 - 追蹤呼叫端，補傳 `config_dict`
 
-**風險**：中（函數簽名變更需追蹤所有呼叫端）
+**風險**：中（函式簽名變更需追蹤所有呼叫端）
 
 **驗證**：
 - 執行快速測試確認啟動無錯
@@ -606,10 +606,10 @@ nodriver_tixcraft_input_       ----->  guess_tixcraft_question()
 ### 7.2 Phase 2：局部試點（PR #2）
 
 **範圍**：
-- 選定 1 個函數（如 `nodriver_kktix_area_auto_select`）完整替換
+- 選定 1 個函式（如 `nodriver_kktix_travel_price_list`）完整替換
 - 驗證替換模式的正確性
 
-**風險**：低（單一函數隔離）
+**風險**：低（單一函式隔離）
 
 ### 7.3 Phase 3：分批替換（PR #3~#6）
 
@@ -636,12 +636,12 @@ nodriver_tixcraft_input_       ----->  guess_tixcraft_question()
 
 | 風險 | 機率 | 影響 | 緩解 |
 |------|------|------|------|
-| util.py 函數簽名變更導致呼叫端漏改 | 中 | 高（RuntimeError） | 預設 `config_dict=None` + 逐一追蹤 |
+| util.py 函式簽名變更導致呼叫端漏改 | 中 | 高（RuntimeError） | 預設 `config_dict=None` + 逐一追蹤 |
 | `log()` 多參數行為與 `print()` 不一致 | **已解決** | **已解決** | v2.0 改用 `" ".join()` |
 | 多行 print 替換格式錯誤 | 低 | 低（顯示問題） | 每行獨立 `debug.log()`，無格式風險 |
-| 大批量替換引入 typo | 低 | 中 | 分批 commit + 每批測試 |
+| 大批次替換引入 typo | 低 | 中 | 分批 commit + 每批測試 |
 | 效能影響 | 極低 | 低 | `datetime.now()` ~1-2us，DebugLogger init ~1us |
-| 條件組合場景遺漏 | 低 | 中 | 已完整列出 3 處 + 56 處巢狀條件 |
+| 條件組合情境遺漏 | 低 | 中 | 已完整列出 3 處 + 56 處巢狀條件 |
 | 巢狀條件替換邏輯錯誤 | 低 | 中 | 統一策略：業務條件留外層，debug 留 logger |
 
 ---
@@ -649,9 +649,9 @@ nodriver_tixcraft_input_       ----->  guess_tixcraft_question()
 ## 9. 向後相容
 
 - 新舊模式可共存：`debug.log()` 和 `if show_debug_message: print()` 可同時存在
-- `get_debug_mode()` 函數保留不變
-- `show_debug_message` 變數在未替換的函數中繼續使用
-- 分階段替換，任何 PR 可獨立回滾
+- `get_debug_mode()` 函式保留不變
+- `show_debug_message` 變數在未替換的函式中繼續使用
+- 分階段替換，任何 PR 可獨立復原
 
 ---
 
@@ -781,20 +781,19 @@ Debug 輸出規範：
 |------|----------|
 | `docs/02-development/coding_templates.md` | **全部範本**替換為 DebugLogger（~15 區塊） |
 | `docs/02-development/development_guide.md` | 必要元素 + 實作範例改為 DebugLogger |
-| `docs/02-development/structure.md` | 函數索引新增 `DebugLogger` / `create_debug_logger` |
+| `docs/02-development/structure.md` | 函式索引新增 `DebugLogger` / `create_debug_logger` |
 
 #### P1（Phase 2-3 同步更新）
 
 | 文件 | 更新內容 |
 |------|----------|
-| 開發工作流程文件 | 日誌輸出範例更新 |
+| 開發工作流程文件 | 記錄輸出範例更新 |
 
 #### P2（Phase 4 清理同步）
 
 | 文件 | 更新內容 |
 |------|----------|
 | `docs/03-mechanisms/` 14 個文件 | 範例程式碼中的 print 更新 |
-| `docs/05-validation/spec-validation-matrix.md` | FR-059 描述更新 |
 | `docs/03-mechanisms/README.md` | 共用函式表格新增 DebugLogger |
 
 ---
@@ -803,9 +802,9 @@ Debug 輸出規範：
 
 | 項目 | 原因 |
 |------|------|
-| Python logging 模組整合 | 過度設計，目前 print + 重定向足夠 |
+| Python logging 模組整合 | 過度設計，目前 print + 重新導向足夠 |
 | Log level 分層（DEBUG/INFO/WARNING） | 目前只需 on/off，保持簡單 |
-| 日誌檔案輪轉 | 依賴外部 shell 重定向，不在程式內處理 |
+| 記錄檔案輪轉 | 依賴外部 shell 重新導向，不在程式內處理 |
 | 新增 `debug_logger.py` 獨立模組 | 不新增檔案，放 util.py 即可 |
 | `mcp_debug_enabled` 整合 | 獨立體系，不納入 DebugLogger |
 
@@ -816,15 +815,15 @@ Debug 輸出規範：
 ### A.1 call-chain-analyzer 發現
 
 - `get_matched_blocks_by_keyword_item_set` 已有 config_dict，不需改動
-- 核心樞紐函數 `get_answer_list_from_question_string` 不在原始清單中但必須一起改
+- 核心樞紐函式 `get_answer_list_from_question_string` 不在原始清單中但必須一起改
 - 所有外部呼叫端都已有 config_dict 可傳遞
 
 ### A.2 special-pattern-finder 發現
 
 - 56 處巢狀條件（業務 + debug 混合），需統一替換策略
 - 75 處多行 print 區塊（最大 10+ prints）
-- 3 處條件組合賦值
-- 2 個函數使用 `show_debug` 而非 `show_debug_message`
+- 3 處條件組合指派
+- 2 個函式使用 `show_debug` 而非 `show_debug_message`
 - 0 處非標準 print 參數（好消息）
 - `mcp_debug_enabled` 和 `CLOUDFLARE_BYPASS_MODE` 為獨立體系
 
@@ -832,7 +831,7 @@ Debug 輸出規範：
 
 - **重大修正**：原始 `log()` 多參數行為與 `print()` 不一致，82 處受影響
 - 修正為 `" ".join(str(a) for a in args)` 後問題解決
-- DebugLogger 實例建立成本極低（< 1us），高頻函數不需快取
+- DebugLogger 實例建立成本極低（< 1us），高頻函式不需快取
 - `print(exc)` 輸出正常，`str(exc)` 自動處理
 - 迴圈中的 debug print 效能影響可忽略
 
@@ -857,4 +856,4 @@ Debug 輸出規範：
 
 - **4 層防護策略**：開發規範 → coding_templates → 開發工作流程 → Hook
 - 開發規範需新增 Debug 輸出標準
-- 開發工作流程的日誌範例需替換
+- 開發工作流程的記錄範例需替換

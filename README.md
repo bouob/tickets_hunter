@@ -14,8 +14,8 @@
 > - 💬 [加入 Discord 社群](https://discord.gg/GCE5s6W6dV) - 即時討論、問答交流、經驗分享
 > - 🐛 [回報 Bug](https://github.com/bouob/tickets_hunter/issues/new?template=bug_report.md) - 確定是程式錯誤請開 Issue
 > - 🚀 [提出新功能建議](https://github.com/bouob/tickets_hunter/issues/new?template=feature_request.md) - 想要新功能請點這裡
-> - 💬 [查看已知問題](https://github.com/bouob/tickets_hunter/issues?q=is%3Aissue) - 搜尋是否有人遇到相同問題
-> - 📝 [更新紀錄](https://github.com/bouob/tickets_hunter/blob/main/CHANGELOG.md) - 查看版本更新歷史
+> - 💬 [檢視已知問題](https://github.com/bouob/tickets_hunter/issues?q=is%3Aissue) - 搜尋是否有人遇到相同問題
+> - 📝 [更新紀錄](https://github.com/bouob/tickets_hunter/blob/main/CHANGELOG.md) - 檢視版本更新歷史
 
 ---
 
@@ -23,13 +23,18 @@
 
 Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支援台灣及海外主要票務網站。
 
-**🤖 技術特色**：本專案是一項 AI 輔助軟體工程實驗 — 主要透過自然語言指令與 [Claude Code](https://claude.ai/code) 及 [Codex](https://openai.com/codex/get-started/) 協作進行開發、除錯與維護，不手寫任何程式碼。從架構設計、功能實作到 PR 審查，皆由 AI 協助完成。
+**🤖 技術特色**：本專案是一項 AI 輔助軟體工程實驗 — 主要透過自然語言指令與 [Claude Code](https://claude.ai/code) 協作開發、除錯與維護，不手寫任何程式碼。從架構設計、功能實作到 PR 審查，皆由 AI 協助完成。
 
 > **🔬 對 AI 開發有興趣？** 歡迎 Fork 本專案，嘗試使用不同的 AI / LLM 工具（如 Claude Code、[Codex](https://openai.com/codex/get-started/)、GitHub Copilot、Cursor、Windsurf、Cline 等）進行開發與研究學習，探索各種 AI 輔助開發的可能性！
 
 ### 🎪 平台支援狀態
 
-✅ **NoDriver 完全支援**：TixCraft、Teamear、TicketMaster、Indievox、KKTIX、TicketPlus、iBon、年代售票、寬宏售票、Cityline 買飛、HKTicketing 快達票、KHAM、FamiTicket、FANSI GO、FunOne
+✅ **zendriver 完全支援**
+
+| 地區 | 支援平台 |
+|------|----------|
+| 🇹🇼 台灣 | 拓元 TixCraft、添翼 Teamear、獨立音樂 Indievox、KKTIX、遠大 TicketPlus、ibon、寬宏 KHAM、年代售票、UDN 售票網、全網 FamiTicket、FANSI GO、FunOne |
+| 🌏 海外 | Ticketmaster SG、Cityline 買飛、HKTicketing 快達票、澳門銀河、Ticketek |
 
 ---
 
@@ -45,7 +50,7 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 **📍 台灣地區重要法規告知**：
 
 <details>
-<summary><code><b>🚨 文化創意產業發展法第10-1條</b>（點擊展開查看完整條文）</code></summary>
+<summary><code><b>🚨 文化創意產業發展法第10-1條</b>（點擊展開檢視完整條文）</code></summary>
 
 **第 10-1 條** （[法規來源](https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=H0170075&flno=10-1)）
 
@@ -53,7 +58,7 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 
 **第二項**：將藝文表演票券以超過票面金額或定價販售者，按票券張數，由主管機關處票面金額或定價之十倍至五十倍罰鍰。
 
-**第三項**：**以虛偽資料或其他不正方式，利用電腦或其他相關設備購買藝文表演票券，取得訂票或取票憑證者，處三年以下有期徒刑，或科或併科新臺幣三百萬元以下罰金。**
+**第三項**：**以虛偽資料或其他不正方式，利用電腦或其他相關裝置購買藝文表演票券，取得訂票或取票憑證者，處三年以下有期徒刑，或科或併科新臺幣三百萬元以下罰金。**
 
 第四項：主管機關為調查或取締前二項違規事實，得洽請警察機關派員協助。
 
@@ -120,6 +125,7 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 | [快速入門指南](guide/quick-start.md) | Python 版本快速設定 | 開發者 |
 | [關鍵字與回退機制](guide/keyword-mechanism.md) | 深入理解搶票邏輯 | 所有使用者 |
 | [詳細設定說明](guide/settings-guide.md) | settings.json 完整欄位參考 | 進階使用者 |
+| [ibon Queue-IT 常見問題](guide/ibon-queue-it-faq.md) | ibon 虛擬等候室排隊說明 | ibon 使用者 |
 
 ---
 
@@ -132,18 +138,18 @@ tickets_hunter/
 │   │   ├── nodriver_tixcraft.py    # 主迴圈與 URL 路由（zendriver）
 │   │   ├── nodriver_common.py      # 共用瀏覽器基礎設施（DOM 工具、Cloudflare）
 │   │   ├── platforms/              # 各平台獨立模組
-│   │   │   ├── tixcraft.py         # TixCraft / TicketMaster / Teamear / Indievox
+│   │   │   ├── tixcraft.py         # 拓元 / Ticketmaster SG / 添翼 / 獨立音樂
 │   │   │   ├── kktix.py            # KKTIX
-│   │   │   ├── ibon.py             # iBon / 年代售票
-│   │   │   ├── ticketplus.py       # TicketPlus
-│   │   │   ├── famiticket.py       # FamiTicket
-│   │   │   ├── kham.py             # 寬宏售票
+│   │   │   ├── ibon.py             # ibon（購票 / 旅遊 / 會展）
+│   │   │   ├── ticketplus.py       # 遠大 TicketPlus
+│   │   │   ├── famiticket.py       # 全網 FamiTicket
+│   │   │   ├── kham.py             # 寬宏 / 年代售票 / UDN 售票網
 │   │   │   ├── fansigo.py          # FANSI GO
 │   │   │   ├── cityline.py         # Cityline 買飛
-│   │   │   ├── hkticketing.py      # HKTicketing 快達票
+│   │   │   ├── hkticketing.py      # 快達票 / 澳門銀河 / Ticketek
 │   │   │   ├── funone.py           # FunOne
 │   │   │   └── facebook.py         # Facebook 登入輔助
-│   │   └── util.py                 # 純工具函式（文字比對、關鍵字解析、DebugLogger）
+│   │   └── util.py                 # 共用工具函式（文字比對、關鍵字解析、DebugLogger）
 │   ├── ⚙️ 設定介面
 │   │   └── settings.py             # 現代網頁設定介面
 │   ├── 📋 設定檔

@@ -1239,6 +1239,38 @@ async def nodriver_ticketplus_click_next_button_unified(tab, config_dict):
     return False
 
 
+# A checkbox is ticked only when its label reads like the terms. The exclusions
+# exist because "agree" alone also matches marketing opt-ins, which must stay off.
+CONST_TICKETPLUS_AGREE_KEYWORDS = ["同意", "條款", "規則", "規定", "須知", "閱讀", "詳閱", "agree", "terms"]
+CONST_TICKETPLUS_AGREE_EXCLUDE_KEYWORDS = ["行銷", "電子報", "訂閱", "推播", "廣告", "捐贈", "加購",
+                                           "marketing", "newsletter", "subscribe", "donat"]
+
+# Label text for a checkbox: its Vuetify .v-input or wrapping <label>, else a
+# <label for=id>, else the parent's text.
+CONST_TICKETPLUS_CHECKBOX_LABEL_JS = '''
+    (el) => {
+        const box = el.closest('.v-input, label');
+        let text = box ? box.innerText : '';
+        if (!text && el.id) {
+            const lab = document.querySelector('label[for="' + CSS.escape(el.id) + '"]');
+            if (lab) text = lab.innerText;
+        }
+        if (!text && el.parentElement) text = el.parentElement.innerText;
+        return (text || '').trim().slice(0, 200);
+    }
+'''
+
+
+def _is_terms_checkbox_label(label_text):
+    """True when a checkbox label reads as a terms agreement, not an opt-in."""
+    text = (label_text or '').lower()
+    if not text:
+        return False
+    if any(kw in text for kw in CONST_TICKETPLUS_AGREE_EXCLUDE_KEYWORDS):
+        return False
+    return any(kw in text for kw in CONST_TICKETPLUS_AGREE_KEYWORDS)
+
+
 async def nodriver_ticketplus_ticket_agree(tab, config_dict):
     """TicketPlus agreement checkbox."""
     if await check_and_handle_pause(config_dict):
@@ -1255,27 +1287,36 @@ async def nodriver_ticketplus_ticket_agree(tab, config_dict):
                 if not checkbox:
                     continue
 
-                is_checked = await checkbox.evaluate('el => el.checked')
+                # Terms only: add-ons, donations and marketing opt-ins stay off.
+                label_text = await checkbox.apply(CONST_TICKETPLUS_CHECKBOX_LABEL_JS)
+                if not _is_terms_checkbox_label(label_text):
+                    debug.log(f"[AGREE] Skipping checkbox that is not the terms: {(label_text or '')[:40]!r}")
+                    continue
+
+                # Element.apply, not Element.evaluate: zendriver defines evaluate
+                # only on Tab, and Element.__getattr__ returns None for unknown
+                # names, so checkbox.evaluate(...) is a TypeError the except hides.
+                is_checked = await checkbox.apply('(el) => el.checked')
 
                 if not is_checked:
                     await checkbox.click()
 
-                    is_checked_after = await checkbox.evaluate('el => el.checked')
+                    is_checked_after = await checkbox.apply('(el) => el.checked')
                     if is_checked_after:
                         is_finish_checkbox_click = True
                         debug.log("successfully checked agreement checkbox")
                     else:
                         if checkbox:
-                            await tab.evaluate('''
-                                (checkbox) => {
-                                    if (checkbox) {
-                                        checkbox.checked = true;
-                                        checkbox.dispatchEvent(new Event('change', {bubbles: true}));
-                                    }
+                            # Element.apply: tab.evaluate's second positional
+                            # arg is await_promise, not a script parameter.
+                            await checkbox.apply('''
+                                (el) => {
+                                    el.checked = true;
+                                    el.dispatchEvent(new Event('change', {bubbles: true}));
                                 }
-                            ''', checkbox)
+                            ''')
 
-                            final_check = await checkbox.evaluate('el => el.checked')
+                            final_check = await checkbox.apply('(el) => el.checked')
                             if final_check:
                                 is_finish_checkbox_click = True
                                 debug.log("successfully checked agreement checkbox via JS")
@@ -1351,7 +1392,11 @@ async def nodriver_ticketplus_accept_order_fail(tab, debug=None):
                 const dialogs = document.querySelectorAll('[role="dialog"], .v-dialog, .v-dialog__content');
                 for (const dialog of dialogs) {
                     if (!isVisible(dialog)) continue;
-                    const text = (dialog.textContent || '').trim();
+                    // innerText, not textContent: a closed Vuetify dialog leaves
+                    // its full-screen .v-dialog__content wrapper mounted, which
+                    // passes isVisible, and textContent would still read the
+                    // hidden "failed" text inside it -- reloading on every pass.
+                    const text = (dialog.innerText || '').trim();
                     if (!failureTexts.some(t => text.includes(t))) continue;
                     const buttons = dialog.querySelectorAll('button');
                     for (const btn of buttons) {
@@ -1414,9 +1459,11 @@ async def nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_de
                            style.opacity !== '0';
                 };
 
+                // innerText for the same reason as bodyText above: a closed
+                // dialog's wrapper still passes isVisible.
                 const dialogTexts = Array.from(document.querySelectorAll('.v-dialog, [role="dialog"]'))
                     .filter(isVisible)
-                    .map(el => (el.textContent || '').trim())
+                    .map(el => (el.innerText || '').trim())
                     .filter(text => text.length > 0);
 
                 const dialogText = dialogTexts.join(' | ');
@@ -1496,11 +1543,13 @@ async def nodriver_ticketplus_confirm(tab, config_dict):
                 confirm_button = await tab.query_selector('button[type="submit"]')
 
             if confirm_button:
-                is_enabled = await tab.evaluate('''
-                    (function(button) {
+                # Element.apply, not tab.evaluate(script, element): the second
+                # positional argument is await_promise, not a script argument.
+                is_enabled = await confirm_button.apply('''
+                    (button) => {
                         return button && !button.disabled && button.offsetParent !== null;
-                    })(arguments[0]);
-                ''', confirm_button)
+                    }
+                ''')
 
                 if is_enabled:
                     await confirm_button.click()

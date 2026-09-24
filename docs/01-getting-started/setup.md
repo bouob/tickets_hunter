@@ -57,7 +57,7 @@ pip install -r requirement.txt
 ```
 
 #### 4. ZenDriver（已包含在 requirement.txt）
-`requirement.txt` 已鎖定 `zendriver==0.15.3`，第 3 步已一併安裝，安裝流程中不需要另外執行 `pip install zendriver`。
+`requirement.txt` 已鎖定 `zendriver==0.16.0`，第 3 步已一併安裝，安裝流程中不需要另外執行 `pip install zendriver`。
 
 > ZenDriver 是 nodriver 的活躍 fork，支援 Chrome 145+ 並有持續維護
 
@@ -224,8 +224,8 @@ TicketPlus 搶票耗時: 1.823 秒
 
 | 設定 | 說明 |
 |------|------|
-| `date_auto_fallback` | 日期關鍵字無匹配時自動選擇 |
-| `area_auto_fallback` | 區域關鍵字無匹配時自動選擇 |
+| `date_auto_fallback` | 日期關鍵字無比對時自動選擇 |
+| `area_auto_fallback` | 區域關鍵字無比對時自動選擇 |
 | `auto_select_mode` | `"random"` / `"from_top"` / `"from_bottom"` |
 
 ### OCR 驗證碼設定
@@ -271,7 +271,7 @@ pip install ddddocr
 **問題**：`Connection refused` 或 `Cannot connect to browser`
 
 **解決**：
-1. 確認沒有其他 Chrome 實例在運行
+1. 確認沒有其他 Chrome 實例在執行
 2. 關閉所有 Chrome 視窗後重試
 3. 檢查防火牆設定
 
@@ -289,7 +289,7 @@ rm -f MAXBOT_INT28_IDLE.txt src/MAXBOT_INT28_IDLE.txt
 **問題**：`UnicodeEncodeError: 'cp950' codec can't encode character`
 
 **解決**：
-1. 確認 Python 代碼中沒有 emoji
+1. 確認 Python 程式碼中沒有 emoji
 2. 設定環境變數：`set PYTHONIOENCODING=utf-8`
 
 ---
@@ -307,7 +307,7 @@ rm -f MAXBOT_INT28_IDLE.txt src/MAXBOT_INT28_IDLE.txt
 ```
 
 ### Headless 模式
-無圖形界面運行：
+無圖形介面執行：
 ```json
 {
   "advanced": {
@@ -339,7 +339,7 @@ rm -f MAXBOT_INT28_IDLE.txt src/MAXBOT_INT28_IDLE.txt
 | `filename` | 音效檔路徑（相對於程式執行目錄） |
 
 ### 通知設定
-購票成功時發送 Discord/Telegram 通知：
+購票成功時傳送 Discord/Telegram 通知：
 ```json
 {
   "advanced": {

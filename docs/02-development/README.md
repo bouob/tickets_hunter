@@ -1,7 +1,7 @@
 # 開發文件導航
 
 **文件說明**：Tickets Hunter 開發文件導航中心，涵蓋開發規範、12 階段標準、架構說明與新手指引
-**最後更新**：2026-03-09
+**最後更新**：2026-09-16
 
 ---
 
@@ -11,23 +11,24 @@
 
 ### 我是新手開發者，想開始開發新平台
 
-1. **第一步**：閱讀 [`development_guide.md`](./development_guide.md) 了解開發規範和 ZenDriver First 策略
-2. **第二步**：查看 [`structure.md`](./structure.md) 了解現有平台的函數架構
-3. **第三步**：參考 [`coding_templates.md`](./coding_templates.md) 中的代碼範本開始實作
-4. **深入學習**：查閱 [`ticket_automation_standard.md`](./ticket_automation_standard.md) 了解 12 階段詳細定義
+1. **第一步**：閱讀 [`code-boundaries.md`](./code-boundaries.md) 了解模組職責、依賴方向與命名慣例（必讀）
+2. **第二步**：閱讀 [`development_guide.md`](./development_guide.md) 了解開發規範和 ZenDriver First 策略
+3. **第三步**：檢視 [`structure.md`](./structure.md) 了解現有平台的函式架構
+4. **第四步**：參考 [`coding_templates.md`](./coding_templates.md) 中的程式碼範本開始實作
+5. **深入學習**：查閱 [`ticket_automation_standard.md`](./ticket_automation_standard.md) 了解 12 階段詳細定義
 
 ### 我要修復 Bug 或改進現有功能
 
-1. **定位問題**：查看 [`structure.md`](./structure.md) 中的函數索引找到相關函數
-2. **理解設計**：查閱 [`development_guide.md`](./development_guide.md) 中的設計原則
-3. **查看範本**：如需參考，查看 [`coding_templates.md`](./coding_templates.md) 中的相應範本
-4. **除錯指南**：參考 [`debugging_methodology.md`](../internal/testing-debugging/debugging_methodology.md) 中的除錯方法
+1. **定位問題**：檢視 [`structure.md`](./structure.md) 中的函式索引找到相關函式
+2. **理解設計**：查閱 [`code-boundaries.md`](./code-boundaries.md) 的模組邊界與 [`development_guide.md`](./development_guide.md) 的設計原則
+3. **檢視範本**：如需參考，檢視 [`coding_templates.md`](./coding_templates.md) 中的相應範本
+4. **測試驗證**：依 [`testing_execution_guide.md`](./testing_execution_guide.md) 執行測試並檢查記錄標籤
 
 ### 我想了解項目整體架構
 
 閱讀順序：
-1. [`ticket_seat_selection_algorithm.md`](./ticket_seat_selection_algorithm.md) - 座位選擇算法（如適用）
-2. [`structure.md`](./structure.md) - 程式結構與函數組織
+1. [`ticket_seat_selection_algorithm.md`](./ticket_seat_selection_algorithm.md) - 座位選擇演算法（如適用）
+2. [`structure.md`](./structure.md) - 程式結構與函式組織
 3. [`development_guide.md`](./development_guide.md) - 開發規範與最佳實踐
 
 ---
@@ -39,8 +40,8 @@
 | 文件 | 用途 | 優先度 |
 |------|------|--------|
 | **development_guide.md** | 開發規範、檢查清單、程式碼品質標準 | ⭐⭐⭐ |
-| **structure.md** | 平台函數索引、完整度評分、現有實作分析 | ⭐⭐⭐ |
-| **coding_templates.md** | 代碼範本庫、實作檢查表、平台完成度評分 | ⭐⭐⭐ |
+| **structure.md** | 平台函式索引、完整度評分、現有實作分析 | ⭐⭐⭐ |
+| **coding_templates.md** | 程式碼範本庫、實作檢查表、平台完成度評分 | ⭐⭐⭐ |
 | **logic_flowcharts.md** | 邏輯判斷流程圖、可重用程式範本、核心機制實作 | ⭐⭐ |
 | **sound_notification_system.md** | 音效通知系統、兩階段音效設計與實作 | ⭐⭐ |
 
@@ -48,13 +49,13 @@
 
 | 文件 | 用途 | 何時查閱 |
 |------|------|----------|
-| **ticket_automation_standard.md** | 12 階段詳細定義、函數拆分規範、配置項目索引 | 深入了解每個階段 |
+| **ticket_automation_standard.md** | 12 階段詳細定義、函式拆分規範、配置項目索引 | 深入了解每個階段 |
 
-### 工作流程與文檔
+### 工作流程與文件
 
 | 文件 | 用途 | 用於 |
 |------|------|------|
-| **ticket_seat_selection_algorithm.md** | 座位選擇詳細算法 | TicketPlus 座位選擇 |
+| **ticket_seat_selection_algorithm.md** | 座位選擇詳細演算法 | TicketPlus 座位選擇 |
 
 ### 跨階段機制（`docs/03-mechanisms/`）
 
@@ -67,16 +68,7 @@
 | [17-multi-instance.md](../03-mechanisms/17-multi-instance.md) | 多開實例隔離 | 2026-06 |
 | [18-universal-ocr-model.md](../03-mechanisms/18-universal-ocr-model.md) | 通用 OCR 模型選擇 | 2026-06 |
 
-### 已歸檔資源
-
-| 位置 | 說明 |
-|------|------|
-| [internal/archived/documentation_workflow.md](../internal/archived/documentation_workflow.md) | 舊版文件維護流程（現行規範見 `.claude/rules/documentation.md`） |
-| [internal/archived/nodriver_comprehensive_structure_analysis.md](../internal/archived/nodriver_comprehensive_structure_analysis.md) | NoDriver 版本各平台結構分析（歷史參考） |
-
----
-
-## 🎯 按工作類型導航
+## 🎯 按工作型別導航
 
 ### 開發新平台
 
@@ -124,24 +116,24 @@
 - **內容**：開發規範、ZenDriver First 策略、編碼標準、檢查清單
 - **適合**：所有開發者，新手入門首選
 - **關鍵章節**：
-  - 搶票程式標準函數架構（12 階段概覽）
+  - 搶票程式標準函式架構（12 階段概覽）
   - 程式碼品質標準
   - WebDriver 除錯規則
 
 ### structure.md
-- **內容**：平台函數索引、完整度評分、現有實作分析
-- **適合**：了解現有實作、查找特定函數
+- **內容**：平台函式索引、完整度評分、現有實作分析
+- **適合**：了解現有實作、尋找特定函式
 - **關鍵章節**：
   - 平台支援狀態表
-  - ZenDriver API 與 Chrome API 函數對照
-  - 各平台的函數完整度評分
+  - ZenDriver API 與 Chrome API 函式對照
+  - 各平台的函式完整度評分
 
 ### coding_templates.md
-- **內容**：代碼範本庫、實作檢查表、平台完成度評分
-- **適合**：編寫代碼時參考、評估完整度
+- **內容**：程式碼範本庫、實作檢查表、平台完成度評分
+- **適合**：編寫程式碼時參考、評估完整度
 - **關鍵章節**：
   - 必要開發規範（Debug 標準、暫停機制）
-  - 標準範本庫（各功能模組的代碼範本）
+  - 標準範本庫（各功能模組的程式碼範本）
   - 實作完整度檢查表（白金/金/銀級標準）
   - 平台完成度總覽
 
@@ -151,19 +143,19 @@
 - **關鍵章節**：
   - 日期選擇判斷邏輯（文字流程圖 + 程式範本）
   - 區域選擇判斷邏輯（AND 邏輯 + 回退機制）
-  - 核心可重用機制（關鍵字匹配、選擇策略、點擊回退鏈）
+  - 核心可重用機制（關鍵字比對、選擇策略、點擊回退鏈）
   - 實戰應用案例（TixCraft 完整流程實例）
 
 ### ticket_automation_standard.md
-- **內容**：12 階段詳細定義、函數拆分規範、配置項目索引
+- **內容**：12 階段詳細定義、函式拆分規範、配置項目索引
 - **適合**：需要深入了解設計意圖、系統性學習
 - **關鍵章節**：
   - 核心設計原則（配置驅動、回退策略等）
   - 12 階段完整功能定義
-  - 函數命名與拆分原則
+  - 函式命名與拆分原則
 
 ### ticket_seat_selection_algorithm.md
-- **內容**：座位選擇詳細算法、特殊平台考量
+- **內容**：座位選擇詳細演算法、特殊平台考量
 - **適合**：實作座位選擇功能的開發者
 - **適用平台**：TicketPlus 等有複雜座位選擇的平台
 
@@ -172,8 +164,8 @@
 ## 🔗 快速連結
 
 ### 常用任務
-- **查找函數定義**：→ `structure.md`（函數索引）
-- **查看代碼範本**：→ `coding_templates.md`（標準範本庫）
+- **尋找函式定義**：→ `structure.md`（函式索引）
+- **檢視程式碼範本**：→ `coding_templates.md`（標準範本庫）
 - **理解邏輯判斷**：→ `logic_flowcharts.md`（流程圖與可重用範本）
 - **了解音效通知**：→ `sound_notification_system.md`（兩階段音效設計）
 - **了解 12 階段**：→ `ticket_automation_standard.md`
@@ -182,10 +174,10 @@
 - **Hot Reload 機制**：→ [`14-hot-reload.md`](../03-mechanisms/14-hot-reload.md)（搶票中即時修改設定）
 
 ### 平台特定資源
-- **TixCraft**：查看 `structure.md` 和 `coding_templates.md` 中的白金級實例
+- **TixCraft**：檢視 `structure.md` 和 `coding_templates.md` 中的白金級實例
 - **KKTIX**：同上
-- **TicketPlus**：查看座位選擇部分和展開式面板處理
-- **iBon**：查看金級實例
+- **TicketPlus**：檢視座位選擇部分和展開式面板處理
+- **iBon**：檢視金級實例
 - **新平台開發**：參考 `development_guide.md` 的檢查清單
 
 ---
@@ -210,41 +202,39 @@
 
 ---
 
-## 🔄 文檔維護策略
+## 🔄 文件維護策略
 
 ### 單一真實來源 (SSOT) 原則
 
 為了避免重複和不一致，遵循以下原則：
 
-- **核心定義**：`ticket_automation_standard.md` 是 12 階段和函數定義的唯一來源
-- **快速參考**：`development_guide.md` 提供摘要，指向詳細文檔
-- **代碼範本**：`coding_templates.md` 提供實際代碼示例
-- **平台分析**：`structure.md` 提供實現分析和評分
+- **核心定義**：`ticket_automation_standard.md` 是 12 階段和函式定義的唯一來源
+- **快速參考**：`development_guide.md` 提供摘要，指向詳細文件
+- **程式碼範本**：`coding_templates.md` 提供實際程式碼示例
+- **平台分析**：`structure.md` 提供實作分析和評分
 
 ### 更新流程
 
-編輯文檔時遵循：
+編輯文件時遵循：
 1. 只在授權位置進行編輯
-2. 其他文件中應提供指向源文件的連結
+2. 其他文件中應提供指向原始檔的連結
 3. 保持相互參考的一致性
-
-詳見 `.claude/rules/documentation.md`
 
 ---
 
 ## ❓ 常見問題
 
 **Q: 我應該先讀哪個文件？**
-A: 如果是新手，先讀 `development_guide.md`。如果是尋找特定內容，查看上面的「快速開始」部分。
+A: 如果是新手，先讀 `development_guide.md`。如果是尋找特定內容，檢視上面的「快速開始」部分。
 
 **Q: ticket_automation_standard.md 為什麼在 reference 子目錄？**
 A: 這是「單一真實來源」策略的一部分。詳細定義集中在 reference，其他文件指向它。
 
-**Q: 代碼範本在哪裡？**
-A: 在 `coding_templates.md` 中。按功能類型搜索相應的範本。
+**Q: 程式碼範本在哪裡？**
+A: 在 `coding_templates.md` 中。按功能型別搜索相應的範本。
 
 **Q: 我想評估平台的完整度？**
-A: 查看 `structure.md` 的完整度評分表或 `coding_templates.md` 的實作檢查表。
+A: 檢視 `structure.md` 的完整度評分表或 `coding_templates.md` 的實作檢查表。
 
 ---
 

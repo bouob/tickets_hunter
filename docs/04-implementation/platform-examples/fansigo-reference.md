@@ -42,15 +42,15 @@
    - 使用 `tab.get()` 直接導航至目標 URL
    - 避免 Next.js 路由攔截導致開啟新分頁的問題
 
-3. **URL 正則表達式路由**
+3. **URL 正規表示式路由**
    - 使用 `FANSIGO_URL_PATTERNS` 字典定義 URL 模式
-   - 透過 `get_fansigo_page_type()` 輔助函式判斷頁面類型
+   - 透過 `get_fansigo_page_type()` 輔助函式判斷頁面型別
 
 ---
 
-## 核心函數索引
+## 核心函式索引
 
-| 階段 | 函數名稱 | 行數 | 說明 |
+| 階段 | 函式名稱 | 行數 | 說明 |
 |------|---------|------|------|
 | Main | `nodriver_fansigo_main()` | 25939 | 主控制流程（URL 路由）|
 | Stage 2 | `nodriver_fansigo_inject_cookie()` | 25397 | Cookie 注入（FansiAuthInfo）|
@@ -61,9 +61,9 @@
 | Stage 5 | `nodriver_fansigo_get_sections()` | 25664 | 取得所有可用票區 |
 | Stage 6 | `nodriver_fansigo_assign_ticket_number()` | 25839 | 票數設定 |
 | Stage 10 | `nodriver_fansigo_click_checkout()` | 25892 | 點擊結帳按鈕 |
-| Util | `get_fansigo_page_type()` | 25376 | URL 頁面類型判斷 |
+| Util | `get_fansigo_page_type()` | 25376 | URL 頁面型別判斷 |
 | Util | `is_fansigo_url()` | 25369 | 是否為 FANSI GO URL |
-| Const | `FANSIGO_URL_PATTERNS` | 25361 | URL 正則表達式模式 |
+| Const | `FANSIGO_URL_PATTERNS` | 25361 | URL 正規表示式模式 |
 
 **程式碼位置**：`src/nodriver_tixcraft.py`
 
@@ -75,9 +75,9 @@
 |------|------|------|------|
 | 1 | 環境初始化 | ✅ 完成 | 由 `cli()` / 主程式進入點處理 |
 | 2 | 身份驗證 | ✅ 完成 | FansiAuthInfo Cookie 注入 |
-| 3 | 頁面監控 | ✅ 完成 | URL 正則路由 + 頁面類型偵測 |
-| 4 | 日期選擇 | ✅ 完成 | 場次列表取得 + 關鍵字匹配 + 直接導航 |
-| 5 | 區域選擇 | ✅ 完成 | 票區列表取得 + 關鍵字匹配 |
+| 3 | 頁面監控 | ✅ 完成 | URL 正則路由 + 頁面型別偵測 |
+| 4 | 日期選擇 | ✅ 完成 | 場次列表取得 + 關鍵字比對 + 直接導航 |
+| 5 | 區域選擇 | ✅ 完成 | 票區列表取得 + 關鍵字比對 |
 | 6 | 票數設定 | ✅ 完成 | tab.evaluate() 設定票數 |
 | 7 | CAPTCHA | ⬜ 不適用 | 平台目前無驗證碼機制 |
 | 8 | 表單填寫 | ❌ 未實作 | 待補充 |
@@ -90,13 +90,13 @@
 
 ---
 
-## 頁面類型與 URL 路由
+## 頁面型別與 URL 路由
 
-FANSI GO 使用正則表達式匹配 URL 來判斷頁面類型：
+FANSI GO 使用正規表示式比對 URL 來判斷頁面型別：
 
-| 頁面類型 | URL 模式 | 處理邏輯 |
+| 頁面型別 | URL 模式 | 處理邏輯 |
 |---------|---------|---------|
-| `event` | `go.fansi.me/events/(\d+)` | 取得場次列表 → 關鍵字匹配 → 導航 |
+| `event` | `go.fansi.me/events/(\d+)` | 取得場次列表 → 關鍵字比對 → 導航 |
 | `show` | `go.fansi.me/tickets/show/(\d+)` | 票區選擇 → 票數設定 → 結帳 |
 | `checkout` | `go.fansi.me/tickets/payment/checkout/` | 停止自動化，播放音效 |
 | `order_result` | `go.fansi.me/tickets/payment/orderresult/` | 停止自動化，播放音效 |
@@ -108,11 +108,11 @@ FANSI GO 使用正則表達式匹配 URL 來判斷頁面類型：
 
 `fansigo_dict` 全域字典管理購票流程狀態：
 
-| 欄位 | 類型 | 說明 |
+| 欄位 | 型別 | 說明 |
 |------|------|------|
 | `is_cookie_injected` | bool | Cookie 是否已注入 |
 | `played_sound_ticket` | bool | 已播放購票成功音效 |
-| `last_page_type` | str | 上次頁面類型（去重用）|
+| `last_page_type` | str | 上次頁面型別（去重用）|
 | `qty_set_url` | str | 已設定票數的 URL（避免重複設定）|
 
 ---
@@ -158,7 +158,7 @@ FANSI GO 使用正則表達式匹配 URL 來判斷頁面類型：
 ## 相關文件
 
 - 📋 [12-Stage 標準](../../02-development/ticket_automation_standard.md) - 完整流程規範
-- 🏗️ [程式碼結構分析](../../02-development/structure.md) - FANSI GO 函數索引
+- 🏗️ [程式碼結構分析](../../02-development/structure.md) - FANSI GO 函式索引
 - 📖 [NoDriver API 指南](../../06-api-reference/nodriver_api_guide.md) - tab.evaluate() 用法
 
 ---

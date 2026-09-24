@@ -66,6 +66,8 @@ __all__ = [
     "nodriver_tixcraft_toast",
     "nodriver_tixcraft_reload_captcha",
     "nodriver_tixcraft_get_ocr_answer",
+    "nodriver_tixcraft_has_captcha",
+    "nodriver_tixcraft_submit_without_captcha",
     "nodriver_tixcraft_auto_ocr",
     "nodriver_tixcraft_ticket_main_ocr",
     "nodriver_tixcraft_main",
@@ -74,6 +76,11 @@ __all__ = [
 
 # Module-level state (replaces global tixcraft_dict)
 _state = {}
+
+# Seconds the Ticketmaster check-captcha handler waits for the captcha input:
+# the URL flips before the form renders, and nodriver_tixcraft_auto_ocr reads a
+# missing input as "no captcha" and ends the OCR loop on the first pass.
+CONST_TICKETMASTER_CAPTCHA_WAIT_SEC = 6.0
 
 
 # Keywords that identify serial-number / membership-code / promo-code style
@@ -272,7 +279,7 @@ async def nodriver_tixcraft_redirect(tab, url):
             if not has_buy_link:
                 return ret
             entry_url = url.replace("/activity/detail/", "/activity/game/").split("#")[0]
-            print("redirec to new url:", entry_url)
+            print("redirect to new url:", entry_url)
             try:
                 await tab.get(entry_url)
                 # 等待日期列表出現，確保頁面載入完成
@@ -1193,6 +1200,26 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
 # User Story 4: Captcha Handling (T019)
 # ============================================
 
+async def _wait_for_captcha_input(tab):
+    """True once #TicketForm_verifyCode exists, within the wait limit.
+
+    Polls on wall-clock time, so pressing pause mid-wait neither shortens it
+    nor gives up early; the OCR loop handles pause. Each poll catches its own
+    error: a CDP error while the form is still rendering means "not yet".
+    tab.wait_for re-raises those and would give up on the first one.
+    """
+    deadline = time.monotonic() + CONST_TICKETMASTER_CAPTCHA_WAIT_SEC
+    while True:
+        try:
+            if await tab.query_selector('#TicketForm_verifyCode'):
+                return True
+        except Exception:
+            pass
+        if time.monotonic() >= deadline:
+            return False
+        await tab.sleep(0.5)
+
+
 async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
     """
     Handle captcha on Ticketmaster check-captcha page.
@@ -1251,6 +1278,14 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
         fail_count = 0
         total_fail_count = 0
 
+        # The caller marks this URL done once we return, so an input that has
+        # not rendered yet must be waited for here, not skipped.
+        if not await _wait_for_captcha_input(tab):
+            print("[TICKETMASTER CAPTCHA] Captcha input did not appear. "
+                  "Please enter the captcha manually.")
+            return False
+
+        # Once the input is there, give the captcha image a moment to draw.
         await asyncio.sleep(random.uniform(0.5, 1.0))
 
         for redo_ocr in range(99):
@@ -2080,7 +2115,10 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
             await target_area.click()
         except:
             try:
-                await target_area.evaluate('el => el.click()')
+                # Element.apply, not Element.evaluate: zendriver defines
+                # evaluate on Tab only and Element.__getattr__ returns None for
+                # unknown names, so .evaluate(...) is a TypeError.
+                await target_area.apply('(el) => el.click()')
             except:
                 pass
 
@@ -2200,7 +2238,9 @@ async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item,
                     font_text = ''
                     font_el = await row.query_selector('font')
                     if font_el:
-                        font_text = await font_el.evaluate('el => el.textContent') or ''
+                        # Element.apply, not Element.evaluate (None on an
+                        # Element; see nodriver_tixcraft_area_auto_select).
+                        font_text = await font_el.apply('(el) => el.textContent') or ''
                 if font_text:
                     font_text = font_text.strip()
 
@@ -2451,7 +2491,11 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
             # clean candidate list -- an excluded ticket type can never be picked
             # by the fallback branch below (same invariant as cityline's
             # _cityline_collect_available_areas).
-            if util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_type_name):
+            #
+            # Guard the empty name: is_row_match_keyword reports a match for
+            # empty text, so a ticket type whose name could not be read would
+            # otherwise count as excluded and drop out of the fallback too.
+            if ticket_type_name and util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_type_name):
                 debug.log(f"[TICKET SELECT] Excluded by keyword_exclude: '{ticket_type_name}'")
                 continue
 
@@ -2592,6 +2636,9 @@ async def nodriver_tixcraft_ticket_main_agree(tab, config_dict):
             break
         else:
             debug.log(f"Failed to check agreement, retry {i+1}/3")
+            # The page is often still rendering on the first pass; space the
+            # retries so they do not all read the same unfinished DOM.
+            await tab.sleep(0.3)
 
     if not is_finish_checkbox_click:
         debug.log("Warning: Failed to check agreement checkbox")
@@ -2976,10 +3023,12 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
 
     is_input_box_exist = False
     if not ocr is None:
-        form_verifyCode = None
         try:
+            # query_selector returns None when absent rather than raising, so
+            # the flag must test the result: events with no image captcha
+            # would otherwise burn the whole retry budget.
             form_verifyCode = await tab.query_selector('#TicketForm_verifyCode')
-            is_input_box_exist = True
+            is_input_box_exist = form_verifyCode is not None
         except Exception as exc:
             pass
     else:
@@ -3044,6 +3093,111 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
 
     return is_need_redo_ocr, previous_answer, is_form_submitted
 
+async def nodriver_tixcraft_has_captcha(tab):
+    """True when this ticket page actually shows an image captcha.
+
+    Some events use invisible reCAPTCHA and have no #TicketForm_verifyCode,
+    which every captcha path here assumes exists. A detection failure answers
+    True: guessing False on a captcha page would submit an empty answer.
+    """
+    try:
+        result = await tab.evaluate('''
+            (function() {
+                return !!(document.querySelector('#TicketForm_verifyCode') ||
+                          document.querySelector('#TicketForm_verifyCode-image'));
+            })();
+        ''')
+        return result is not False
+    except Exception:
+        return True
+
+
+def _forget_ticket_assigned(current_url):
+    """Drop the "ticket count already set" marks nodriver_tixcraft_ticket_main
+    keeps for this URL, so the next pass assigns the count again."""
+    prefix = f"ticket_assigned_{current_url}_"
+    for key in [k for k in _state if k.startswith(prefix)]:
+        del _state[key]
+
+
+async def nodriver_tixcraft_submit_without_captcha(tab, config_dict):
+    """Agree, confirm the ticket count, and submit a ticket page with no captcha.
+
+    The captcha flow cannot submit here: it is gated on the input existing and
+    its readiness check requires verify.value.length === 4.
+    """
+    debug = util.create_debug_logger(config_dict)
+
+    await nodriver_check_checkbox_enhanced(tab, '#TicketForm_agree', config_dict)
+
+    # nodriver_tixcraft_ticket_main has already assigned the count, so only
+    # confirm it here rather than duplicate keyin_captcha_code's reset.
+    ticket_number_js = json.dumps(str(config_dict.get("ticket_number", 2)))
+    allow_less_js = json.dumps(bool(
+        config_dict.get("tixcraft", {}).get("allow_less_tickets", False)))
+    ready = await tab.evaluate(f'''
+        (function() {{
+            const target = parseInt({ticket_number_js});
+            const allowLess = {allow_less_js};
+            const agree = document.querySelector('#TicketForm_agree');
+            const selects = Array.from(document.querySelectorAll(
+                '.mobile-select, select[id*="TicketForm_ticketPrice_"]'
+            )).filter(s => s && !s.disabled);
+            const matched = selects.find(s => {{
+                if (s.value === "0" || s.value === "") return false;
+                const current = parseInt(s.value);
+                if (isNaN(current) || isNaN(target)) return false;
+                return allowLess ? (current > 0 && current <= target) : (current === target);
+            }});
+            return {{
+                ticket: !!matched,
+                agree: !!(agree && agree.checked),
+                ready: !!matched && !!(agree && agree.checked)
+            }};
+        }})();
+    ''')
+
+    if not isinstance(ready, dict) or not ready.get('ready'):
+        got = ready if isinstance(ready, dict) else {}
+        debug.log("[TIXCRAFT] No captcha on this page, but the form is not ready "
+                  f"- Ticket:{got.get('ticket')} Agreement:{got.get('agree')}")
+        if got.get('ticket') is False:
+            # The count went back to 0 (refused submit or back navigation on
+            # the same URL); nodriver_tixcraft_ticket_main skips assignment
+            # while the URL is marked done, so clear the mark.
+            current_url, _ = await nodriver_current_url(tab)
+            _forget_ticket_assigned(current_url)
+            debug.log("[TIXCRAFT] Ticket count was reset, re-assigning next round")
+        return False
+
+    if not config_dict["ocr_captcha"]["force_submit"]:
+        debug.log("[TIXCRAFT] No captcha on this page; agreement and ticket count "
+                  "are set. Auto-submit is off, so the order is left for you.")
+        return False
+
+    # Click the button: Enter needs focus in the (absent) captcha input, and
+    # form.submit() skips the page's handler that enforces agreement and quota.
+    clicked = await tab.evaluate('''
+        (function() {
+            const form = document.querySelector('#form-ticket-ticket');
+            if (!form) return false;
+            const btn = form.querySelector('button[type="submit"], input[type="submit"]');
+            if (!btn || btn.disabled) return false;
+            btn.click();
+            return true;
+        })();
+    ''')
+
+    if clicked:
+        debug.log("[TIXCRAFT] Submitted a page with no captcha")
+        # Same guard the captcha path sets: keep the main loop from re-entering
+        # this page while the POST is still navigating.
+        _state["captcha_submit_until"] = time.time() + 1.5
+    else:
+        debug.log("[TIXCRAFT] No captcha on this page and no submit button found")
+    return bool(clicked)
+
+
 async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name):
     """票券頁面 OCR 處理主函數"""
     # 函數開始時檢查暫停
@@ -3051,6 +3205,13 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
         return False, "", False
 
     debug = util.create_debug_logger(config_dict)
+
+    # Handle the no-captcha case before the ocr_captcha.enable split: with OCR
+    # off the manual branch below only focuses the captcha input, so an event
+    # without one reaches the same dead end by a different route.
+    if not await nodriver_tixcraft_has_captcha(tab):
+        await nodriver_tixcraft_submit_without_captcha(tab, config_dict)
+        return
 
     away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
     if not config_dict["ocr_captcha"]["enable"]:

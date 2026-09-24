@@ -67,6 +67,45 @@ __all__ = [
     "nodriver_ticket_switch_to_auto_seat",
 ]
 
+# Seconds to let a reloaded page settle before reading its DOM: tab.reload()
+# returns once CDP sends Page.reload, before the new document parses (~200ms on
+# UTK0204). Same 0.5s nodriver_kham_date_auto_select waits after its reload.
+CONST_KHAM_RELOAD_SETTLE = 0.5
+
+
+def _parse_remaining_seats(row_text):
+    """Remaining seats for an area row - the last column of the kham table.
+
+    Reads the whole trailing token ("... 4,280 50" -> 50), not the last
+    character. Returns None when that token is not a number (button label,
+    empty cell, sold-out marker); callers treat None as "unknown, let it through".
+    """
+    if not row_text:
+        return None
+    tokens = row_text.split()
+    if not tokens:
+        return None
+    candidate = tokens[-1].replace(',', '')
+    return int(candidate) if candidate.isdigit() else None
+
+
+# The only reply meaning the order reached the cart; anything else (bad or empty
+# captcha, no seat chosen) is a failure. An allowlist, since the exact
+# wrong-captcha wording is unknown.
+CONST_KHAM_CART_SUCCESS_KEYWORDS = ("加入購物車",)
+
+
+def _is_cart_success_message(dialog_text):
+    """True when a post-submit dialog says the order reached the cart.
+
+    kham answers an add-to-cart over AJAX with JavaScript rather than
+    navigating, so the dialog text is the only immediate signal.
+    """
+    if not dialog_text:
+        return False
+    return any(kw in dialog_text for kw in CONST_KHAM_CART_SUCCESS_KEYWORDS)
+
+
 # Module-level state (replaces global kham_dict)
 _state = {}
 
@@ -185,6 +224,8 @@ async def nodriver_kham_login(tab, account, password, ocr=None, config_dict=None
                         debug.log("[KHAM LOGIN] Fill captcha fail:", exc)
                 else:
                     debug.log(f"[KHAM LOGIN] Invalid captcha length: {len(ocr_answer)}, expected 4")
+                    # New image, or the next pass re-reads this one forever.
+                    await nodriver_kham_refresh_captcha(tab, config_dict)
             else:
                 debug.log("[KHAM LOGIN] OCR answer is None")
 
@@ -388,20 +429,30 @@ async def _handle_post_submit_dialog(tab, config_dict):
     - none: no dialog appeared within timeout
     """
     debug = util.create_debug_logger(config_dict)
-    SUCCESS_KEYWORDS = ["加入購物車"]
 
     for i in range(10):  # 10 * 0.5s = 5s
         await tab.sleep(0.5)
         try:
             dialog_text = await tab.evaluate('''
                 (function() {
-                    var el = document.querySelector('div.ui-dialog > div#dialog-message.ui-dialog-content');
+                    // Only a VISIBLE dialog counts. jQuery UI keeps the wrapper
+                    // in the DOM after close, with the previous message still
+                    // inside it, so an existence check reads the last round's
+                    // text and classifies a fresh submit on a stale reply.
+                    // Verified 2026-09-21 on kham UTK0205: after clicking Ok the
+                    // wrapper stays with display:none and #dialog-message still
+                    // holds the old message.
+                    var wrap = document.querySelector('div.ui-dialog');
+                    if (!wrap || window.getComputedStyle(wrap).display === 'none') {
+                        return null;
+                    }
+                    var el = wrap.querySelector('div#dialog-message.ui-dialog-content');
                     return el ? el.textContent : null;
                 })();
             ''')
 
             if dialog_text is not None:
-                is_success = any(kw in dialog_text for kw in SUCCESS_KEYWORDS)
+                is_success = _is_cart_success_message(dialog_text)
 
                 el_btn = await tab.query_selector('div.ui-dialog-buttonset > button.ui-button')
                 if el_btn:
@@ -851,10 +902,14 @@ async def nodriver_kham_keyin_captcha_code(tab, answer="", auto_submit=False):
 
     return is_verifyCode_editing
 
-async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_keyword_item):
+async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_keyword_item,
+                                         allow_fallback=True):
     """
     Area/ticket type auto selection with table and dropdown support
     Reference: chrome_tixcraft.py kham_area_auto_select (line 8662-8925)
+
+    allow_fallback=False keeps a missed keyword from falling back to any row,
+    so a caller trying several keywords can defer the fallback to the last one.
     """
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
@@ -864,7 +919,10 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
     auto_select_mode = config_dict["area_auto_select"]["mode"]
 
     # Feature 003: Safe access for conditional fallback switch
-    area_auto_fallback = config_dict.get('area_auto_fallback', False)
+    area_auto_fallback = config_dict.get('area_auto_fallback', False) and allow_fallback
+    # Fallback is on in settings but held for a later keyword: a miss here just
+    # moves on to the next keyword, with no reload.
+    fallback_deferred = config_dict.get('area_auto_fallback', False) and not allow_fallback
 
     # NOTE: area_keyword_item is already a SINGLE keyword string from upper layer JSON parsing (line 13180)
     # Upper layer at line 13180: area_keyword_array = json.loads("[" + area_keyword + "]")
@@ -975,6 +1033,9 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                         debug.log(f"[KHAM AREA FALLBACK] area_auto_fallback=true, triggering auto fallback (dropdown)")
                         debug.log(f"[KHAM AREA FALLBACK] Selecting from {len(available_options)} available options using mode='{auto_select_mode}'")
                         matched_options = available_options
+                    elif fallback_deferred:
+                        debug.log(f"[KHAM AREA FALLBACK] No match for '{area_keyword_item}', fallback deferred to the last keyword (dropdown)")
+                        return False, False, False
                     else:
                         # Fallback disabled - strict mode (no selection, will reload)
                         debug.log(f"[KHAM AREA FALLBACK] area_auto_fallback=false, fallback is disabled (dropdown)")
@@ -987,7 +1048,8 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
 
             # Select target option by simulating user interaction
             if matched_options:
-                target_option = matched_options[0]  # Take first match
+                # Honour area_auto_select.mode, as the table branch does.
+                target_option = util.get_target_item_from_matched_list(matched_options, auto_select_mode)
                 target_value = target_option['value']
                 target_text = target_option['text']
 
@@ -1157,12 +1219,9 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
             for i, row_text in enumerate(filtered_rows_text):
                 if 'udnfunlife' not in domain_name:
                     if ticket_number > 1:
-                        # Check remaining tickets from last character
-                        maybe_count = row_text[-1:] if row_text else ''
-                        if maybe_count.isdigit():
-                            available_count = int(maybe_count)
-                            if available_count < ticket_number:
-                                continue
+                        remaining = _parse_remaining_seats(row_text)
+                        if remaining is not None and remaining < ticket_number:
+                            continue
                 final_rows.append(filtered_rows[i])
                 final_rows_text.append(row_text)
 
@@ -1212,6 +1271,9 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                         debug.log(f"[KHAM AREA FALLBACK] area_auto_fallback=true, triggering auto fallback (table)")
                         debug.log(f"[KHAM AREA FALLBACK] Selecting from {len(final_rows)} available rows using mode='{auto_select_mode}'")
                         matched_blocks = final_rows
+                    elif fallback_deferred:
+                        debug.log(f"[KHAM AREA FALLBACK] No match for '{area_keyword_item}', fallback deferred to the last keyword (table)")
+                        return False, False, False
                     else:
                         # Fallback disabled - strict mode (no selection, will reload)
                         debug.log(f"[KHAM AREA FALLBACK] area_auto_fallback=false, fallback is disabled (table)")
@@ -1245,6 +1307,36 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
             is_need_refresh = True
 
     return is_need_refresh, is_price_assign_by_bot, is_keyword_matched
+
+CONST_KHAM_CAPTCHA_REFRESH_JS = '''
+    (() => {
+        const img = document.querySelector('#chk_pic');
+        if (!img) return 'no_image';
+        // RWD pages ship a captcha widget with its own refresh (and loading mask).
+        if (typeof $ === 'function' && typeof $(img).captchaInstance === 'function') {
+            try { $(img).captchaInstance().refresh(); return 'widget'; } catch (e) {}
+        }
+        // Rebuild from the page's own URL: the TYPE must stay exactly as served
+        // (e.g. UTK0201_001), which a truncated model name would not.
+        const base = img.getAttribute('data-captcha-url') || img.src.split('&ts=')[0];
+        img.src = base + (base.indexOf('?') >= 0 ? '&' : '?') + 'ts=' + Date.now();
+        return 'src';
+    })()
+'''
+
+
+async def nodriver_kham_refresh_captcha(tab, config_dict):
+    """Ask the page for a new captcha image; returns how it was refreshed."""
+    debug = util.create_debug_logger(config_dict)
+    try:
+        method = await tab.evaluate(CONST_KHAM_CAPTCHA_REFRESH_JS)
+        debug.log(f"[KHAM OCR] Captcha refreshed via {method}")
+        await tab.sleep(0.3)
+        return method
+    except Exception as exc:
+        debug.log(f"[KHAM OCR] Captcha refresh failed: {exc}")
+        return None
+
 
 async def nodriver_kham_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enable, previous_answer, model_name):
     """
@@ -1289,27 +1381,16 @@ async def nodriver_kham_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
             previous_answer = ocr_answer  # Update previous_answer to mark as sent
             who_care_var = await nodriver_kham_keyin_captcha_code(tab, answer=ocr_answer, auto_submit=away_from_keyboard_enable)
         else:
-            # Invalid length - retry
+            # Invalid length: ask for a new image either way. Without it the
+            # next pass re-reads the same image and gets the same wrong answer
+            # forever (seen on UTK0201_001, a 5-char read of a 4-char captcha).
+            await nodriver_kham_refresh_captcha(tab, config_dict)
             if not away_from_keyboard_enable:
                 await nodriver_kham_keyin_captcha_code(tab, "")
             else:
                 is_need_redo_ocr = True
                 if previous_answer != ocr_answer:
                     previous_answer = ocr_answer
-                    debug.log("[KHAM OCR] Click captcha to refresh")
-                    # Refresh captcha image
-                    try:
-                        await tab.evaluate(f'''
-                            (function() {{
-                                const img = document.querySelector('#chk_pic');
-                                if (img) {{
-                                    img.src = '/pic.aspx?TYPE={model_name}&ts=' + new Date().getTime();
-                                }}
-                            }})();
-                        ''')
-                        await tab.sleep(0.3)
-                    except:
-                        pass
     else:
         debug.log(f"[KHAM OCR] OCR answer is None, previous_answer: {previous_answer}")
         if previous_answer is None:
@@ -1390,12 +1471,15 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
 
         # Feature 003: Enhanced fallback logic with early return
         for keyword_index, area_keyword_item in enumerate(area_keyword_array):
-            is_need_refresh, is_price_assign_by_bot, is_keyword_matched = await nodriver_kham_area_auto_select(
-                tab, domain_name, config_dict, area_keyword_item
-            )
-
-            # Check if this is the last keyword
             is_last_keyword = (keyword_index == len(area_keyword_array) - 1)
+
+            # Fallback only on the last keyword: a fallback clicks a row and
+            # the loop stops (Case 3), so allowing it earlier would pick any
+            # area before the later keywords were ever tried.
+            is_need_refresh, is_price_assign_by_bot, is_keyword_matched = await nodriver_kham_area_auto_select(
+                tab, domain_name, config_dict, area_keyword_item,
+                allow_fallback=is_last_keyword
+            )
 
             # Case 1: True keyword match - stop trying
             if is_keyword_matched:
@@ -1413,14 +1497,17 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
                     break
                 else:
                     # Not last keyword - continue trying
-                    debug.log(f"[KHAM PERFORMANCE] Keyword #{keyword_index + 1} failed (strict mode), trying next...")
+                    debug.log(f"[KHAM PERFORMANCE] Keyword #{keyword_index + 1} not matched, trying next...")
                     continue
 
-            # Case 3: Fallback selection - continue trying next keyword
+            # Case 3: Fallback selection - the row is clicked and the page is
+            # navigating, so stop: later keywords would read the torn-down DOM
+            # as zero rows and trigger a reload of a page already left.
             # is_price_assign_by_bot=True, is_keyword_matched=False
             if is_price_assign_by_bot and not is_keyword_matched:
-                debug.log(f"[KHAM PERFORMANCE] Fallback selection, trying next keyword...")
-                # Continue to next keyword
+                debug.log(f"[KHAM PERFORMANCE] Fallback selection for "
+                          f"'{area_keyword_item}', stopping")
+                break
 
             # Case 4: Refresh needed - continue trying next keyword
             # is_need_refresh=True (other scenarios)
@@ -1435,18 +1522,16 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
 
     if is_need_refresh:
         debug.log("is_need_refresh:", is_need_refresh)
-        # Stage 5: area sold out / keyword not matched -> throttle the reload by
-        # auto_reload_page_interval before retrying, mirroring date_auto_select
-        # (see the reload block ~line 725). Without this delay the main loop
-        # hammers the page roughly once per second instead of honouring the
-        # user's configured refresh interval.
-        reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0.0)
-        if reload_interval > 0:
-            await tab.sleep(reload_interval)
+        # Stage 5: area sold out / keyword not matched -> reload and retry.
         try:
             await tab.reload()
-        except:
-            pass
+        except Exception as exc:
+            debug.log("Area reload exception:", exc)
+        # Wait AFTER the reload: a DOM read before the new document parses sees
+        # zero area rows and reloads forever. The same wait throttles the refresh
+        # rate (#322); the settle floor applies even when the interval is 0.
+        reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0.0)
+        await tab.sleep(max(reload_interval, CONST_KHAM_RELOAD_SETTLE))
         # The page is reloading and the current DOM is stale, so skip the
         # captcha/submit attempt this round. Returning is_captcha_sent=False
         # makes the caller skip the add-to-cart submit (avoids the wasted
@@ -3049,6 +3134,10 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
     """
     debug = util.create_debug_logger(config_dict)
     is_seat_type_assigned = False
+    # Tells nodriver_kham_seat_main apart "no seat type is usable" (the page
+    # has loaded and this area is spent) from "no buttons yet" (still loading):
+    # both return False here.
+    _state["kham_seat_types_exhausted"] = False
 
     # Clean keyword quotes
     # NOTE: This function only supports single keyword or space-separated AND logic (e.g., "VIP 區")
@@ -3220,12 +3309,17 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
         # Step 4: Filter disabled buttons, then apply keyword_exclude here so that
         # keyword matching and the first-button fallback below share one clean
         # candidate list -- an excluded seat type can never be auto-picked.
+        #
+        # Guard the empty text: is_row_match_keyword reports a match for empty
+        # text, so a button whose label could not be extracted would otherwise
+        # count as excluded and drop out of the first-button fallback too.
         enabled_buttons = []
         for btn in ticket_buttons:
             if btn['disabled']:
                 continue
-            if util.reset_row_text_if_match_keyword_exclude(config_dict, btn.get('text', '')):
-                debug.log(f"[KHAM SEAT TYPE] Excluded by keyword_exclude: {btn.get('text', '')}")
+            button_text = btn.get('text', '')
+            if button_text and util.reset_row_text_if_match_keyword_exclude(config_dict, button_text):
+                debug.log(f"[KHAM SEAT TYPE] Excluded by keyword_exclude: {button_text}")
                 continue
             enabled_buttons.append(btn)
 
@@ -3233,6 +3327,7 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
 
         if len(enabled_buttons) == 0:
             debug.log("[KHAM SEAT TYPE] All buttons are disabled or excluded")
+            _state["kham_seat_types_exhausted"] = True
             return False
 
         # Step 5: Match and select button using Python logic
@@ -3853,8 +3948,10 @@ async def nodriver_kham_handle_seat_unavailable(tab, config_dict):
         except Exception as exc:
             debug.log(f"[KHAM SEAT] 更新座位失敗: {exc}")
 
+        # Floor the wait as the area page does: a seat map read before the
+        # reload finishes is empty and would abandon an area that has seats.
         reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0.1)
-        wait_sec = reload_interval if reload_interval > 0 else 0.5
+        wait_sec = max(reload_interval, CONST_KHAM_RELOAD_SETTLE)
         await asyncio_sleep_with_pause_check(wait_sec)
         return True
 
@@ -3893,6 +3990,22 @@ async def nodriver_kham_handle_seat_unavailable(tab, config_dict):
 
         await asyncio_sleep_with_pause_check(0.8)
         return True
+
+async def _kham_seat_map_loaded(tab):
+    """True once #TBL has been parsed and holds seat cells.
+
+    A seat map that is still parsing reads as "no seats", the same as a full
+    one. Only a parsed map that still yields no seats should reach
+    nodriver_kham_handle_seat_unavailable.
+    """
+    try:
+        result = await tab.evaluate('''
+            (() => document.readyState !== 'loading' &&
+                   document.querySelectorAll('table#TBL td').length > 0)()
+        ''')
+        return result is True
+    except Exception:
+        return False
 
 async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
     """
@@ -3940,7 +4053,15 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
             is_seat_assigned = await nodriver_kham_seat_auto_select(tab, config_dict)
 
         if not is_seat_assigned:
-            await nodriver_kham_handle_seat_unavailable(tab, config_dict)
+            # Refresh-then-switch-area only for a loaded page whose area cannot
+            # be bought; no seat type buttons or #TBL still parsing means
+            # mid-load, so retry next pass. UDN is excluded: the handler's
+            # selectors and history.back() fallback were only verified on kham.
+            types_exhausted = _state.get("kham_seat_types_exhausted", False)
+            page_ready = types_exhausted or (
+                is_seat_type_assigned and await _kham_seat_map_loaded(tab))
+            if 'udnfunlife' not in domain_name and page_ready:
+                await nodriver_kham_handle_seat_unavailable(tab, config_dict)
             return False
         else:
             clear_kham_seat_reload_tracker(tab.target.url)
@@ -3965,6 +4086,11 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
     is_submit_success = False
     if is_seat_assigned and (not config_dict["ocr_captcha"]["enable"] or is_captcha_sent):
         try:
+            # Baseline for the transition check below, taken before the click:
+            # kham often redirects to UTK0206 while the reply dialog is still
+            # being polled, and a baseline read after that never sees a change.
+            pre_submit_url = tab.target.url
+
             # 4.1: Click submit button - UTK0205 uses addShoppingCart() function
             result = await tab.evaluate('''
                 (function() {
@@ -4002,115 +4128,45 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
                 is_submit_success = result
 
             if is_submit_success:
-                debug.log("[KHAM SUBMIT] Order submitted successfully")
+                debug.log("[KHAM SUBMIT] Add-to-cart clicked, reading the reply dialog")
 
-                # 4.2: Wait for and close success dialog with improved logic + fallback
-                dialog_closed = False
+                # 4.2: Classify the reply. UTK0205 adds to cart over AJAX and kham
+                # answers with JavaScript that either redirects to UTK0206 or opens
+                # a dialog; same helper as the two submit paths in nodriver_kham_main.
+                dialog_result = await _handle_post_submit_dialog(tab, config_dict)
 
-                # Initial wait for dialog to appear (1.5 seconds)
-                await tab.sleep(1.5)
-                debug.log("[KHAM SUBMIT] Initial wait completed, now checking for dialog...")
+                if dialog_result == "error":
+                    # The helper cleared the captcha and kham issued a new image;
+                    # end the round so the next pass re-runs OCR right away.
+                    is_submit_success = False
+                    debug.log("[KHAM SUBMIT] Submit refused; captcha cleared, "
+                              "retrying on the next round")
+                else:
+                    # 4.3: Always check for page transition (fallback) - regardless of dialog detection
+                    # This is more reliable than waiting for dialog to close
+                    debug.log("[KHAM SUBMIT] Checking for page transition (fallback)...")
 
-                for i in range(16):  # 16 attempts * 0.5s = 8 seconds
-                    await tab.sleep(0.5)
-                    try:
-                        # Use JavaScript to check dialog and close (improved selectors)
-                        result = await tab.evaluate('''
-                            (function() {
-                                // Check if dialog exists (multiple selectors)
-                                const dialog = document.querySelector('div.ui-dialog');
-                                if (dialog) {
-                                    // Try multiple button selectors - be more specific
-                                    // Selector 1: Class-based (most specific)
-                                    let btn = document.querySelector('button.ui-button.ui-corner-all.ui-widget');
-                                    // Selector 2: Dialog buttonset
-                                    if (!btn) btn = document.querySelector('.ui-dialog-buttonset button');
-                                    // Selector 3: Any button in dialog
-                                    if (!btn) btn = document.querySelector('div.ui-dialog button');
+                    debug.log(f"[KHAM SUBMIT] URL before submit: {pre_submit_url}")
 
-                                    if (btn) {
-                                        // Click the button
-                                        btn.click();
-                                        return {found: true, clicked: true};
-                                    }
-                                    return {found: true, clicked: false};
-                                }
-                                return {found: false, clicked: false};
-                            })();
-                        ''')
+                    # Check if URL changed (maximum 15 seconds wait - more generous fallback)
+                    url_changed = False
+                    for i in range(30):  # 30 attempts * 0.5s = 15 seconds (extended from 10s)
+                        new_url = tab.target.url
+                        if new_url != pre_submit_url:
+                            debug.log(f"[KHAM SUBMIT] Page transitioned successfully")
+                            debug.log(f"[KHAM SUBMIT] New URL: {new_url}")
+                            url_changed = True
+                            break
+                        await tab.sleep(0.5)
 
-                        # Convert CDP format
-                        if isinstance(result, list) and len(result) == 2:
-                            result_dict = result[1].get('value', {}) if isinstance(result[1], dict) else {}
-                        else:
-                            result_dict = result if isinstance(result, dict) else {}
+                    if not url_changed:
+                        debug.log("[KHAM SUBMIT] URL did not change after submit")
+                        debug.log("[KHAM SUBMIT] Note: KHAM may not auto-redirect - this may be normal")
+                        debug.log("[KHAM SUBMIT] Proceeding anyway as submit button was clicked")
 
-                        dialog_found = result_dict.get('found', False)
-                        dialog_clicked = result_dict.get('clicked', False)
-
-                        debug.log(f"[KHAM SUBMIT] Dialog check #{i+1}: found={dialog_found}, clicked={dialog_clicked}")
-
-                        if dialog_found and dialog_clicked:
-                            debug.log("[KHAM SUBMIT] Dialog found and clicked via JavaScript")
-                            await tab.sleep(0.5)
-
-                            # Verify dialog actually closed (important for stability)
-                            verify_result = await tab.evaluate('''
-                                (function() {
-                                    const dialog = document.querySelector('div.ui-dialog');
-                                    return {exists: dialog !== null};
-                                })();
-                            ''')
-
-                            if isinstance(verify_result, list) and len(verify_result) == 2:
-                                verify_dict = verify_result[1].get('value', {}) if isinstance(verify_result[1], dict) else {}
-                            else:
-                                verify_dict = verify_result if isinstance(verify_result, dict) else {}
-
-                            if not verify_dict.get('exists', True):
-                                dialog_closed = True
-                                debug.log("[KHAM SUBMIT] Dialog close verified - dialog no longer exists")
-                                break
-                            else:
-                                debug.log("[KHAM SUBMIT] Dialog still exists after click attempt, retrying...")
-                        elif dialog_found and not dialog_clicked:
-                            debug.log("[KHAM SUBMIT] Dialog found but button click failed, retrying...")
-                        elif not dialog_found and i % 4 == 0:
-                            # Log periodically that we're still searching
-                            debug.log(f"[KHAM SUBMIT] Still searching for dialog... (attempt {i+1}/16)")
-
-                    except Exception as e:
-                        debug.log(f"[KHAM SUBMIT] Dialog check #{i+1} exception: {e}")
-
-                if not dialog_closed:
-                    debug.log("[KHAM SUBMIT] Dialog detection incomplete - will proceed with fallback URL check")
-
-                # 4.3: Always check for page transition (fallback) - regardless of dialog detection
-                # This is more reliable than waiting for dialog to close
-                debug.log("[KHAM SUBMIT] Checking for page transition (fallback)...")
-
-                current_url = tab.target.url
-                debug.log(f"[KHAM SUBMIT] Current URL: {current_url}")
-
-                # Check if URL changed (maximum 15 seconds wait - more generous fallback)
-                url_changed = False
-                for i in range(30):  # 30 attempts * 0.5s = 15 seconds (extended from 10s)
-                    await tab.sleep(0.5)
-                    new_url = tab.target.url
-                    if new_url != current_url:
-                        debug.log(f"[KHAM SUBMIT] Page transitioned successfully")
-                        debug.log(f"[KHAM SUBMIT] New URL: {new_url}")
-                        url_changed = True
-                        break
-
-                if not url_changed:
-                    debug.log("[KHAM SUBMIT] URL did not change after submit")
-                    debug.log("[KHAM SUBMIT] Note: KHAM may not auto-redirect - this may be normal")
-                    debug.log("[KHAM SUBMIT] Proceeding anyway as submit button was clicked")
-
-                # 4.4: Play sound if enabled
-                if config_dict["advanced"]["play_sound"]["order"]:
-                    play_sound_while_ordering(config_dict)
+                    # 4.4: Play sound if enabled
+                    if config_dict["advanced"]["play_sound"]["order"]:
+                        play_sound_while_ordering(config_dict)
 
         except Exception as exc:
             debug.log(f"[ERROR] KHAM submit exception: {exc}")
@@ -4582,12 +4638,17 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
         # Step 4: Filter disabled buttons, then apply keyword_exclude here so that
         # keyword matching and the first-button fallback below share one clean
         # candidate list -- an excluded seat type can never be auto-picked.
+        #
+        # Guard the empty text: is_row_match_keyword reports a match for empty
+        # text, so a button whose label could not be extracted would otherwise
+        # count as excluded and drop out of the first-button fallback too.
         enabled_buttons = []
         for btn in ticket_buttons:
             if btn['disabled']:
                 continue
-            if util.reset_row_text_if_match_keyword_exclude(config_dict, btn['text']):
-                debug.log(f"[TICKET SEAT TYPE] Excluded by keyword_exclude: {btn['text']}")
+            button_text = btn['text']
+            if button_text and util.reset_row_text_if_match_keyword_exclude(config_dict, button_text):
+                debug.log(f"[TICKET SEAT TYPE] Excluded by keyword_exclude: {button_text}")
                 continue
             enabled_buttons.append(btn)
 
@@ -5916,11 +5977,9 @@ async def nodriver_ticket_switch_to_auto_seat(tab):
 
         if btn:
             # Check if already selected
-            is_checked = await tab.evaluate('''
-                (function(elem) {
-                    return elem.checked === true;
-                })(arguments[0])
-            ''', btn)
+            # Element.apply, not tab.evaluate(script, element): Tab.evaluate's
+            # second positional argument is await_promise, not a script argument.
+            is_checked = await btn.apply('(elem) => elem.checked === true')
 
             if not is_checked:
                 # Not selected, click it
@@ -5930,9 +5989,7 @@ async def nodriver_ticket_switch_to_auto_seat(tab):
                 except Exception:
                     # Fallback: use JavaScript to force click
                     try:
-                        await tab.evaluate('''
-                            (function(elem) { elem.click(); })(arguments[0])
-                        ''', btn)
+                        await btn.apply('(elem) => elem.click()')
                         is_switch_to_auto_seat = True
                     except:
                         pass
