@@ -224,6 +224,8 @@ async def nodriver_kham_login(tab, account, password, ocr=None, config_dict=None
                         debug.log("[KHAM LOGIN] Fill captcha fail:", exc)
                 else:
                     debug.log(f"[KHAM LOGIN] Invalid captcha length: {len(ocr_answer)}, expected 4")
+                    # New image, or the next pass re-reads this one forever.
+                    await nodriver_kham_refresh_captcha(tab, config_dict)
             else:
                 debug.log("[KHAM LOGIN] OCR answer is None")
 

@@ -1203,15 +1203,21 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
 async def _wait_for_captcha_input(tab):
     """True once #TicketForm_verifyCode exists, within the wait limit.
 
-    tab.wait_for times out on wall-clock time, so pressing pause mid-wait
-    neither shortens it nor gives up early; the OCR loop handles pause.
+    Polls on wall-clock time, so pressing pause mid-wait neither shortens it
+    nor gives up early; the OCR loop handles pause. Each poll catches its own
+    error: a CDP error while the form is still rendering means "not yet".
+    tab.wait_for re-raises those and would give up on the first one.
     """
-    try:
-        await tab.wait_for('#TicketForm_verifyCode',
-                           timeout=CONST_TICKETMASTER_CAPTCHA_WAIT_SEC)
-        return True
-    except Exception:
-        return False
+    deadline = time.monotonic() + CONST_TICKETMASTER_CAPTCHA_WAIT_SEC
+    while True:
+        try:
+            if await tab.query_selector('#TicketForm_verifyCode'):
+                return True
+        except Exception:
+            pass
+        if time.monotonic() >= deadline:
+            return False
+        await tab.sleep(0.5)
 
 
 async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
