@@ -900,10 +900,14 @@ async def nodriver_kham_keyin_captcha_code(tab, answer="", auto_submit=False):
 
     return is_verifyCode_editing
 
-async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_keyword_item):
+async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_keyword_item,
+                                         allow_fallback=True):
     """
     Area/ticket type auto selection with table and dropdown support
     Reference: chrome_tixcraft.py kham_area_auto_select (line 8662-8925)
+
+    allow_fallback=False keeps a missed keyword from falling back to any row,
+    so a caller trying several keywords can defer the fallback to the last one.
     """
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
@@ -913,7 +917,10 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
     auto_select_mode = config_dict["area_auto_select"]["mode"]
 
     # Feature 003: Safe access for conditional fallback switch
-    area_auto_fallback = config_dict.get('area_auto_fallback', False)
+    area_auto_fallback = config_dict.get('area_auto_fallback', False) and allow_fallback
+    # Fallback is on in settings but held for a later keyword: a miss here just
+    # moves on to the next keyword, with no reload.
+    fallback_deferred = config_dict.get('area_auto_fallback', False) and not allow_fallback
 
     # NOTE: area_keyword_item is already a SINGLE keyword string from upper layer JSON parsing (line 13180)
     # Upper layer at line 13180: area_keyword_array = json.loads("[" + area_keyword + "]")
@@ -1024,6 +1031,9 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                         debug.log(f"[KHAM AREA FALLBACK] area_auto_fallback=true, triggering auto fallback (dropdown)")
                         debug.log(f"[KHAM AREA FALLBACK] Selecting from {len(available_options)} available options using mode='{auto_select_mode}'")
                         matched_options = available_options
+                    elif fallback_deferred:
+                        debug.log(f"[KHAM AREA FALLBACK] No match for '{area_keyword_item}', fallback deferred to the last keyword (dropdown)")
+                        return False, False, False
                     else:
                         # Fallback disabled - strict mode (no selection, will reload)
                         debug.log(f"[KHAM AREA FALLBACK] area_auto_fallback=false, fallback is disabled (dropdown)")
@@ -1036,7 +1046,8 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
 
             # Select target option by simulating user interaction
             if matched_options:
-                target_option = matched_options[0]  # Take first match
+                # Honour area_auto_select.mode, as the table branch does.
+                target_option = util.get_target_item_from_matched_list(matched_options, auto_select_mode)
                 target_value = target_option['value']
                 target_text = target_option['text']
 
@@ -1258,6 +1269,9 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                         debug.log(f"[KHAM AREA FALLBACK] area_auto_fallback=true, triggering auto fallback (table)")
                         debug.log(f"[KHAM AREA FALLBACK] Selecting from {len(final_rows)} available rows using mode='{auto_select_mode}'")
                         matched_blocks = final_rows
+                    elif fallback_deferred:
+                        debug.log(f"[KHAM AREA FALLBACK] No match for '{area_keyword_item}', fallback deferred to the last keyword (table)")
+                        return False, False, False
                     else:
                         # Fallback disabled - strict mode (no selection, will reload)
                         debug.log(f"[KHAM AREA FALLBACK] area_auto_fallback=false, fallback is disabled (table)")
@@ -1291,6 +1305,36 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
             is_need_refresh = True
 
     return is_need_refresh, is_price_assign_by_bot, is_keyword_matched
+
+CONST_KHAM_CAPTCHA_REFRESH_JS = '''
+    (() => {
+        const img = document.querySelector('#chk_pic');
+        if (!img) return 'no_image';
+        // RWD pages ship a captcha widget with its own refresh (and loading mask).
+        if (typeof $ === 'function' && typeof $(img).captchaInstance === 'function') {
+            try { $(img).captchaInstance().refresh(); return 'widget'; } catch (e) {}
+        }
+        // Rebuild from the page's own URL: the TYPE must stay exactly as served
+        // (e.g. UTK0201_001), which a truncated model name would not.
+        const base = img.getAttribute('data-captcha-url') || img.src.split('&ts=')[0];
+        img.src = base + (base.indexOf('?') >= 0 ? '&' : '?') + 'ts=' + Date.now();
+        return 'src';
+    })()
+'''
+
+
+async def nodriver_kham_refresh_captcha(tab, config_dict):
+    """Ask the page for a new captcha image; returns how it was refreshed."""
+    debug = util.create_debug_logger(config_dict)
+    try:
+        method = await tab.evaluate(CONST_KHAM_CAPTCHA_REFRESH_JS)
+        debug.log(f"[KHAM OCR] Captcha refreshed via {method}")
+        await tab.sleep(0.3)
+        return method
+    except Exception as exc:
+        debug.log(f"[KHAM OCR] Captcha refresh failed: {exc}")
+        return None
+
 
 async def nodriver_kham_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enable, previous_answer, model_name):
     """
@@ -1335,27 +1379,16 @@ async def nodriver_kham_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
             previous_answer = ocr_answer  # Update previous_answer to mark as sent
             who_care_var = await nodriver_kham_keyin_captcha_code(tab, answer=ocr_answer, auto_submit=away_from_keyboard_enable)
         else:
-            # Invalid length - retry
+            # Invalid length: ask for a new image either way. Without it the
+            # next pass re-reads the same image and gets the same wrong answer
+            # forever (seen on UTK0201_001, a 5-char read of a 4-char captcha).
+            await nodriver_kham_refresh_captcha(tab, config_dict)
             if not away_from_keyboard_enable:
                 await nodriver_kham_keyin_captcha_code(tab, "")
             else:
                 is_need_redo_ocr = True
                 if previous_answer != ocr_answer:
                     previous_answer = ocr_answer
-                    debug.log("[KHAM OCR] Click captcha to refresh")
-                    # Refresh captcha image
-                    try:
-                        await tab.evaluate(f'''
-                            (function() {{
-                                const img = document.querySelector('#chk_pic');
-                                if (img) {{
-                                    img.src = '/pic.aspx?TYPE={model_name}&ts=' + new Date().getTime();
-                                }}
-                            }})();
-                        ''')
-                        await tab.sleep(0.3)
-                    except:
-                        pass
     else:
         debug.log(f"[KHAM OCR] OCR answer is None, previous_answer: {previous_answer}")
         if previous_answer is None:
@@ -1436,12 +1469,15 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
 
         # Feature 003: Enhanced fallback logic with early return
         for keyword_index, area_keyword_item in enumerate(area_keyword_array):
-            is_need_refresh, is_price_assign_by_bot, is_keyword_matched = await nodriver_kham_area_auto_select(
-                tab, domain_name, config_dict, area_keyword_item
-            )
-
-            # Check if this is the last keyword
             is_last_keyword = (keyword_index == len(area_keyword_array) - 1)
+
+            # Fallback only on the last keyword: a fallback clicks a row and
+            # the loop stops (Case 3), so allowing it earlier would pick any
+            # area before the later keywords were ever tried.
+            is_need_refresh, is_price_assign_by_bot, is_keyword_matched = await nodriver_kham_area_auto_select(
+                tab, domain_name, config_dict, area_keyword_item,
+                allow_fallback=is_last_keyword
+            )
 
             # Case 1: True keyword match - stop trying
             if is_keyword_matched:
@@ -1459,7 +1495,7 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
                     break
                 else:
                     # Not last keyword - continue trying
-                    debug.log(f"[KHAM PERFORMANCE] Keyword #{keyword_index + 1} failed (strict mode), trying next...")
+                    debug.log(f"[KHAM PERFORMANCE] Keyword #{keyword_index + 1} not matched, trying next...")
                     continue
 
             # Case 3: Fallback selection - the row is clicked and the page is
@@ -4048,6 +4084,11 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
     is_submit_success = False
     if is_seat_assigned and (not config_dict["ocr_captcha"]["enable"] or is_captcha_sent):
         try:
+            # Baseline for the transition check below, taken before the click:
+            # kham often redirects to UTK0206 while the reply dialog is still
+            # being polled, and a baseline read after that never sees a change.
+            pre_submit_url = tab.target.url
+
             # 4.1: Click submit button - UTK0205 uses addShoppingCart() function
             result = await tab.evaluate('''
                 (function() {
@@ -4103,19 +4144,18 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
                     # This is more reliable than waiting for dialog to close
                     debug.log("[KHAM SUBMIT] Checking for page transition (fallback)...")
 
-                    current_url = tab.target.url
-                    debug.log(f"[KHAM SUBMIT] Current URL: {current_url}")
+                    debug.log(f"[KHAM SUBMIT] URL before submit: {pre_submit_url}")
 
                     # Check if URL changed (maximum 15 seconds wait - more generous fallback)
                     url_changed = False
                     for i in range(30):  # 30 attempts * 0.5s = 15 seconds (extended from 10s)
-                        await tab.sleep(0.5)
                         new_url = tab.target.url
-                        if new_url != current_url:
+                        if new_url != pre_submit_url:
                             debug.log(f"[KHAM SUBMIT] Page transitioned successfully")
                             debug.log(f"[KHAM SUBMIT] New URL: {new_url}")
                             url_changed = True
                             break
+                        await tab.sleep(0.5)
 
                     if not url_changed:
                         debug.log("[KHAM SUBMIT] URL did not change after submit")
