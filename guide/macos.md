@@ -148,7 +148,7 @@ open build_scripts/macos/
 ./build_scripts/macos/build.command
 ```
 
-它會挑選 Python、建立虛擬環境、安裝套件、檢查驗證碼辨識能不能用、打包、跑 20 項檢查，最後
+它會挑選 Python、建立虛擬環境、安裝套件、檢查驗證碼辨識能不能用、打包、跑 21 項檢查（含打包後的驗證碼辨識自我檢查），最後
 自動解除 Gatekeeper 限制。跑完會停住等你按 Return。
 
 **重跑很快**：虛擬環境會沿用，套件只有在 `requirement.txt` 有更動時才重裝。
@@ -156,7 +156,7 @@ open build_scripts/macos/
 成功時會看到：
 
 ```
-All 20 checks passed
+All 21 checks passed
 Bundle: /Users/你的帳號/tickets_hunter/dist/tickets_hunter
 
 Gatekeeper quarantine flag cleared.
@@ -220,9 +220,9 @@ python build_scripts/build_local.py --keep
 
 然後看 `build/*/warn-*.txt`。
 
-### 20 項檢查有失敗
+### 21 項檢查有失敗
 
-檢查項目包含驗證碼模型有沒有被正確打包、不該進去的大型套件有沒有被排除。任何一項失敗都表示
+檢查項目包含驗證碼模型有沒有被正確打包、打包後能不能實際辨識驗證碼、不該進去的大型套件有沒有被排除。任何一項失敗都表示
 打包出來的東西有問題，請把完整輸出貼到
 [GitHub Issues](https://github.com/bouob/tickets_hunter/issues)。
 

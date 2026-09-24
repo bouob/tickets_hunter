@@ -39,10 +39,9 @@ EXE_SUFFIX = ".exe" if IS_WINDOWS else ""
 
 SPECS = ["nodriver_tixcraft", "settings"]
 
-# The bot's own help screen is the smoke test. nodriver_tixcraft.py imports
-# every platform module at module level, and those pull in zendriver and
-# ddddocr, so argparse printing usage means the whole import chain unpacked and
-# loaded inside the frozen bundle. Anything less only proves the file exists.
+# Two smoke checks run the frozen bot: --help proves the import chain loaded,
+# and --self-test proves OCR works, which --help cannot because the ddddocr
+# import is wrapped in try/except.
 SMOKE_TIMEOUT = 120
 
 results = []
@@ -169,8 +168,7 @@ def verify_layout():
                f"{len(onnx)} .onnx file(s)" if onnx else
                "no .onnx under _internal")
 
-    # The excludes in the spec files were added to keep torch and friends out
-    # of the bundle and have never been checked against a real build.
+    # The spec files exclude these to keep the bundle small; confirm it held.
     for unwanted in ("torch", "matplotlib", "IPython"):
         hits = list((STAGE / "_internal").glob(unwanted))
         ok &= step(f"{unwanted} excluded", not hits)
@@ -181,38 +179,55 @@ def verify_layout():
     return ok
 
 
+def run_bot(exe, flag):
+    """Run the frozen bot with one flag; (returncode, output) or (None, "")."""
+    try:
+        proc = subprocess.run([str(exe), flag], cwd=STAGE,
+                              capture_output=True, text=True,
+                              timeout=SMOKE_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        return None, ""
+    return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
+
+
+def print_tail(output):
+    print("\n".join(output.strip().splitlines()[-12:]))
+
+
 def smoke():
     print("\n[5/5] Smoke test")
     exe = STAGE / f"nodriver_tixcraft{EXE_SUFFIX}"
     if not exe.exists():
         return step("bot binary starts", False, "not built")
 
-    try:
-        proc = subprocess.run([str(exe), "--help"], cwd=STAGE,
-                              capture_output=True, text=True,
-                              timeout=SMOKE_TIMEOUT)
-    except subprocess.TimeoutExpired:
+    code, output = run_bot(exe, "--help")
+    if code is None:
         return step("bot binary starts", False,
                     f"no output within {SMOKE_TIMEOUT}s")
-
-    output = (proc.stdout or "") + (proc.stderr or "")
-    if proc.returncode != 0:
-        tail = "\n".join(output.strip().splitlines()[-12:])
-        print(tail)
+    if code != 0:
+        print_tail(output)
+        return step("bot binary starts", False, f"exit {code}")
+    if "--homepage" not in output:
+        print_tail(output)
         return step("bot binary starts", False,
-                    f"exit {proc.returncode}")
-    return step("bot binary starts", "--homepage" in output,
-                "import chain loaded, argparse reached")
+                    "exit 0 but usage text missing")
+    step("bot binary starts", True, "import chain loaded, argparse reached")
+
+    code, output = run_bot(exe, "--self-test")
+    if code is None:
+        return step("OCR self-test", False,
+                    f"no output within {SMOKE_TIMEOUT}s")
+    if code != 0:
+        print_tail(output)
+        return step("OCR self-test", False, f"exit {code}")
+    return step("OCR self-test", True, "both models read the test image")
 
 
 def clear_quarantine():
     """Drop the quarantine flag macOS puts on a freshly written unsigned binary.
 
-    Without it the first launch is refused, and the way out -- right-click,
-    Open, confirm -- is not something a user guesses. Whoever just built the
-    bundle already trusts it, so the prompt adds friction without adding a
-    decision. Handing it to someone else is a different question, and one that
-    signing and notarisation answer rather than this.
+    Without it the first launch is refused. Whoever just built the bundle
+    already trusts it; shipping it to others is for signing and notarisation.
     """
     proc = subprocess.run(["xattr", "-dr", "com.apple.quarantine", str(STAGE)],
                           capture_output=True, text=True)

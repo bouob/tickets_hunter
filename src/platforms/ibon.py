@@ -2020,9 +2020,8 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
             })();
         ''', await_promise=True)
 
-        # Must stay an IIFE: a bare arrow-function expression evaluates to the
-        # function object, so the Promise body never runs and await_promise has
-        # nothing to await -- the wait silently became a no-op.
+        # Must stay an IIFE: a bare arrow function evaluates to the function
+        # object, so the Promise never runs and await_promise has nothing to await.
         if isinstance(wait_result, dict):
             if wait_result.get('ready'):
                 debug.log(f"[TICKET DOM] SELECT element ready: {wait_result.get('selector_used')}")

@@ -1,10 +1,9 @@
 """Smoke-test ddddocr on the current architecture.
 
-Upstream max32002/tixcraft_bot#82 reports that captcha OCR silently fails on
-ARM machines, so a green "pip install succeeded" is not evidence that OCR
-works. This renders a throwaway image and asks ddddocr to read it. The test
-asserts that the model loads and returns a string, not that the string is
-correct - recognition accuracy is the model's job, not the build's.
+Upstream max32002/tixcraft_bot#82: captcha OCR silently fails on ARM, so a
+successful pip install proves nothing. Renders an image and requires non-empty
+text back (accuracy is not checked). Checks the host interpreter only; the
+frozen bundle is checked by build_local.py via --self-test.
 
 Exit code 0 means the OCR stack is usable on this architecture.
 """
@@ -18,10 +17,11 @@ def main():
     print("sys.platform:", sys.platform)
 
     import ddddocr
-    from PIL import Image, ImageDraw
+    from PIL import Image, ImageDraw, ImageFont
 
     image = Image.new("RGB", (120, 40), color="white")
-    ImageDraw.Draw(image).text((12, 12), "A1B2", fill="black")
+    ImageDraw.Draw(image).text((8, 4), "A1B2", fill="black",
+                               font=ImageFont.load_default(size=28))
 
     from io import BytesIO
     buffer = BytesIO()
@@ -31,8 +31,8 @@ def main():
     result = ocr.classification(buffer.getvalue())
 
     print("ddddocr returned:", repr(result))
-    if not isinstance(result, str):
-        raise SystemExit("ddddocr did not return a string; OCR stack is broken")
+    if not isinstance(result, str) or not result.strip():
+        raise SystemExit("ddddocr returned no text; OCR stack is broken")
 
     print("OCR smoke test passed on", platform.machine())
 

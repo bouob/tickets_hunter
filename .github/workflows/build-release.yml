@@ -78,8 +78,9 @@ jobs:
 
       - name: Verify the frozen bundle starts
         # Nothing else in this job ever runs what it ships. --skip-build checks
-        # the assembled layout and runs the frozen binary's --help, which loads
-        # every platform module; --keep leaves build/ for the failure upload.
+        # the assembled layout, runs the frozen binary's --help, which loads
+        # every platform module, and its --self-test, which fails the job when
+        # OCR cannot read a captcha; --keep leaves build/ for the failure upload.
         run: python build_scripts/build_local.py --skip-build --keep
 
       - name: Create ZIP archive
@@ -246,9 +247,10 @@ jobs:
 
       - name: Smoke-test captcha OCR on this architecture
         id: ocr_smoke
-        # Non-blocking on purpose: a bot with broken OCR still works with manual
-        # captcha entry, so this does not withhold the build. continue-on-error
-        # leaves the job green either way, which is why the next step exists.
+        # Non-blocking on purpose: this reads the host interpreter, an early
+        # signal only. The gate is "Verify the frozen bundle starts", whose
+        # build_local.py OCR self-test fails the job when the shipped bundle
+        # cannot read a captcha. The next step surfaces a failure here.
         continue-on-error: true
         run: python build_scripts/macos/ocr_smoke_test.py
 

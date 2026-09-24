@@ -1239,10 +1239,8 @@ async def nodriver_ticketplus_click_next_button_unified(tab, config_dict):
     return False
 
 
-# A checkbox is ticked only when its label reads like the terms. Same words as
-# nodriver_funone_ticket_agree. The exclusions exist because the word for
-# "agree" alone also matches "I agree to receive marketing", which is exactly
-# what must stay off.
+# A checkbox is ticked only when its label reads like the terms. The exclusions
+# exist because "agree" alone also matches marketing opt-ins, which must stay off.
 CONST_TICKETPLUS_AGREE_KEYWORDS = ["同意", "條款", "規則", "規定", "須知", "閱讀", "詳閱", "agree", "terms"]
 CONST_TICKETPLUS_AGREE_EXCLUDE_KEYWORDS = ["行銷", "電子報", "訂閱", "推播", "廣告", "捐贈", "加購",
                                            "marketing", "newsletter", "subscribe", "donat"]
@@ -1289,20 +1287,15 @@ async def nodriver_ticketplus_ticket_agree(tab, config_dict):
                 if not checkbox:
                     continue
 
-                # Every checkbox on the page used to be ticked. That was
-                # harmless only because the call below never ran (see the
-                # Element.apply note); once it worked, add-ons, donations and
-                # marketing opt-ins would have been ticked too.
+                # Terms only: add-ons, donations and marketing opt-ins stay off.
                 label_text = await checkbox.apply(CONST_TICKETPLUS_CHECKBOX_LABEL_JS)
                 if not _is_terms_checkbox_label(label_text):
                     debug.log(f"[AGREE] Skipping checkbox that is not the terms: {(label_text or '')[:40]!r}")
                     continue
 
-                # Element.apply, not Element.evaluate: zendriver only defines
-                # evaluate on Tab, and Element.__getattr__ returns None for an
-                # unknown name instead of raising, so "await checkbox.evaluate("
-                # became None(...) -> TypeError -> the except below swallowed
-                # every checkbox and this stage never checked anything.
+                # Element.apply, not Element.evaluate: zendriver defines evaluate
+                # only on Tab, and Element.__getattr__ returns None for unknown
+                # names, so checkbox.evaluate(...) is a TypeError the except hides.
                 is_checked = await checkbox.apply('(el) => el.checked')
 
                 if not is_checked:
@@ -1314,9 +1307,8 @@ async def nodriver_ticketplus_ticket_agree(tab, config_dict):
                         debug.log("successfully checked agreement checkbox")
                     else:
                         if checkbox:
-                            # Passing the element as the second positional arg
-                            # of tab.evaluate() set await_promise, not a script
-                            # parameter -- the checkbox never reached the page.
+                            # Element.apply: tab.evaluate's second positional
+                            # arg is await_promise, not a script parameter.
                             await checkbox.apply('''
                                 (el) => {
                                     el.checked = true;
@@ -1552,9 +1544,7 @@ async def nodriver_ticketplus_confirm(tab, config_dict):
 
             if confirm_button:
                 # Element.apply, not tab.evaluate(script, element): the second
-                # positional argument is await_promise, so the button never
-                # reached the script and is_enabled was always falsy -- this
-                # confirm button was never clicked.
+                # positional argument is await_promise, not a script argument.
                 is_enabled = await confirm_button.apply('''
                     (button) => {
                         return button && !button.disabled && button.offsetParent !== null;

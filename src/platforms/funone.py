@@ -43,11 +43,9 @@ __all__ = [
     "nodriver_funone_main",
 ]
 
-# How long after a successful order submit to stop re-running the ticket flow
-# on that same URL. The POST navigation is still in flight during this window:
-# the page has already torn down its ticket rows, so any re-check reads as
-# "sold out". Longer than the kktix equivalent because FunOne's purchase POST
-# was measured taking several seconds to land on purchase_fill_form.
+# Seconds after a submit to skip the ticket flow on that URL: the POST is still
+# navigating and the torn-down ticket rows read as "sold out". Longer than
+# kktix's CONST_KKTIX_NEXT_BUTTON_COOLDOWN because FunOne's POST takes seconds.
 CONST_FUNONE_SUBMIT_COOLDOWN = 5.0
 
 _state = {}
@@ -67,11 +65,9 @@ def _is_submit_cooldown(url, submitted_url, submitted_time, now):
 def _is_past_ticket_selection(url):
     """The order is already placed - never submit or reload from here.
 
-    Reloading a POST result raises the native form-resubmission dialog, which
-    blocks every later tab.evaluate() call and strands the run.
-
-    Deliberately a blocklist: step 2 is identified by DOM shape rather than by
-    URL, so an allowlist would refuse its submit as well.
+    Reloading a POST result raises a native resubmission dialog that blocks
+    every later tab.evaluate(). A blocklist on purpose: step 2 is detected by
+    DOM shape, not URL, so an allowlist would refuse its submit too.
     """
     if not url:
         return False
@@ -1895,8 +1891,7 @@ async def nodriver_funone_main(tab, url, config_dict):
         _state["refresh_retry_count"] = 0
         _state["last_sold_out_logged"] = False
         _state["max_retry_logged"] = False
-        # Was missing here, so the sold-out line stayed deduplicated for the
-        # rest of the run once the page type had changed even once.
+        # So the sold-out message is logged again on the next page.
         _state["qty_sold_out_refreshing"] = False
         # Reset OCR retry state
         _state["ocr_retry_count"] = 0
@@ -1965,11 +1960,8 @@ async def nodriver_funone_main(tab, url, config_dict):
                 _state["last_step"] = step
 
             if step == 1:
-                # A submit from this same URL is still in flight: the POST has
-                # not navigated yet, so the ticket rows are already gone and any
-                # re-check reads as sold out, which then triggers a reload of a
-                # page that has in fact already been ordered. Bounded by URL and
-                # time so it always expires.
+                # A submit from this URL is still in flight; re-checking now would
+                # read as sold out and reload an already-ordered page.
                 if _is_submit_cooldown(url,
                                        _state.get("order_submitted_url", ""),
                                        _state.get("order_submitted_time", 0),
@@ -1980,10 +1972,8 @@ async def nodriver_funone_main(tab, url, config_dict):
                 # Step 1: Ticket type/quantity selection
                 # FunOne: purchase_choose_ticket_no_map is a combined ticket selection + quantity page
 
-                # Read once here, not inside the no_map branch below: the
-                # sold-out path further down uses it even when step 1 was
-                # entered through a plain purchase_choose_ticket URL or by DOM
-                # detection, which used to raise UnboundLocalError.
+                # Read here, not inside the no_map branch: the sold-out path in
+                # the non-no_map branch below uses it too.
                 auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 2)
 
                 # Check if on purchase_choose_ticket_no_map page - apply sold-out detection
@@ -2070,10 +2060,8 @@ async def nodriver_funone_main(tab, url, config_dict):
                                 await asyncio.sleep(auto_reload_interval)
                             else:
                                 await asyncio.sleep(auto_reload_interval)
-                                # Never reload a page we have already navigated
-                                # away from: reloading a POST result raises a
-                                # native resubmission dialog, which blocks all
-                                # JS evaluation and strands the run.
+                                # Never reload a POST result (see
+                                # _is_past_ticket_selection).
                                 live_url = await nodriver_current_url_safe(tab)
                                 if _is_past_ticket_selection(live_url):
                                     debug.log("[FUNONE] Page already moved on, "

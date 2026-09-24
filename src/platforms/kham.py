@@ -67,26 +67,18 @@ __all__ = [
     "nodriver_ticket_switch_to_auto_seat",
 ]
 
-# How long to let a reloaded page settle before reading its DOM again.
-# zendriver's tab.reload() only sends CDP Page.reload and returns immediately,
-# so without this the next read lands in the window where the old document is
-# already gone and the new one has not parsed. Measured on kham UTK0204:
-# response at 61ms, domInteractive at 207ms. Matches the 0.5s that
-# nodriver_kham_date_auto_select already waits after its own reload.
+# Seconds to let a reloaded page settle before reading its DOM: tab.reload()
+# returns once CDP sends Page.reload, before the new document parses (~200ms on
+# UTK0204). Same 0.5s nodriver_kham_date_auto_select waits after its reload.
 CONST_KHAM_RELOAD_SETTLE = 0.5
 
 
 def _parse_remaining_seats(row_text):
     """Remaining seats for an area row - the last column of the kham table.
 
-    Reads the whole trailing token, not one character: the row text ends
-    "... 4,280 50" and taking row_text[-1:] turns 50 into 0, which discards an
-    area that in fact has 50 seats left. The more seats remain, the more likely
-    the old code was to drop the row.
-
-    Returns None when the trailing token is not a number (a button label, an
-    empty cell, a sold-out marker). Callers treat None as "unknown, let it
-    through", which is the same permissive default the old code had.
+    Reads the whole trailing token ("... 4,280 50" -> 50), not the last
+    character. Returns None when that token is not a number (button label,
+    empty cell, sold-out marker); callers treat None as "unknown, let it through".
     """
     if not row_text:
         return None
@@ -97,20 +89,17 @@ def _parse_remaining_seats(row_text):
     return int(candidate) if candidate.isdigit() else None
 
 
-# The only message that means the order actually reached the cart. Everything
-# else the dialog can say -- a rejected captcha, an empty captcha box, no seat
-# chosen -- is a failure, so this is an allowlist: the server's exact wording
-# for a wrong captcha was never captured, and an allowlist does not need it.
+# The only reply meaning the order reached the cart; anything else (bad or empty
+# captcha, no seat chosen) is a failure. An allowlist, since the exact
+# wrong-captcha wording is unknown.
 CONST_KHAM_CART_SUCCESS_KEYWORDS = ("加入購物車",)
 
 
 def _is_cart_success_message(dialog_text):
     """True when a post-submit dialog says the order reached the cart.
 
-    kham answers an add-to-cart over AJAX and replies with JavaScript rather
-    than navigating, so the dialog text is the only immediate signal of what
-    happened. Treating any dialog as success made a rejected captcha look like
-    a placed order.
+    kham answers an add-to-cart over AJAX with JavaScript rather than
+    navigating, so the dialog text is the only immediate signal.
     """
     if not dialog_text:
         return False
@@ -1473,11 +1462,9 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
                     debug.log(f"[KHAM PERFORMANCE] Keyword #{keyword_index + 1} failed (strict mode), trying next...")
                     continue
 
-            # Case 3: Fallback selection - the row has already been clicked and
-            # the page is navigating away, so stop here. Scanning the remaining
-            # keywords would run against a DOM that is being torn down, read as
-            # zero rows, and flip is_need_refresh into reloading a page we have
-            # already left.
+            # Case 3: Fallback selection - the row is clicked and the page is
+            # navigating, so stop: later keywords would read the torn-down DOM
+            # as zero rows and trigger a reload of a page already left.
             # is_price_assign_by_bot=True, is_keyword_matched=False
             if is_price_assign_by_bot and not is_keyword_matched:
                 debug.log(f"[KHAM PERFORMANCE] Fallback selection for "
@@ -1502,17 +1489,9 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
             await tab.reload()
         except Exception as exc:
             debug.log("Area reload exception:", exc)
-        # Wait AFTER the reload, not before. tab.reload() returns as soon as CDP
-        # acknowledges Page.reload, so reading the DOM straight away lands in the
-        # ~60-200ms window where the old document is gone and the new one has not
-        # parsed -- that reads as zero area rows, sets is_need_refresh again, and
-        # reloads forever (measured 2026-09-21 on UTK0204: five straight rounds of
-        # zero rows until the browser was killed). The same wait still throttles
-        # the refresh rate the way issue #322 requires, so honouring
-        # auto_reload_page_interval here costs nothing extra. The floor applies
-        # even when the user sets the interval to 0: reading a blank document is
-        # not faster, it is broken. nodriver_kham_date_auto_select already waits
-        # the same 0.5s after its own reload.
+        # Wait AFTER the reload: a DOM read before the new document parses sees
+        # zero area rows and reloads forever. The same wait throttles the refresh
+        # rate (#322); the settle floor applies even when the interval is 0.
         reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0.0)
         await tab.sleep(max(reload_interval, CONST_KHAM_RELOAD_SETTLE))
         # The page is reloading and the current DOM is stale, so skip the
@@ -3117,6 +3096,10 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
     """
     debug = util.create_debug_logger(config_dict)
     is_seat_type_assigned = False
+    # Tells nodriver_kham_seat_main apart "no seat type is usable" (the page
+    # has loaded and this area is spent) from "no buttons yet" (still loading):
+    # both return False here.
+    _state["kham_seat_types_exhausted"] = False
 
     # Clean keyword quotes
     # NOTE: This function only supports single keyword or space-separated AND logic (e.g., "VIP 區")
@@ -3306,6 +3289,7 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
 
         if len(enabled_buttons) == 0:
             debug.log("[KHAM SEAT TYPE] All buttons are disabled or excluded")
+            _state["kham_seat_types_exhausted"] = True
             return False
 
         # Step 5: Match and select button using Python logic
@@ -3926,9 +3910,8 @@ async def nodriver_kham_handle_seat_unavailable(tab, config_dict):
         except Exception as exc:
             debug.log(f"[KHAM SEAT] 更新座位失敗: {exc}")
 
-        # Floor the wait as the area page does: tab.reload() returns before the
-        # page loads, and a seat map read any sooner is empty, which counted
-        # as the second miss and abandoned an area that had seats.
+        # Floor the wait as the area page does: a seat map read before the
+        # reload finishes is empty and would abandon an area that has seats.
         reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0.1)
         wait_sec = max(reload_interval, CONST_KHAM_RELOAD_SETTLE)
         await asyncio_sleep_with_pause_check(wait_sec)
@@ -4032,14 +4015,14 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
             is_seat_assigned = await nodriver_kham_seat_auto_select(tab, config_dict)
 
         if not is_seat_assigned:
-            # Refresh-then-switch-area is for a loaded seat map that is short
-            # of seats. With no ticket type chosen yet, or #TBL still parsing,
-            # the page is mid-load: retry next pass, as before this handler
-            # existed, rather than reload or leave an area that has seats.
-            # UDN reuses this function, but the handler's button selectors and
-            # its history.back() fallback were only verified on kham.
-            if (is_seat_type_assigned and 'udnfunlife' not in domain_name
-                    and await _kham_seat_map_loaded(tab)):
+            # Refresh-then-switch-area only for a loaded page whose area cannot
+            # be bought; no seat type buttons or #TBL still parsing means
+            # mid-load, so retry next pass. UDN is excluded: the handler's
+            # selectors and history.back() fallback were only verified on kham.
+            types_exhausted = _state.get("kham_seat_types_exhausted", False)
+            page_ready = types_exhausted or (
+                is_seat_type_assigned and await _kham_seat_map_loaded(tab))
+            if 'udnfunlife' not in domain_name and page_ready:
                 await nodriver_kham_handle_seat_unavailable(tab, config_dict)
             return False
         else:
@@ -4104,22 +4087,14 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
             if is_submit_success:
                 debug.log("[KHAM SUBMIT] Add-to-cart clicked, reading the reply dialog")
 
-                # 4.2: Classify the reply. UTK0205 adds to cart over AJAX, so the
-                # page never navigates on its own: kham answers with JavaScript
-                # that either redirects to UTK0206 or opens a dialog. The old code
-                # clicked whatever dialog was on screen without reading it, so a
-                # rejected captcha was logged as a placed order and then spent
-                # 15 seconds waiting for a redirect that was never coming --
-                # roughly 24 seconds per refused submit. _handle_post_submit_dialog
-                # already does this correctly for the other two kham submit paths
-                # (nodriver_kham_main); UTK0205 was the only one not wired to it.
+                # 4.2: Classify the reply. UTK0205 adds to cart over AJAX and kham
+                # answers with JavaScript that either redirects to UTK0206 or opens
+                # a dialog; same helper as the two submit paths in nodriver_kham_main.
                 dialog_result = await _handle_post_submit_dialog(tab, config_dict)
 
                 if dialog_result == "error":
-                    # The helper has cleared the captcha box and kham has issued a
-                    # fresh image, so end the round here: the main loop re-enters,
-                    # sees the seats still selected, and runs OCR again straight
-                    # away instead of burning the URL wait on a refused submit.
+                    # The helper cleared the captcha and kham issued a new image;
+                    # end the round so the next pass re-runs OCR right away.
                     is_submit_success = False
                     debug.log("[KHAM SUBMIT] Submit refused; captcha cleared, "
                               "retrying on the next round")
@@ -5960,9 +5935,8 @@ async def nodriver_ticket_switch_to_auto_seat(tab):
 
         if btn:
             # Check if already selected
-            # Element.apply, not tab.evaluate(script, element): the second
-            # positional argument of Tab.evaluate is await_promise, so the
-            # element never reached the script and arguments[0] was undefined.
+            # Element.apply, not tab.evaluate(script, element): Tab.evaluate's
+            # second positional argument is await_promise, not a script argument.
             is_checked = await btn.apply('(elem) => elem.checked === true')
 
             if not is_checked:

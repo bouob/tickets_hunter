@@ -66,9 +66,9 @@ fi
 echo
 
 # OCR has been confirmed working on Apple Silicon, but a successful pip install
-# proves nothing on its own, so check it on this machine. Report it, but do not
-# stop the build over it: a packaged bot with broken OCR is still worth having
-# for manual captcha entry.
+# proves nothing on its own, so check it on this machine. This is an early,
+# informational read of the interpreter; the gate is build_local.py's OCR
+# self-test on the frozen bundle, which fails the build when OCR is broken.
 echo "Checking the OCR stack on this architecture..."
 if python "$ROOT/build_scripts/macos/ocr_smoke_test.py"; then
     OCR_STATUS="working"

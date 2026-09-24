@@ -28,7 +28,7 @@ except Exception:
 
 # ===== Constants =====
 
-CONST_APP_VERSION = "TicketsHunter (2026.09.22)"
+CONST_APP_VERSION = "TicketsHunter (2026.09.24)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -320,11 +320,8 @@ async def nodriver_force_check_checkbox(tab, checkbox_element):
 
     if checkbox_element:
         try:
-            # Element.apply is what hands the element to the script. The old
-            # form passed it as tab.evaluate's second positional argument,
-            # which is await_promise -- so the element never arrived, and
-            # arguments[0] inside the IIFE was undefined, making this return
-            # false on every platform that called it.
+            # Element.apply passes the element in; tab.evaluate's second
+            # positional argument is await_promise, not a script argument.
             result = await checkbox_element.apply('''
                 (element) => {
                     if (!element) return false;
@@ -354,18 +351,10 @@ async def nodriver_force_check_checkbox(tab, checkbox_element):
 async def nodriver_check_checkbox_enhanced(tab, select_query, config_dict=None):
     """Tick a checkbox, falling back to setting the property when a click will not.
 
-    The fallback is the point of this function. Clicking is tried first because
-    it goes through the page's own handlers, but click() does not throw on a
-    checkbox, so an earlier try/except around it could never catch anything --
-    a handler calling preventDefault, or an element that is not interactive
-    yet, both returned a bare False with the fallback unreachable. Setting
-    .checked directly and dispatching change covers those, which is what the
-    TicketPlus flow has always done.
-
-    Returns a bool so existing callers are unaffected; the reason a call failed
-    is logged rather than returned, because "not found", "the click did not
-    stick" and "the page refused it" need different responses from a human
-    reading the log and none from the caller.
+    click() goes through the page's handlers but never throws on a checkbox, so
+    a preventDefault handler or a not-yet-interactive element is caught by
+    re-reading .checked; the fallback then sets it and dispatches change.
+    Returns a bool; the failure reason is only logged.
     """
     debug = util.create_debug_logger(config_dict)
     is_checkbox_checked = False
