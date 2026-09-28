@@ -29,7 +29,7 @@
 | `--homepage` | 覆寫首頁 URL | `--homepage https://tixcraft.com/...` |
 | `--ticket_number` | 覆寫票數 | `--ticket_number 2` |
 | `--headless` | 無頭模式 | `--headless True` |
-| `--browser` | 瀏覽器類型 | `--browser chrome` |
+| `--browser` | 瀏覽器型別 | `--browser chrome` |
 | `--mcp_debug` | MCP 除錯模式 | `--mcp_debug 9222` |
 | `--mcp_connect` | 連線既有 Chrome | `--mcp_connect 9222` |
 
@@ -56,14 +56,14 @@
 chrome_path = chrome_downloader.ensure_chrome_available(download_dir=webdriver_dir)
 ```
 
-若系統未安裝 Chrome，嘗試自動下載；下載失敗則拋出 `FileNotFoundError`。
+若系統未安裝 Chrome，嘗試自動下載；下載失敗則丟出 `FileNotFoundError`。
 
 #### 2.2 ZenDriver 瀏覽器參數
 
 `get_nodriver_browser_args()` 回傳經過 Cloudflare 驗證的啟動參數清單：
 
 **核心參數**（約 30 項）：
-- 效能優化：`--disable-animations`, `--disable-background-networking`, `--disable-smooth-scrolling`
+- 效能最佳化：`--disable-animations`, `--disable-background-networking`, `--disable-smooth-scrolling`
 - 隱私保護：`--disable-sync`, `--disable-translate`, `--no-pings`
 - 穩定性：`--disable-breakpad`, `--disable-component-update`, `--disable-dev-shm-usage`
 - 語系設定：`--lang=zh-TW`
@@ -117,7 +117,7 @@ chrome_path = chrome_downloader.ensure_chrome_available(download_dir=webdriver_d
 
 ### 4. 暫停機制
 
-系統透過 `MAXBOT_INT28_IDLE.txt` 檔案實現暫停：
+系統透過 `MAXBOT_INT28_IDLE.txt` 檔案實作暫停：
 
 - `check_and_handle_pause()`（`src/nodriver_common.py`）：檢查暫停檔案是否存在
 - 檔案存在 → 主迴圈跳過所有平台邏輯，僅執行 KKTIX 暫停登入
@@ -137,7 +137,7 @@ chrome_path = chrome_downloader.ensure_chrome_available(download_dir=webdriver_d
 
 `main()` 中的其他初始化：
 
-- **全域時間戳**：當 `show_timestamp` 啟用時，覆寫 `builtins.print` 為帶時間前綴的版本
+- **全域時間戳**：當 `show_timestamp` 啟用時，覆寫 `builtins.print` 為帶時間字首的版本
 - **OCR 初始化**：載入 `ddddocr` 模型，設定辨識範圍為小寫字母
 - **定時開搶閘門**：`check_refresh_datetime_gate()` 在指定時刻前阻擋所有平台搶票邏輯，時間到達後立即重載頁面並放行
 

@@ -338,6 +338,10 @@ async def nodriver_kktix_signin(tab, url, config_dict):
                 debug.log("[KKTIX SIGNIN] #user_login not found; page may be a queue room "
                           "or already signed in")
                 return False
+            # Clear first: send_keys appends, and the main loop re-enters here on
+            # every pass while on the login page, so a round that ends before
+            # submitting would otherwise type the credentials twice.
+            await account.clear_input()
             await account.send_keys(kktix_account)
             await asyncio.sleep(random.uniform(0.1, 0.2))
 
@@ -345,6 +349,7 @@ async def nodriver_kktix_signin(tab, url, config_dict):
             if password is None:
                 debug.log("[KKTIX SIGNIN] #user_password not found; login form is incomplete")
                 return False
+            await password.clear_input()
             await password.send_keys(kktix_password)
             await asyncio.sleep(random.uniform(0.1, 0.2))
 
@@ -2055,7 +2060,7 @@ async def nodriver_kktix_check_ticket_page_status(tab, config_dict=None):
 
     try:
         page_state_raw = await tab.evaluate('''
-            () => {
+            (() => {
                 const ticketArea = document.querySelector('#registrationsNewApp') || document.body;
 
                 // Get all ticket units
@@ -2129,11 +2134,12 @@ async def nodriver_kktix_check_ticket_page_status(tab, config_dict=None):
                         available: availableCount
                     }
                 };
-            }
+            })();
         ''')
 
-        # Use unified result parsing function
-        page_state = util.parse_nodriver_result(page_state_raw)
+        # Must stay an IIFE: a bare arrow function evaluates to the function
+        # object and its body never runs, leaving page_state None.
+        page_state = page_state_raw if isinstance(page_state_raw, dict) else None
 
         # Only reload if "all tickets not yet open" or "all tickets sold out"
         if page_state:
@@ -2731,11 +2737,13 @@ async def nodriver_kktix_confirm_order_button(tab, config_dict):
         confirm_button = await tab.query_selector('div.form-actions a.btn-primary')
         if confirm_button:
             # 檢查按鈕是否可點擊
-            is_enabled = await tab.evaluate('''
+            # Element.apply, not tab.evaluate(script, element): Tab.evaluate's
+            # second positional parameter is await_promise, not a script arg.
+            is_enabled = await confirm_button.apply('''
                 (button) => {
                     return button && !button.disabled && button.offsetParent !== null;
                 }
-            ''', confirm_button)
+            ''')
 
             if is_enabled:
                 await confirm_button.click()

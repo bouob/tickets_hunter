@@ -1035,6 +1035,50 @@ async def main(args):
         if url[:len(facebook_login_url)]==facebook_login_url:
             await nodriver_facebook_main(tab, config_dict)
 
+def run_ocr_self_test():
+    """Load both OCR models and read one rendered image; 0 means OCR works.
+
+    Run by build_scripts/build_local.py against the frozen binary: the ddddocr
+    import is wrapped in try/except, so a bundle with a broken onnxruntime or
+    cv2 still passes --help. Uses print because the build script reads it.
+    """
+    try:
+        import ddddocr
+        from io import BytesIO
+        from PIL import Image, ImageDraw, ImageFont
+    except Exception as exc:
+        print(f"OCR self-test FAILED: import error: {exc}")
+        return 1
+
+    # Captcha-sized glyphs: PIL's tiny default bitmap font is too small for
+    # the universal model to read reliably.
+    image = Image.new("RGB", (120, 40), color="white")
+    ImageDraw.Draw(image).text((8, 4), "A1B2", fill="black",
+                               font=ImageFont.load_default(size=28))
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+
+    models = [("universal", create_universal_ocr(settings.get_default_config()))]
+    try:
+        models.append(("builtin", ddddocr.DdddOcr(show_ad=False)))
+    except Exception as exc:
+        print(f"OCR self-test FAILED: builtin model did not load: {exc}")
+        return 1
+
+    for name, ocr in models:
+        if ocr is None:
+            print(f"OCR self-test FAILED: {name} model did not load")
+            return 1
+        result = ocr.classification(buffer.getvalue())
+        print(f"OCR self-test {name}: {result!r}")
+        if not isinstance(result, str) or not result.strip():
+            print(f"OCR self-test FAILED: {name} model returned no text")
+            return 1
+
+    print("OCR self-test passed")
+    return 0
+
+
 def cli():
     parser = argparse.ArgumentParser(
             description="MaxBot Aggument Parser")
@@ -1103,7 +1147,14 @@ def cli():
         type=int,
         metavar="PORT")
 
+    # Build check only (see run_ocr_self_test), so it stays out of --help.
+    parser.add_argument("--self-test",
+        action="store_true",
+        help=argparse.SUPPRESS)
+
     args = parser.parse_args()
+    if args.self_test:
+        sys.exit(run_ocr_self_test())
     asyncio.run(main(args))
 
 if __name__ == "__main__":

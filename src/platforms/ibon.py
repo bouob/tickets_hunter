@@ -1996,7 +1996,7 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
     try:
         # Step 1: Wait for SELECT element
         wait_result = await tab.evaluate('''
-            () => {
+            (() => {
                 return new Promise((resolve) => {
                     let attempts = 0;
                     const maxAttempts = 15;
@@ -2017,15 +2017,16 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
                         }
                     }, 100);
                 });
-            }
+            })();
         ''', await_promise=True)
 
-        wait_parsed = util.parse_nodriver_result(wait_result)
-        if isinstance(wait_parsed, dict):
-            if wait_parsed.get('ready'):
-                debug.log(f"[TICKET DOM] SELECT element ready: {wait_parsed.get('selector_used')}")
+        # Must stay an IIFE: a bare arrow function evaluates to the function
+        # object, so the Promise never runs and await_promise has nothing to await.
+        if isinstance(wait_result, dict):
+            if wait_result.get('ready'):
+                debug.log(f"[TICKET DOM] SELECT element ready: {wait_result.get('selector_used')}")
             else:
-                debug.log(f"[TICKET DOM] {wait_parsed.get('error')}")
+                debug.log(f"[TICKET DOM] {wait_result.get('error')}")
 
         # Step 2: Extract all ticket types with their names and availability
         ticket_types_result = await tab.evaluate(f'''

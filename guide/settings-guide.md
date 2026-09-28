@@ -49,16 +49,16 @@ python settings.py
 這在搶票過程中非常實用，例如：
 - 發現關鍵字設錯 → 直接修改並儲存，程式立即使用新關鍵字
 - 想改票數 → 直接修改張數，程式立即套用
-- 需要除錯 → 打開「輸出除錯訊息」，立即看到詳細日誌
+- 需要除錯 → 打開「輸出除錯訊息」，立即看到詳細記錄
 
-> ⚠️ **注意**：並非所有設定都支援即時套用。瀏覽器類型、帳號密碼、Cookie 等需要重新啟動才會生效。詳見 [Q2](#q2-修改設定後要重新啟動嗎)。
+> ⚠️ **注意**：並非所有設定都支援即時套用。瀏覽器型別、帳號密碼、Cookie 等需要重新啟動才會生效。詳見 [Q2](#q2-修改設定後要重新啟動嗎)。
 
 ---
 
 ## 基礎設定
 
 ### 售票網站（homepage）
-**必填** | 類型：字串
+**必填** | 型別：字串
 
 活動或票券的網址。
 
@@ -75,7 +75,7 @@ python settings.py
 ---
 
 ### 瀏覽器（browser）
-選填 | 類型：字串 | 預設：chrome
+選填 | 型別：字串 | 預設：chrome
 
 指定使用的瀏覽器。
 
@@ -95,9 +95,9 @@ python settings.py
 ---
 
 ### 語言（language）
-選填 | 類型：字串 | 預設：English
+選填 | 型別：字串 | 預設：English
 
-設定設定頁的顯示語言。變更後會立即套用到設定頁，並在下次開啟時沿用上次儲存的語系。
+設定本頁的顯示語言。變更後會立即套用到設定頁，並在下次開啟時沿用上次儲存的語系。
 
 **目前設定頁支援**：
 - 繁體中文
@@ -115,7 +115,7 @@ python settings.py
 ---
 
 ### 門票張數（ticket_number）
-**必填** | 類型：整數 | 預設：2
+**必填** | 型別：整數 | 預設：2
 
 要購買的票數。
 
@@ -127,7 +127,7 @@ python settings.py
 ---
 
 ### 刷新在指定時間（refresh_datetime）
-選填 | 類型：字串 | 預設：空白
+選填 | 型別：字串 | 預設：空白
 
 在指定時間到達前，程式會持續等待並顯示倒數；時間到達後立即重整頁面開始搶票。
 
@@ -155,7 +155,7 @@ python settings.py
 ---
 
 #### 啟用日期自動選擇
-類型：布林值 | 預設：啟用
+型別：布林值 | 預設：啟用
 
 是否啟用日期自動選擇功能。
 
@@ -168,7 +168,7 @@ python settings.py
 ---
 
 #### 日期關鍵字
-類型：字串 | 預設：空白
+型別：字串 | 預設：空白
 
 指定要選擇的日期的部分文字。
 
@@ -197,7 +197,7 @@ python settings.py
 ---
 
 #### 日期排序方式
-類型：字串 | 預設：random
+型別：字串 | 預設：random
 
 自動選擇日期的策略。
 
@@ -222,9 +222,9 @@ python settings.py
 ---
 
 #### 日期自動遞補 ⭐ 新功能
-類型：布林值 | 預設：**關閉**（嚴格模式）
+型別：布林值 | 預設：**關閉**（嚴格模式）
 
-當所有日期關鍵字都匹配失敗時的行為控制。
+當所有日期關鍵字都比對失敗時的行為控制。
 
 在圖形介面中顯示為：**日期自動遞補** (開關按鈕)
 
@@ -239,7 +239,7 @@ python settings.py
 - **嚴格模式（推薦）**：避免誤購不想要的場次
   - 關鍵字設定錯誤時會停止並等待修正
   - 適合對日期有嚴格要求的使用者
-- **自動遞補模式**：確保程式持續運行
+- **自動遞補模式**：確保程式持續執行
   - 即使關鍵字設定錯誤也會自動選擇
   - **風險**：可能購買到不想要的場次
 
@@ -275,7 +275,7 @@ python settings.py
 ---
 
 #### 啟用區域自動選擇
-類型：布林值 | 預設：啟用
+型別：布林值 | 預設：啟用
 
 是否啟用區域自動選擇功能。
 
@@ -285,7 +285,7 @@ python settings.py
 ---
 
 #### 區域關鍵字
-類型：字串 | 預設：空白
+型別：字串 | 預設：空白
 
 指定要選擇的區域的部分文字。
 
@@ -314,7 +314,7 @@ python settings.py
 ---
 
 #### 區域排序方式
-類型：字串 | 預設：random
+型別：字串 | 預設：random
 
 自動選擇區域的策略。
 
@@ -339,9 +339,9 @@ python settings.py
 ---
 
 #### 區域自動遞補 ⭐ 新功能
-類型：布林值 | 預設：**關閉**（嚴格模式）
+型別：布林值 | 預設：**關閉**（嚴格模式）
 
-當所有區域關鍵字都匹配失敗時的行為控制。
+當所有區域關鍵字都比對失敗時的行為控制。
 
 在圖形介面中顯示為：**區域自動遞補** (開關按鈕)
 
@@ -356,7 +356,7 @@ python settings.py
 - **嚴格模式（推薦）**：避免誤購不想要的座位/票種
   - 關鍵字設定錯誤時會停止並等待修正
   - 適合對座位有嚴格要求的使用者（如：只要搖滾區，不要看台）
-- **自動遞補模式**：確保程式持續運行
+- **自動遞補模式**：確保程式持續執行
   - 即使關鍵字設定錯誤也會自動選擇
   - **風險**：可能購買到不想要的座位（如：誤買輪椅席、視線不佳區）
 
@@ -395,7 +395,7 @@ python settings.py
 ---
 
 ### 排除關鍵字
-**重要** | 類型：字串 | 預設：輪椅;身障;身心;障礙;Restricted View;燈柱遮蔽;視線不完整
+**重要** | 型別：字串 | 預設：輪椅;身障;身心;障礙;Restricted View;燈柱遮蔽;視線不完整
 
 設定**不要選擇**包含這些文字的區域。
 
@@ -417,7 +417,7 @@ python settings.py
 ### 猜測驗證碼（ocr_captcha）
 
 #### 啟用（enable）
-類型：布林值 | 預設：**false**（停用）
+型別：布林值 | 預設：**false**（停用）
 
 是否啟用 OCR 自動辨識驗證碼。
 
@@ -433,7 +433,7 @@ python settings.py
 ---
 
 #### ddddocr beta（beta）
-類型：布林值 | 預設：啟用
+型別：布林值 | 預設：啟用
 
 是否使用 beta OCR 模型。
 
@@ -447,7 +447,7 @@ python settings.py
 ---
 
 #### 掛機模式（force_submit）
-類型：布林值 | 預設：啟用
+型別：布林值 | 預設：啟用
 
 辨識後是否自動送出表單。
 
@@ -463,7 +463,7 @@ python settings.py
 ---
 
 #### OCR圖片取得方式（image_source）
-類型：字串 | 預設：canvas
+型別：字串 | 預設：canvas
 
 驗證碼圖片的取得方式。
 
@@ -478,7 +478,7 @@ python settings.py
 ---
 
 #### 自訂 OCR 模型
-類型：字串 | 預設：空白
+型別：字串 | 預設：空白
 
 指定自訂 OCR 模型的目錄路徑，目前**僅支援 Ticketmaster 平台**。
 
@@ -488,7 +488,7 @@ python settings.py
 1. 在 `assets/` 資料夾內建立模型目錄（例如：`assets/ocr_model/`）
 2. 將以下兩個檔案放入該目錄：
    - `custom.onnx` - ONNX 格式的模型檔案
-   - `charsets.json` - 字符集定義檔案
+   - `charsets.json` - 字元集定義檔案
 3. 在圖形介面填入路徑：`assets/ocr_model`
 
 **錯誤處理**：
@@ -500,7 +500,7 @@ python settings.py
 ---
 
 #### 使用通用 OCR 模型（use_universal）
-類型：布林值 | 預設：**啟用**
+型別：布林值 | 預設：**啟用**
 
 是否使用內建通用自訓 OCR 模型進行驗證碼辨識。
 
@@ -519,7 +519,7 @@ python settings.py
 ### TixCraft（拓元售票）
 
 #### 避開「搶購一空」的日期（pass_date_is_sold_out）
-類型：布林值 | 預設：啟用
+型別：布林值 | 預設：啟用
 
 是否自動跳過已售完的日期。
 
@@ -533,7 +533,7 @@ python settings.py
 ---
 
 #### 自動刷新倒數中的日期頁面（auto_reload_coming_soon_page）
-類型：布林值 | 預設：啟用
+型別：布林值 | 預設：啟用
 
 遇到「即將開賣」頁面時是否自動重載。
 
@@ -547,7 +547,7 @@ python settings.py
 ---
 
 #### 不足張數仍購買（allow_less_tickets）
-類型：布林值 | 預設：關閉
+型別：布林值 | 預設：關閉
 
 當拓元、添翼、Indievox 的票數下拉選單無法選擇設定張數時，是否改買小於設定張數的最大可用張數。
 
@@ -567,7 +567,7 @@ python settings.py
 ### KKTIX
 
 #### KKTIX點選下一步按鈕（auto_press_next_step_button）
-類型：布林值 | 預設：true勾選
+型別：布林值 | 預設：true勾選
 
 是否自動點擊「下一步」按鈕。
 
@@ -575,7 +575,7 @@ python settings.py
 ---
 
 #### 自動輸入張數（auto_fill_ticket_number）
-類型：布林值 | 預設：啟用
+型別：布林值 | 預設：啟用
 
 是否自動填寫票數（KKTIX 價格清單式票種）。
 
@@ -585,7 +585,7 @@ python settings.py
 ---
 
 #### KKTIX購票最長停留(秒)（max_dwell_time）
-類型：整數 | 預設：90
+型別：整數 | 預設：90
 
 在訂單頁面的最大停留時間（秒）。
 
@@ -601,15 +601,15 @@ python settings.py
 
 在圖形介面中顯示為：**優惠代碼**（文字框）
 
-**使用場景**：
+**使用情境**：
 - **會員專屬活動**：需要輸入會員序號才能購票
 - **驗證問題活動**：需要輸入驗證答案（如：粉絲專屬問題）
 
 **說明**：
 - 程式會自動偵測 KKTIX 訂單頁面的序號輸入欄位
-- 支援的欄位類型：
+- 支援的欄位型別：
   - 會員序號欄位（`input.member-code`）
-  - AngularJS 綁定欄位（`input[ng-model*="member_codes"]`）
+  - AngularJS 繫結欄位（`input[ng-model*="member_codes"]`）
   - 任何包含「序號」、「驗證」關鍵字的欄位
 - 自動觸發 AngularJS 事件確保表單驗證通過
 
@@ -638,11 +638,11 @@ FANCLUB2024
 
 **使用方式**：
 
-在「使用者自定字典」欄位輸入可能用到的資料，程式會自動根據問題類型提取正確答案。
+在「使用者自定字典」欄位輸入可能用到的資料，程式會自動根據問題型別提取正確答案。
 
 **智慧提取功能**：
 
-| 問題類型 | 您輸入的資料 | 程式自動填入 |
+| 問題型別 | 您輸入的資料 | 程式自動填入 |
 |---------|------------|-------------|
 | 請輸入手機末三碼 | `0912345678`（完整手機號碼） | `678`（自動取末 3 碼） |
 | 請輸入手機後四碼 | `0912345678` | `5678`（自動取末 4 碼） |
@@ -658,7 +658,7 @@ FANCLUB2024
 0912345678;123456;D12345678
 ```
 
-程式會自動判斷問題類型並選擇正確的資料。
+程式會自動判斷問題型別並選擇正確的資料。
 
 **雙欄位表單**：
 
@@ -690,7 +690,7 @@ FANCLUB2024
    - 在瀏覽器視窗中輸入您的密碼
 
 3. **到信箱收取驗證碼**
-   - Cityline 會發送驗證碼到您的註冊信箱
+   - Cityline 會傳送驗證碼到您的註冊信箱
    - 開啟信箱，找到驗證碼
    - 在登入頁面輸入驗證碼
 
@@ -705,7 +705,7 @@ FANCLUB2024
 
 6. **自動繼續搶票**
    - 登入成功後，程式會：
-     - 自動重定向到目標活動頁面（`[CITYLINE LOGIN] Redirecting to target page...`）
+     - 自動重新導向到目標活動頁面（`[CITYLINE LOGIN] Redirecting to target page...`）
      - 繼續執行搶票流程（日期選擇 → 區域選擇 → 購票）
 
 **時間限制**：
@@ -732,7 +732,7 @@ FANCLUB2024
 
 **支援網站**：
 - `hkt.hkticketing.com`（Type02 SPA 版本）✅ 完全支援
-- `premier.hkticketing.com`（Type01 傳統版本）建議使用 Chrome 版本
+- `premier.hkticketing.com`（Type01 傳統版本）⚠️ 支援度較低，部分步驟需手動完成
 
 **登入流程**（Type02）：
 
@@ -756,7 +756,7 @@ FANCLUB2024
 
 5. **自動繼續搶票**
    - 登入成功後，程式會：
-     - 自動重定向到目標活動頁面
+     - 自動重新導向到目標活動頁面
      - 繼續執行搶票流程（日期選擇 → 區域選擇 → 購票）
 
 **時間限制**：
@@ -778,7 +778,7 @@ FANCLUB2024
 **在圖形介面中，這些設定位於「進階設定」頁籤**
 
 ### 設定介面 Port（server_port）
-類型：整數 | 預設：16888
+型別：整數 | 預設：16888
 
 設定介面 Web Server 的連接埠號碼。
 
@@ -807,7 +807,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 ---
 
 ### 設定介面網址（remote_url）
-類型：字串 | 自動產生（唯讀）
+型別：字串 | 自動產生（唯讀）
 
 設定介面的存取網址，由系統根據「設定介面 Port」自動產生，無需手動修改。
 
@@ -821,22 +821,22 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 ---
 
 ### 輸出詳細除錯訊息（verbose）
-類型：布林值 | 預設：停用
+型別：布林值 | 預設：停用
 
 是否顯示詳細的執行過程訊息。
 
 
 **說明**：
-- 啟用 - 顯示詳細日誌
+- 啟用 - 顯示詳細記錄
 - 停用 - 僅顯示關鍵訊息
 
 
-**警告**：輸出大量日誌可能影響搶票效能，除非需要除錯，否則建議保持關閉。
+**警告**：輸出大量記錄可能影響搶票效能，除非需要除錯，否則建議保持關閉。
 
 ---
 
 ### 無圖形界面模式（headless）
-類型：布林值 | 預設：停用
+型別：布林值 | 預設：停用
 
 是否使用無頭模式（不顯示瀏覽器視窗）。
 
@@ -850,7 +850,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 ---
 
 ### 瀏覽器視窗大小（window_size）
-類型：字串 | 預設：600,1024
+型別：字串 | 預設：600,1024
 
 瀏覽器視窗大小。
 
@@ -860,7 +860,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 ---
 
 ### 顯示時間戳記（show_timestamp）
-類型：布林值 | 預設：停用
+型別：布林值 | 預設：停用
 
 是否在程式輸出的每一行加上時間戳記。
 
@@ -868,12 +868,12 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 - 啟用 — 每行輸出前加上 `[HH:MM:SS]` 格式的時間標記，例如：`[09:30:15] [DATE] found: 2024-12-31`
 - 停用（預設）— 正常輸出，不加時間標記
 
-**使用情境**：需要精確記錄每個動作的發生時間時啟用，例如搶票後檢視日誌分析流程。
+**使用情境**：需要精確記錄每個動作的發生時間時啟用，例如搶票後檢視記錄分析流程。
 
 ---
 
 ### 重新啟動瀏覽器間隔(秒)（reset_browser_interval）
-類型：整數 | 預設：0（停用）
+型別：整數 | 預設：0（停用）
 
 定時自動重啟瀏覽器的間隔秒數。
 
@@ -886,7 +886,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 ---
 
 ### 代理伺服器（proxy_server_port）
-類型：字串 | 預設：空白（停用）
+型別：字串 | 預設：空白（停用）
 
 設定瀏覽器連線所使用的代理伺服器位址與 Port。
 
@@ -907,7 +907,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 ---
 
 ### 停用相鄰座位（disable_adjacent_seat）
-類型：布林值 | 預設：停用
+型別：布林值 | 預設：停用
 
 是否允許選取不相鄰（非連座）的座位。
 
@@ -922,7 +922,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 ---
 
 ### 隱藏部分圖片（hide_some_image）
-類型：布林值 | 預設：停用
+型別：布林值 | 預設：停用
 
 是否透過網路封鎖減少非必要資源載入，加速頁面回應。
 
@@ -937,7 +937,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 ---
 
 ### 封鎖 Facebook 網路（block_facebook_network）
-類型：布林值 | 預設：停用
+型別：布林值 | 預設：停用
 
 是否封鎖 Facebook 相關網路請求。
 
@@ -950,7 +950,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 ---
 
 ### 自動猜測驗證選項（auto_guess_options）
-類型：布林值 | 預設：停用
+型別：布林值 | 預設：停用
 
 是否自動猜測驗證碼選項題的答案（適用於圖文選擇題型的驗證）。
 
@@ -962,12 +962,12 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 
 **使用情境**：部分平台在購票時會出現「請選擇正確答案」的選項題驗證（例如：「1+1=?」、「台北101在哪個縣市？」），啟用後程式會嘗試自動選擇正確答案。
 
-**注意**：猜測準確率取決於題目類型，若猜錯可能導致購票失敗，建議先測試後再決定是否啟用。
+**注意**：猜測準確率取決於題目型別，若猜錯可能導致購票失敗，建議先測試後再決定是否啟用。
 
 ---
 
 ### 自動刷新頁面間隔(秒)（auto_reload_page_interval）
-類型：浮點數 | 預設：5.0
+型別：浮點數 | 預設：5.0
 
 自動重載頁面的間隔時間（秒）。
 
@@ -977,7 +977,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 ---
 
 ### 暫時鎖定等待秒數（advanced.tixcraft_soft_block_delay）
-類型：整數字串 | 預設：空白
+型別：整數字串 | 預設：空白
 
 當程式遇到拓元、添翼、Indievox 的白畫面暫時鎖定時，等待幾秒後再回到原頁面重試。
 
@@ -995,7 +995,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 ### 音效通知
 
 #### 有票時播放音效（play_sound.ticket）
-類型：布林值 | 預設：啟用
+型別：布林值 | 預設：啟用
 
 選到票時是否播放音效。
 
@@ -1003,7 +1003,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 ---
 
 #### 訂購時播放音效（play_sound.order）
-類型：布林值 | 預設：啟用
+型別：布林值 | 預設：啟用
 
 送出訂單時是否播放音效。
 
@@ -1011,7 +1011,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 ---
 
 #### 音效檔（play_sound.filename）
-類型：字串 | 預設：assets/sounds/ding-dong.wav
+型別：字串 | 預設：assets/sounds/ding-dong.wav
 
 音效檔案路徑。
 
@@ -1021,16 +1021,16 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 ### Discord Webhook 通知
 
 #### Discord Webhook URL（discord_webhook_url）
-類型：字串 | 預設：空白
+型別：字串 | 預設：空白
 
-設定 Discord Webhook 網址，當找到票券或訂單成功時自動發送通知到您的 Discord 頻道。
+設定 Discord Webhook 網址，當找到票券或訂單成功時自動傳送通知到您的 Discord 頻道。
 
 在圖形介面中顯示為：**Discord Webhook URL**（文字框）
 
 **功能說明**：
-- **找到票券時**：發送「[平台名稱] found ticket! Please check your computer」
-- **訂單成功時**：發送「[平台名稱] order success! Please checkout and pay ASAP」
-- 通知不會影響搶票流程（使用非同步發送，3 秒超時）
+- **找到票券時**：傳送「[平台名稱] found ticket! Please check your computer」
+- **訂單成功時**：傳送「[平台名稱] order success! Please checkout and pay ASAP」
+- 通知不會影響搶票流程（使用非同步傳送，3 秒逾時）
 
 **如何建立 Discord Webhook**：
 
@@ -1050,7 +1050,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 4. **設定 Webhook**
    - 命名您的 Webhook（例如：Tickets Hunter）
    - 選擇要接收通知的頻道
-   - 可選：上傳自訂頭像
+   - 可選：上傳自訂大頭貼
 
 5. **複製 Webhook URL**
    - 點擊「複製 Webhook URL」按鈕
@@ -1076,23 +1076,23 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 > ⭐ v2026.03 新增
 
 #### Telegram Bot Token（telegram_bot_token）
-類型：字串 | 預設：空白
+型別：字串 | 預設：空白
 
 Telegram Bot 的 API Token。留空則停用 Telegram 通知。
 
 在圖形介面中顯示為：**Telegram Bot Token**（文字框）
 
 #### Telegram Chat ID（telegram_chat_id）
-類型：字串 | 預設：空白
+型別：字串 | 預設：空白
 
 接收通知的 Telegram 聊天室 ID。多個 ID 請用逗號隔開。
 
 在圖形介面中顯示為：**Telegram Chat ID**（文字框 + 測試按鈕）
 
 **功能說明**：
-- **訂單成功時**：發送「[平台名稱] order success! Please checkout and pay ASAP」
-- 支援同時發送到多個聊天室（逗號分隔 ID）
-- 通知不會影響搶票流程（使用非同步發送，3 秒超時）
+- **訂單成功時**：傳送「[平台名稱] order success! Please checkout and pay ASAP」
+- 支援同時傳送到多個聊天室（逗號分隔 ID）
+- 通知不會影響搶票流程（使用非同步傳送，3 秒逾時）
 - 可與 Discord 通知同時啟用，兩者互不影響
 
 **如何建立 Telegram Bot**：
@@ -1102,7 +1102,7 @@ Telegram Bot 的 API Token。留空則停用 Telegram 通知。
    - 或直接點擊：https://t.me/BotFather
 
 2. **建立新 Bot**
-   - 發送 `/newbot`
+   - 傳送 `/newbot`
    - 依照提示輸入 Bot 名稱（顯示名稱）
    - 再輸入 Bot 使用者名稱（必須以 `bot` 結尾，例如 `MyTicketBot`）
 
@@ -1112,13 +1112,13 @@ Telegram Bot 的 API Token。留空則停用 Telegram 通知。
 
 4. **取得 Chat ID**
    - 在 Telegram 搜尋 `@userinfobot` 或 `@RawDataBot` 並開啟對話
-   - 發送任意訊息，Bot 會回覆您的 Chat ID（一串數字）
-   - 如果要發送到群組，先將您的 Bot 加入群組，再用 `@RawDataBot` 在群組中取得群組 Chat ID（通常為負數）
+   - 傳送任意訊息，Bot 會回覆您的 Chat ID（一串數字）
+   - 如果要傳送到群組，先將您的 Bot 加入群組，再用 `@RawDataBot` 在群組中取得群組 Chat ID（通常為負數）
 
 5. **跟 Bot 對話（必要）**
    - 在 Telegram 搜尋您剛建立的 Bot（用 `@您的Bot名稱`）
-   - 按下 **Start** 或發送 `/start`
-   - ⚠️ **未執行此步驟，Bot 無法發送訊息給您**（Telegram API 限制：Bot 只能回覆曾主動對話過的使用者）
+   - 按下 **Start** 或傳送 `/start`
+   - ⚠️ **未執行此步驟，Bot 無法傳送訊息給您**（Telegram API 限制：Bot 只能回覆曾主動對話過的使用者）
 
 6. **貼到設定介面**
    - 在「進階設定」頁籤找到「Telegram Bot Token」和「Telegram Chat ID」
@@ -1138,7 +1138,7 @@ Telegram Bot 的 API Token。留空則停用 Telegram 通知。
 ### Cookie 設定（快速登入）
 
 #### 拓元家族 cookie（tixcraft_sid）
-類型：字串 | 預設：空白
+型別：字串 | 預設：空白
 
 拓元家族網站的登入 Cookie，用於快速登入。
 
@@ -1158,7 +1158,7 @@ Telegram Bot 的 API Token。留空則停用 Telegram 通知。
 ---
 
 #### ibon cookie ibonqware（ibonqware）
-類型：字串 | 預設：空白
+型別：字串 | 預設：空白
 
 iBon 的 Cookie qware，用於快速登入。
 
@@ -1205,7 +1205,7 @@ iBon 的 Cookie qware，用於快速登入。
 ### 優惠代碼設定（通用）⭐ 新增功能
 
 #### 優惠代碼（discount_code）
-類型：字串 | 預設：空白
+型別：字串 | 預設：空白
 
 適用於所有平台的優惠代碼，程式會自動偵測並填入對應欄位。
 
@@ -1213,14 +1213,14 @@ iBon 的 Cookie qware，用於快速登入。
 
 **支援平台與功能**：
 
-| 平台 | 功能類型 | 欄位名稱範例 | 使用場景 |
+| 平台 | 功能型別 | 欄位名稱範例 | 使用情境 |
 |------|---------|------------|---------|
 | **KKTIX** | 會員序號 | member_code | 會員專屬活動需要輸入序號驗證資格 |
 | **TicketPlus** | 優惠序號 | exclusive_code | 特定活動要求優惠序號才能購票 |
 
 **說明**：
 - **單一設定支援多平台**：無需為每個平台設定不同欄位
-- **自動偵測欄位類型**：程式會根據頁面內容自動判斷欄位用途
+- **自動偵測欄位型別**：程式會根據頁面內容自動判斷欄位用途
 - **智慧填寫**：根據平台特性選擇對應的 DOM 操作方式
   - KKTIX：觸發 AngularJS 事件（`input` + `change` + `blur` + `scope.$apply()`）
   - TicketPlus：觸發 Vue.js 事件（`input` + `change`）
@@ -1239,9 +1239,9 @@ FANCLUB999
 4. **會員專屬**：需要輸入會員編號
 
 **注意**：
-- 僅在特定活動頁面出現代碼欄位時才需要設定
-- 如果活動無需代碼，請保持空白
-- 代碼格式依各活動主辦方規定
+- 僅在特定活動頁面出現程式碼欄位時才需要設定
+- 如果活動無需程式碼，請保持空白
+- 程式碼格式依各活動主辦方規定
 
 **設定位置**：
 1. 在圖形介面中找到「進階設定」頁籤
@@ -1260,13 +1260,13 @@ FANCLUB999
 2. 點「＋ 新增」選平台 → 自動以目前設定為底建立 `profiles/<name>.json`，並帶入該平台 homepage。
 3. 切換 profile 分頁，各自編輯關鍵字、帳號、homepage 並獨立存檔。
 4. 在各 profile 分頁按「搶票」，即以該設定檔啟動一個實例。
-5. 「執行階段」頁籤的「執行中實例」面板：列出每個實例的存活（心跳）、運行/暫停狀態與執行網址，可逐一暫停／繼續，或「全部暫停」。
+5. 「執行階段」頁籤的「執行中實例」面板：列出每個實例的存活（心跳）、執行/暫停狀態與執行網址，可逐一暫停／繼續，或「全部暫停」。
 6. 對已在執行的 profile 再按「搶票」會跳確認框，確認後以序號（如 `kktix-2`）開第二個實例。
 
 ### 注意事項
 
 - **一實例一帳號**：同帳號同活動多開會被平台踢 session。
-- **KKTIX**：多開可能打亂自身排隊順序、甚至被導入假排隊，請斟酌。
+- **KKTIX**：多開可能打亂自身排隊順序、甚至被匯入假排隊，請斟酌。
 - **改帳號需重啟實例**：帳號/Cookie 不在熱載白名單，改完要重開該實例才生效。
 - **暫停為 per-instance**：暫停一個實例不影響其他；「系統時間／秒數 - 暫停關鍵字」定時排程也各實例依自己設定生效。
 - 開發者參考：機制細節見 `docs/03-mechanisms/17-multi-instance.md`。
@@ -1285,7 +1285,7 @@ FANCLUB999
 
 ### 建議 2：進階使用者
 - 使用多組關鍵字提高成功率
-- 善用 AND 邏輯精確匹配（分號分隔）
+- 善用 AND 邏輯精確比對（分號分隔）
 - 啟用音效通知（有票時/訂購時）
 
 ---

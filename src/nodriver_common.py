@@ -28,7 +28,7 @@ except Exception:
 
 # ===== Constants =====
 
-CONST_APP_VERSION = "TicketsHunter (2026.09.16)"
+CONST_APP_VERSION = "TicketsHunter (2026.09.24)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -320,9 +320,10 @@ async def nodriver_force_check_checkbox(tab, checkbox_element):
 
     if checkbox_element:
         try:
-            # Use JavaScript to check and set checkbox state
-            result = await tab.evaluate('''
-                (function(element) {
+            # Element.apply passes the element in; tab.evaluate's second
+            # positional argument is await_promise, not a script argument.
+            result = await checkbox_element.apply('''
+                (element) => {
                     if (!element) return false;
 
                     // Check if already checked
@@ -337,8 +338,8 @@ async def nodriver_force_check_checkbox(tab, checkbox_element):
                         element.checked = true;
                         return element.checked;
                     }
-                })(arguments[0]);
-            ''', checkbox_element)
+                }
+            ''')
 
             is_finish_checkbox_click = bool(result)
 
@@ -348,34 +349,44 @@ async def nodriver_force_check_checkbox(tab, checkbox_element):
     return is_finish_checkbox_click
 
 async def nodriver_check_checkbox_enhanced(tab, select_query, config_dict=None):
-    """Enhanced checkbox function using direct JavaScript"""
+    """Tick a checkbox, falling back to setting the property when a click will not.
+
+    click() goes through the page's handlers but never throws on a checkbox, so
+    a preventDefault handler or a not-yet-interactive element is caught by
+    re-reading .checked; the fallback then sets it and dispatches change.
+    Returns a bool; the failure reason is only logged.
+    """
     debug = util.create_debug_logger(config_dict)
     is_checkbox_checked = False
 
     try:
         debug.log(f"Checking checkbox: {select_query}")
 
-        # Direct JavaScript find and check
+        selector_js = json.dumps(select_query)
         result = await tab.evaluate(f'''
             (function() {{
-                const checkbox = document.querySelector('{select_query}');
-                if (!checkbox) return false;
+                const checkbox = document.querySelector({selector_js});
+                if (!checkbox) return {{ok: false, reason: 'not found'}};
+                if (checkbox.checked) return {{ok: true, reason: 'already checked'}};
 
-                if (checkbox.checked) return true;
+                checkbox.click();
+                if (checkbox.checked) return {{ok: true, reason: 'click'}};
 
-                try {{
-                    checkbox.click();
-                    return checkbox.checked;
-                }} catch(e) {{
-                    checkbox.checked = true;
-                    return checkbox.checked;
-                }}
+                checkbox.checked = true;
+                checkbox.dispatchEvent(new Event('change', {{bubbles: true}}));
+                return {{
+                    ok: checkbox.checked,
+                    reason: checkbox.checked ? 'forced' : 'refused'
+                }};
             }})();
         ''')
 
-        is_checkbox_checked = bool(result)
-
-        debug.log(f"Checkbox result: {is_checkbox_checked}")
+        if isinstance(result, dict):
+            is_checkbox_checked = bool(result.get('ok'))
+            debug.log(f"Checkbox result: {is_checkbox_checked} ({result.get('reason')})")
+        else:
+            is_checkbox_checked = bool(result)
+            debug.log(f"Checkbox result: {is_checkbox_checked}")
 
     except Exception as exc:
         debug.log(f"Checkbox error: {exc}")

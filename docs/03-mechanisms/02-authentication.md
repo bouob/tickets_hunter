@@ -64,7 +64,7 @@ Secure: True, HttpOnly: True
 
 函式會驗證 Cookie 內容是否包含必要欄位（`mem_id`, `mem_email`, `huiwanTK`, `ibonqwareverify`），並在設定後透過 `driver.cookies.get_all()` 確認寫入成功。
 
-特殊處理：`tour.ibon.com.tw` 需要先訪問 `ticket.ibon.com.tw` 完成 OAuth 取得 `_at_e` token（`nodriver_goto_homepage()` 內處理）。
+特殊處理：`tour.ibon.com.tw` 需要先存取 `ticket.ibon.com.tw` 完成 OAuth 取得 `_at_e` token（`nodriver_goto_homepage()` 內處理）。
 
 **實作位置**：`src/platforms/ibon.py`（nodriver_ibon_login）
 
@@ -103,7 +103,7 @@ string 的裸登入 URL（session 過期時 KKTIX 會導向這種）。過去五
 | 關卡 | 偵測 | 行為 |
 |------|------|------|
 | Cloudflare 等候室 | `nodriver_kktix_check_queue_page`（`#cf-time`）| 直接返回不填表。頁面會自我刷新，**禁止手動 reload** |
-| 訪客彈窗「立刻成為 KKTIX 會員」| `nodriver_kktix_check_guest_modal`（`#guestModal`）| 點 `button[data-dismiss="modal"]` 關閉 |
+| 訪客彈出視窗「立刻成為 KKTIX 會員」| `nodriver_kktix_check_guest_modal`（`#guestModal`）| 點 `button[data-dismiss="modal"]` 關閉 |
 | 排隊後掉成訪客 session | `nodriver_kktix_redirect_to_signin_if_guest`（`li.not-signed-in:not(.hidden)`）| 導回 sign_in 頁，跳過本輪 |
 
 第四道是 **Cloudflare Turnstile**，它現在由登入流程自己處理。
@@ -126,7 +126,7 @@ string 的裸登入 URL（session 過期時 KKTIX 會導向這種）。過去五
 
 #### 送出按鈕的選擇器降級鏈
 
-送出按鈕曾以中文 `value="登入"` 綁定，非繁中 locale 會靜默失敗（找不到就什麼都不做，也不留 log）。
+送出按鈕曾以中文 `value="登入"` 繫結，非繁中 locale 會靜默失敗（找不到就什麼都不做，也不留 log）。
 現改為依序嘗試：
 
 ```
@@ -183,7 +183,7 @@ viewport 內。按鈕在摺線以下時 rect 仍會回傳值，對那個座標�
 `nodriver_fami_login()` 處理全家售票登入：
 
 1. 檢查帳號 (`#usr_act`) 與密碼 (`#usr_pwd`) 欄位是否已有值
-2. 使用 ZenDriver `send_keys` 填寫（非 JS 直接賦值，模擬真人輸入）
+2. 使用 ZenDriver `send_keys` 填寫（非 JS 直接指派，模擬真人輸入）
 3. 點擊 `button#btnLogin`
 4. 等待 URL 變化確認登入成功（最多 10 秒）
 
@@ -296,5 +296,5 @@ UDN 為半自動登入：程式填寫帳密，但 reCAPTCHA 圖片驗證需使�
 
 ### tour.ibon.com.tw 登入異常
 **症狀**：Cookie 注入成功但 tour.ibon 頁面仍未登入
-**原因**：未先訪問 ticket.ibon.com.tw 完成 OAuth
+**原因**：未先存取 ticket.ibon.com.tw 完成 OAuth
 **解法**：確認 `nodriver_goto_homepage()` 中的 tour.ibon 特殊處理流程正確執行

@@ -32,7 +32,7 @@
 
 ### 何時使用 CDP 方法（推薦）
 
-**必須使用 CDP 的場景：**
+**必須使用 CDP 的情境：**
 - Shadow DOM 操作（closed Shadow DOM 只能用 CDP）
 - 元素精確定位與截圖
 - 模擬真實滑鼠/鍵盤行為
@@ -46,7 +46,7 @@
 
 ### 何時使用 JavaScript（謹慎使用）
 
-**適合場景：**
+**適合情境：**
 - 簡單 DOM 查詢（檢查元素存在、讀取屬性）
 - 表單操作（open Shadow DOM）
 - CDP 實作過於複雜（>50 行 vs <10 行）
@@ -119,7 +119,7 @@ await tab.send(cdp.input.dispatch_mouse_event(
 await tab.send(cdp.page.capture_screenshot(format_='png'))
 ```
 
-**📖 深入學習 CDP：** 查看 **[CDP Protocol 參考指南](cdp_protocol_reference.md)** 了解完整的 CDP 命令、參數和使用範例。
+**📖 深入學習 CDP：** 檢視 **[CDP Protocol 參考指南](cdp_protocol_reference.md)** 了解完整的 CDP 命令、參數和使用範例。
 
 ### 推薦方法對照表
 
@@ -143,7 +143,7 @@ await tab.send(cdp.page.capture_screenshot(format_='png'))
 
 ### 範例 0：Pierce Method - Shadow DOM 穿透最佳實踐（推薦優先） ⭐
 
-**重大突破**：從優化 DOMSnapshot 速度發現的更優方法，60-70% 性能提升！
+**重大突破**：從最佳化 DOMSnapshot 速度發現的更優方法，60-70% 效能提升！
 
 **ibon 購票按鈕** 位於 closed Shadow DOM 內，傳統 JavaScript 無法存取。使用 Pierce Method 可以：
 - ⚡ **速度快**：2-5 秒（vs DOMSnapshot 10-15 秒）
@@ -275,7 +275,7 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
     return True
 ```
 
-**性能對比**：
+**效能對比**：
 
 | 指標 | DOMSnapshot (範例 1) | Pierce Method (範例 0) | 提升幅度 |
 |------|---------------------|----------------------|---------|
@@ -290,7 +290,7 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
 |------|---------|
 | 搜尋特定元素（如按鈕） | ✅ Pierce Method |
 | 需要快速響應 | ✅ Pierce Method |
-| 需要提取複雜關聯數據（如表格） | ✅ DOMSnapshot |
+| 需要提取複雜關聯資料（如表格） | ✅ DOMSnapshot |
 | 作為 Pierce 的 Fallback | ✅ DOMSnapshot |
 
 **Primary → Fallback 設計模式**：
@@ -310,7 +310,7 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
     return await nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict)
 ```
 
-**📖 深入學習**：查看 **[Shadow DOM Pierce Method 完整指南](shadow_dom_pierce_guide.md)** 了解技術原理、完整實作和最佳實踐。
+**📖 深入學習**：檢視 **[Shadow DOM Pierce Method 完整指南](shadow_dom_pierce_guide.md)** 了解技術原理、完整實作和最佳實踐。
 
 ---
 
@@ -372,9 +372,9 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
 **關鍵優勢：**
 - DOMSnapshot 自動平坦化所有 Shadow DOM（包含 closed）
 - 一次呼叫即可獲得完整 DOM 結構
-- 性能優異，適合大規模元素搜尋
+- 效能優異，適合大規模元素搜尋
 
-**JavaScript 無法實現（對比）：**
+**JavaScript 無法實作（對比）：**
 ```python
 # JavaScript 無法穿透 closed Shadow DOM
 result = await tab.evaluate('''
@@ -382,7 +382,7 @@ result = await tab.evaluate('''
 ''')
 ```
 
-### 範例 2：CDP DOM API 截取 Shadow DOM 內的驗證碼圖片
+### 範例 2：CDP DOM API 擷取 Shadow DOM 內的驗證碼圖片
 
 ```python
 async def nodriver_ibon_get_captcha_image(tab, config_dict):
@@ -471,7 +471,7 @@ async def nodriver_ibon_get_captcha_image(tab, config_dict):
 - `get_box_model()` 提供精確的元素位置
 - `capture_screenshot()` 支援完整頁面截圖
 - 結合 PIL 進行精確裁切
-- 不受 Shadow DOM 類型限制
+- 不受 Shadow DOM 型別限制
 
 ### 範例 3：CDP 原生點擊 vs JavaScript 點擊
 
@@ -569,7 +569,7 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer, config_dict):
 ```
 
 **使用原則：**
-- 元素查找：NoDriver `query_selector()`（簡單穩定）
+- 元素尋找：NoDriver `query_selector()`（簡單穩定）
 - 可見性檢查：JavaScript（快速查詢）
 - 文字輸入：NoDriver `send_keys()`（模擬真實輸入）
 
@@ -753,7 +753,7 @@ async def advanced_shadow_dom_traversal(tab, target_selector="button"):
     return buttons
 ```
 
-### 2. Shadow Root 類型檢測
+### 2. Shadow Root 型別偵測
 
 ```python
 async def detect_shadow_root_types(tab):
@@ -790,14 +790,14 @@ async def detect_shadow_root_types(tab):
     return await analyze_shadow_roots(document.root)
 ```
 
-**Shadow Root 類型說明：**
+**Shadow Root 型別說明：**
 - **`USER_AGENT`**: 瀏覽器原生創建（如 `<input type="date">`）
 - **`OPEN`**: 開放式，JavaScript 可存取
 - **`CLOSED`**: 封閉式，JavaScript 無法存取
 
-**重要**：CDP 的 `pierce=True` 可穿透所有類型的 Shadow DOM
+**重要**：CDP 的 `pierce=True` 可穿透所有型別的 Shadow DOM
 
-### 3. DOMSnapshot 大規模檢測（推薦）
+### 3. DOMSnapshot 大規模偵測（推薦）
 
 ```python
 async def capture_shadow_dom_snapshot(tab):
@@ -894,7 +894,7 @@ async def bypass_cloudflare(tab, max_retries=10, retry_interval=2):
 ## KKTIX 自動答題流程
 
 **功能分支**: `004-kktix-auto-answer`
-**實作位置**: `src/nodriver_tixcraft.py:1172-1313` (nodriver_kktix_reg_captcha 函數)
+**實作位置**: `src/nodriver_tixcraft.py:1172-1313` (nodriver_kktix_reg_captcha 函式)
 
 ### 功能概述
 
@@ -992,7 +992,7 @@ if elements_check and elements_check.get('hasQuestion'):
 **為何使用 JavaScript 而非 CDP?**
 - 簡單表單操作:JavaScript evaluate 10 行 vs CDP 需 50+ 行
 - open Shadow DOM:不需 CDP DOMSnapshot
-- 符合決策流程:「CDP > 50 行且 JS < 10 行」的場景
+- 符合決策流程:「CDP > 50 行且 JS < 10 行」的情境
 
 **人類化策略**
 1. 隨機延遲(0.3-1.0 秒)模擬思考時間
@@ -1029,9 +1029,9 @@ fail_list: []
 Captcha answer filled successfully: SUNSET
 ```
 
-### 相關函數
+### 相關函式
 
-- `util.get_answer_list_from_user_guess_string()` - 讀取用戶預定義答案
+- `util.get_answer_list_from_user_guess_string()` - 讀取使用者預定義答案
 - `util.get_answer_list_from_question_string()` - 從問題推測答案
 - `write_question_to_file()` - 記錄問題至 `src/question.txt`
 - `nodriver_kktix_press_next_button()` - 點擊下一步按鈕
@@ -1134,9 +1134,9 @@ async def check_elements_existence(tab, selectors):
 
 ### 方法選擇快速參考
 
-| 場景 | 方法 | 理由 |
+| 情境 | 方法 | 理由 |
 |-----|------|-----|
-| closed Shadow DOM | CDP DOMSnapshot | JavaScript 無法實現 |
+| closed Shadow DOM | CDP DOMSnapshot | JavaScript 無法實作 |
 | 精確定位 | CDP get_box_model | 完整座標資訊 |
 | 真實點擊 | CDP dispatch_mouse_event | 模擬真實行為 |
 | 截圖 | CDP capture_screenshot | 支援區域截圖 |

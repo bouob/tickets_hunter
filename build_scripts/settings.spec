@@ -7,6 +7,7 @@
 # =============================================================================
 
 import os
+import sys
 from PyInstaller.utils.hooks import collect_data_files
 
 block_cipher = None
@@ -51,7 +52,22 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=[
+        # tools/captcha_trainer/ installs torch into the same venv, and the
+        # ddddocr hiddenimport above reaches it: a local build measured
+        # 3984MB for this spec against 307MB for nodriver_tixcraft.spec,
+        # which already carried these entries. CI installs only
+        # requirement.txt and so never saw it.
+        'torch',
+        'torchvision',
+        # The project migrated to zendriver; the old nodriver package may still
+        # be present in a long-lived venv. Keep it out of the build.
+        'nodriver',
+        # Notebook/plotting stacks that OCR training tools tend to drag in.
+        'matplotlib',
+        'IPython',
+        'tkinter',
+    ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
@@ -75,7 +91,9 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=os.path.join(project_root, 'src', 'www', 'favicon.ico'),  # Application icon
+    # Windows-only: macOS PyInstaller expects .icns and fails on a .ico.
+    icon=(os.path.join(project_root, 'src', 'www', 'favicon.ico')
+          if sys.platform == 'win32' else None),
 )
 
 coll = COLLECT(

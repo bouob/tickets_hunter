@@ -8,9 +8,11 @@ __pycache__/
 *.pyc
 *.pyo
 .python-version
+.pytest_cache/
 
 # Sensitive config files
 /src/settings.json
+/src/config_launcher.json
 /src/MAXBOT_LAST_URL.txt
 /src/MAXBOT_INT28_IDLE.txt
 /src/MAXBOT_QUESTION.txt
@@ -35,10 +37,14 @@ user_data/
 /src/webdriver/chrome-linux64/
 /src/webdriver/chrome-mac-*/
 
+# Build output
+/build/
+/dist/
+*.spec.bak
+
 # Logs and temp files
 *.log
 *.tmp
-.temp/
 .history/
 logs.txt
 
@@ -46,23 +52,10 @@ logs.txt
 .env
 .env.*
 
-# Private documentation (Claude Code)
-.claude/
-CLAUDE.md
-/docs/
-.specify/
-specs/
+# macOS metadata
+.DS_Store
+__MACOSX/
+._*
+
+# AI tool configs - may hold API tokens
 .mcp.json
-
-tmpclaude-*-cwd
-
-# Captcha trainer tool (private - code tracked via gsave PRIVATE commit)
-# Defense in depth: large data directories excluded even without nested .gitignore
-tools/captcha_trainer/OCRimages/
-tools/captcha_trainer/projects/
-tools/captcha_trainer/temp/
-tools/captcha_trainer/.venv/
-tools/captcha_trainer/build/
-tools/captcha_trainer/dist/
-.spectra/
-openspec/.vector-search.db*

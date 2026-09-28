@@ -57,15 +57,15 @@
 
 ---
 
-## 核心函數索引
+## 核心函式索引
 
-| 階段 | 函數名稱 | 行數 | 說明 |
+| 階段 | 函式名稱 | 行數 | 說明 |
 |------|---------|------|------|
 | Main | `nodriver_funone_main()` | 25057 | 主控制流程（URL 路由 + 頁面狀態機）|
 | Stage 2 | `nodriver_funone_inject_cookie()` | 23375 | Cookie 注入（ticket_session）|
 | Stage 2 | `nodriver_funone_check_login_status()` | 23413 | 登入狀態檢查 |
 | Stage 2 | `nodriver_funone_verify_login()` | 23431 | 登入驗證 |
-| Stage 3 | `nodriver_funone_close_popup()` | 23455 | 關閉彈窗/Cookie 同意框 |
+| Stage 3 | `nodriver_funone_close_popup()` | 23455 | 關閉彈出視窗/Cookie 同意框 |
 | Stage 3 | `nodriver_funone_detect_step()` | 24673 | 偵測購票流程步驟（1~5）|
 | Stage 4 | `nodriver_funone_date_auto_select()` | 23557 | 場次/日期自動選擇 |
 | Stage 5 | `nodriver_funone_area_auto_select()` | 23761 | 票種區域自動選擇 |
@@ -90,7 +90,7 @@
 |------|------|------|------|
 | 1 | 環境初始化 | ✅ 完成 | 由 `cli()` / 主程式進入點處理 |
 | 2 | 身份驗證 | ✅ 完成 | Cookie 注入 + 登入狀態驗證 |
-| 3 | 頁面監控 | ✅ 完成 | URL 路由 + 頁面狀態機 + 彈窗關閉 |
+| 3 | 頁面監控 | ✅ 完成 | URL 路由 + 頁面狀態機 + 彈出視窗關閉 |
 | 4 | 日期選擇 | ✅ 完成 | 場次/日期自動選擇（活動詳情頁）|
 | 5 | 區域選擇 | ✅ 完成 | 票種區域選擇 + 售罄偵測 + 自動重新整理 |
 | 6 | 票數設定 | ✅ 完成 | 票數自動設定 |
@@ -105,11 +105,11 @@
 
 ---
 
-## 頁面類型與 URL 路由
+## 頁面型別與 URL 路由
 
-FunOne 的 `_main()` 依據 URL 判斷頁面類型：
+FunOne 的 `_main()` 依據 URL 判斷頁面型別：
 
-| 頁面類型 | URL 模式 | 處理邏輯 |
+| 頁面型別 | URL 模式 | 處理邏輯 |
 |---------|---------|---------|
 | `HOME` | `https://tickets.funone.io` | 驗證登入狀態 |
 | `LOGIN` | `/login` | 等待手動登入 |
@@ -124,7 +124,7 @@ FunOne 的 `_main()` 依據 URL 判斷頁面類型：
 
 `funone_dict` 全域字典管理整個購票流程的狀態追蹤：
 
-| 欄位 | 類型 | 說明 |
+| 欄位 | 型別 | 說明 |
 |------|------|------|
 | `is_session_selecting` | bool | 場次選擇中 |
 | `is_ticket_selecting` | bool | 票種選擇中 |
@@ -132,7 +132,7 @@ FunOne 的 `_main()` 依據 URL 判斷頁面類型：
 | `fail_list` | list | 已失敗的答案/嘗試 |
 | `reload_count` | int | 重新載入計數 |
 | `ocr_retry_count` | int | OCR 重試計數 |
-| `last_page_type` | str | 上次頁面類型（去重用）|
+| `last_page_type` | str | 上次頁面型別（去重用）|
 
 ---
 
@@ -180,7 +180,7 @@ FunOne 的 `_main()` 依據 URL 判斷頁面類型：
 ## 相關文件
 
 - 📋 [12-Stage 標準](../../02-development/ticket_automation_standard.md) - 完整流程規範
-- 🏗️ [程式碼結構分析](../../02-development/structure.md) - FunOne 函數索引
+- 🏗️ [程式碼結構分析](../../02-development/structure.md) - FunOne 函式索引
 - 📖 [Stage 7: 驗證碼處理機制](../../03-mechanisms/07-captcha-handling.md) - OCR 驗證碼詳解
 
 ---

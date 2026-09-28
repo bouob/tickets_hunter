@@ -70,7 +70,7 @@ settings.exe              # 測試網頁介面
 
 ### Step 1: 更新版本號
 
-使用 `/gupdate` 指令自動更新以下檔案的 `CONST_APP_VERSION`：
+同步更新以下檔案的 `CONST_APP_VERSION`（兩者必須一致）：
 - `src/nodriver_tixcraft.py`
 - `src/settings.py`
 
@@ -80,11 +80,10 @@ settings.exe              # 測試網頁介面
 
 ### Step 3: 提交並推送 Tag
 
-```batch
-/gsave          # 提交變更
-/gpush          # 推送到私人庫
-/publicpr       # 建立 PR 到公開庫
-/publicrelease  # 建立 Release Tag
+```bash
+git commit -am "chore(release): update version to YYYY.MM.DD"
+git push origin main
+git tag vYYYY.MM.DD && git push origin vYYYY.MM.DD
 ```
 
 ### Step 4: GitHub Actions 自動執行
@@ -167,7 +166,7 @@ dist/
 | 目標 | 使用方法 | 時間 | 輸出 |
 |------|---------|------|------|
 | 本地打包與測試 | `build_and_test.bat` | 10-20 分鐘 | ZIP + 測試輸出 |
-| 更新版本號 | `/gupdate` 指令 | < 1 分鐘 | 更新 2 個檔案 |
+| 更新版本號 | 編輯 `CONST_APP_VERSION` | < 1 分鐘 | 更新 2 個檔案 |
 | GitHub 自動發布 | 推送 tag | 15-25 分鐘 | GitHub Release |
 
 ---

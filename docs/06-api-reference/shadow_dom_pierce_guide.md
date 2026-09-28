@@ -1,12 +1,12 @@
 # Shadow DOM Pierce Method - 完整技術指南
 
-**文件說明**：Shadow DOM 穿透的完整技術指南，涵蓋 CDP DOMSnapshot 與 perform_search() 方法、性能優化策略與實作案例。
+**文件說明**：Shadow DOM 穿透的完整技術指南，涵蓋 CDP DOMSnapshot 與 perform_search() 方法、效能最佳化策略與實作案例。
 **最後更新**：2025-11-12
 
 ---
 
-> **重大突破**：從優化 DOMSnapshot 速度的目標，發現了更優的 Shadow DOM 穿透方法
-> **性能提升**：60-70% 速度提升（10-15秒 → 2-5秒），95%+ 第一次成功率
+> **重大突破**：從最佳化 DOMSnapshot 速度的目標，發現了更優的 Shadow DOM 穿透方法
+> **效能提升**：60-70% 速度提升（10-15秒 → 2-5秒），95%+ 第一次成功率
 > **技術來源**：ZenDriver CDP `perform_search()` + `include_user_agent_shadow_dom=True`
 
 ---
@@ -18,7 +18,7 @@
 3. [技術原理](#技術原理)
 4. [完整實作範例](#完整實作範例)
 5. [核心技術要點](#核心技術要點)
-6. [性能對比](#性能對比)
+6. [效能對比](#效能對比)
 7. [最佳實踐](#最佳實踐)
 8. [常見問題 FAQ](#常見問題-faq)
 
@@ -53,19 +53,19 @@ snapshot = await tab.send(cdp.dom_snapshot.capture_snapshot(
 ```
 
 **效能問題**：
-- 🐢 **速度慢**：需要 10-15 秒（全量 snapshot + 大量節點遍歷）
+- 🐢 **速度慢**：需要 10-15 秒（全量 snapshot + 大量節點走訪）
 - 🐢 **記憶體消耗高**：6000+ 節點資料
 - 🐢 **第一次失敗率高**：Angular 未完成渲染時 snapshot 為空（20% 成功率）
 
-**原本目標**：優化 DOMSnapshot 的速度和成功率
+**原本目標**：最佳化 DOMSnapshot 的速度和成功率
 
 ---
 
 ## 突破性發現
 
-### 查詢 ZenDriver 文檔的發現
+### 查詢 ZenDriver 文件的發現
 
-在嘗試優化 DOMSnapshot 時，查詢 [ZenDriver CDP DOM 文檔](https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html) 發現了 `perform_search()` 方法的關鍵參數：
+在嘗試最佳化 DOMSnapshot 時，查詢 [ZenDriver CDP DOM 文件](https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html) 發現了 `perform_search()` 方法的關鍵參數：
 
 ```python
 # 重大發現：perform_search 支援 Shadow DOM 穿透！
@@ -77,10 +77,10 @@ search_id, result_count = await tab.send(cdp.dom.perform_search(
 
 **突破點**：
 - ✅ **原生支援 Shadow DOM 穿透**：不需要 snapshot 平坦化
-- ✅ **按需查詢**：只查找目標元素，不處理整個 DOM 樹
-- ✅ **速度極快**：直接搜尋，無需大量數據處理
+- ✅ **按需查詢**：只尋找目標元素，不處理整個 DOM 樹
+- ✅ **速度極快**：直接搜尋，無需大量資料處理
 
-### 性能提升數據
+### 效能提升資料
 
 實測結果（ibon 日期選擇）：
 
@@ -110,7 +110,7 @@ Line 70: [IBON DATE PIERCE] Button clicked successfully ✓
 
 ### perform_search API 說明
 
-**來源**：[ZenDriver CDP DOM 文檔](https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html)
+**來源**：[ZenDriver CDP DOM 文件](https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html)
 
 ```python
 cdp.dom.perform_search(
@@ -120,10 +120,10 @@ cdp.dom.perform_search(
 ```
 
 **參數說明**：
-- `query`：搜尋條件（支援 CSS selector、XPath、純文本）
+- `query`：搜尋條件（支援 CSS selector、XPath、純文字）
 - `include_user_agent_shadow_dom`：**關鍵參數**，設為 `True` 時穿透 Shadow DOM
 
-**返回值**：
+**回傳值**：
 ```python
 (search_id, result_count)
 # search_id: 搜尋會話識別碼（用於後續獲取結果）
@@ -151,17 +151,17 @@ await tab.send(cdp.dom.discard_search_results(search_id=search_id))
 ```
 
 **重要提醒**：
-- ⚠️ **必須清理**：調用 `discard_search_results()` 釋放 CDP 資源
-- ⚠️ **會話失效**：清理後不能再對該 `search_id` 調用 `get_search_results()`
+- ⚠️ **必須清理**：呼叫 `discard_search_results()` 釋放 CDP 資源
+- ⚠️ **會話失效**：清理後不能再對該 `search_id` 呼叫 `get_search_results()`
 
 ### 與 DOMSnapshot 的架構差異
 
 | 特性 | DOMSnapshot | Pierce Method |
 |------|-------------|---------------|
-| **工作方式** | 全量 snapshot → 平坦化 → 遍歷 | 直接搜尋目標元素 |
-| **Shadow DOM** | 平坦化後訪問 | 原生穿透 |
-| **資料量** | 6000+ 節點（整個 DOM 樹） | 1-10 節點（只有匹配結果） |
-| **速度** | 慢（大量數據處理） | 快（按需查詢） |
+| **工作方式** | 全量 snapshot → 平坦化 → 走訪 | 直接搜尋目標元素 |
+| **Shadow DOM** | 平坦化後存取 | 原生穿透 |
+| **資料量** | 6000+ 節點（整個 DOM 樹） | 1-10 節點（只有比對結果） |
+| **速度** | 慢（大量資料處理） | 快（按需查詢） |
 | **記憶體** | 高（全量快照） | 低（僅結果節點） |
 | **時機** | 需等待頁面完全載入 | 可輪詢檢查（智慧等待） |
 
@@ -220,7 +220,7 @@ for attempt in range(max_attempts):
 - ✅ **適應網速**：快速網路 1.2 秒執行，慢速網路最多等 6.2 秒
 - ✅ **提升成功率**：從 20% → 95%+
 
-#### 階段 2：獲取文檔根節點
+#### 階段 2：獲取文件根節點
 
 ```python
 # 獲取文檔根節點（使用 depth=0 避免 CBOR 錯誤）
@@ -337,10 +337,10 @@ for node_id in button_node_ids:
 **技術要點**：
 - **Defensive Programming**：使用 `hasattr()` 檢查屬性存在
 - **屬性解析**：CDP 的 `attributes` 是平坦陣列 `[key, val, key, val, ...]`
-- **靈活匹配**：不強制日期格式，直接使用 HTML 文本讓關鍵字自然匹配
-- **父元素遍歷**：從按鈕的父元素開始（不是按鈕本身），最多 10 層
+- **靈活比對**：不強制日期格式，直接使用 HTML 文字讓關鍵字自然比對
+- **父元素走訪**：從按鈕的父元素開始（不是按鈕本身），最多 10 層
 
-#### 階段 5：關鍵字匹配與回退
+#### 階段 5：關鍵字比對與回退
 
 ```python
 # 關鍵字過濾
@@ -367,11 +367,11 @@ if len(matched_buttons) == 0:
     matched_buttons = enabled_buttons
 ```
 
-**關鍵字匹配邏輯**：
-- ✅ 用戶輸入 `"11/30"` → 匹配包含 `11/30` 的日期（如 `2025/11/30`, `2026/11/30`）
-- ✅ 用戶輸入 `"11-30"` → 只匹配包含 `11-30` 的日期（如 `2025-11-30`）
-- ✅ 用戶輸入 `"11.30"` → 只匹配包含 `11.30` 的日期（如 `2025.11.30`）
-- ✅ **不進行格式轉換**：Python `in` 運算符精確字串匹配
+**關鍵字比對邏輯**：
+- ✅ 使用者輸入 `"11/30"` → 比對包含 `11/30` 的日期（如 `2025/11/30`, `2026/11/30`）
+- ✅ 使用者輸入 `"11-30"` → 只比對包含 `11-30` 的日期（如 `2025-11-30`）
+- ✅ 使用者輸入 `"11.30"` → 只比對包含 `11.30` 的日期（如 `2025.11.30`）
+- ✅ **不進行格式轉換**：Python `in` 運算子精確字串比對
 
 #### 階段 6：模式選擇與 CDP 點擊
 
@@ -423,7 +423,7 @@ except Exception as e:
 
 ### 1. 避免 CBOR Stack Overflow
 
-**問題**：`get_document(depth=-1, pierce=True)` 會遞歸獲取整個 DOM 樹，導致：
+**問題**：`get_document(depth=-1, pierce=True)` 會遞迴獲取整個 DOM 樹，導致：
 ```
 Failed to convert response to JSON: CBOR: stack limit exceeded at position 237314
 ```
@@ -489,9 +489,9 @@ except:
 
 **為何重要**：
 - CDP 會維護搜尋會話，不清理會浪費資源
-- 清理後不能再對該 `search_id` 調用 `get_search_results()`
+- 清理後不能再對該 `search_id` 呼叫 `get_search_results()`
 
-### 5. 父元素遍歷策略
+### 5. 父元素走訪策略
 
 **❌ 錯誤：從按鈕本身開始**：
 ```python
@@ -514,11 +514,11 @@ if hasattr(button_node, 'parent_id') and button_node.parent_id:
 
 ---
 
-## 性能對比
+## 效能對比
 
 ### 實測資料（ibon 日期選擇）
 
-| 指標 | DOMSnapshot (原始) | Pierce Method (優化後) | 提升幅度 |
+| 指標 | DOMSnapshot (原始) | Pierce Method (最佳化後) | 提升幅度 |
 |------|-------------------|----------------------|---------|
 | **總執行時間** | 10-15 秒 | 2-5 秒 | **60-70% ↓** |
 | **第一次成功率** | 20% | 95%+ | **75% ↑** |
@@ -529,7 +529,7 @@ if hasattr(button_node, 'parent_id') and button_node.parent_id:
 
 ### 實際 Log 對比
 
-**優化前（第一次執行，Line 24-53）**：
+**最佳化前（第一次執行，Line 24-53）**：
 ```
 [IBON DATE PIERCE] Waiting for Angular to initialize...
 [IBON DATE PIERCE] Scrolled to bottom
@@ -546,7 +546,7 @@ if hasattr(button_node, 'parent_id') and button_node.parent_id:
 [IBON DATE] Date selection failed, reloading page...  ← 需要重新載入
 ```
 
-**優化後（第二次執行，Line 54-70）**：
+**最佳化後（第二次執行，Line 54-70）**：
 ```
 [IBON DATE PIERCE] Waiting for Angular to initialize...
 [IBON DATE PIERCE] Scrolled to bottom
@@ -594,8 +594,8 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
 **回退觸發條件**：
 1. `perform_search()` 找到 0 個按鈕 → `return False`
 2. 所有按鈕都被 disabled → `return False`
-3. 關鍵字匹配後沒有符合的按鈕 → `return False`
-4. 拋出異常（CDP 調用失敗、點擊失敗等） → `Exception`
+3. 關鍵字比對後沒有符合的按鈕 → `return False`
+4. 丟出異常（CDP 呼叫失敗、點擊失敗等） → `Exception`
 
 ### 2. 智慧等待實作模式
 
@@ -711,7 +711,7 @@ async def platform_feature_auto_select_domsnapshot(tab, config_dict):
 
 ### Q1: 為何不用 `query_selector_all(pierce=True)`？
 
-**A**: 當前 ZenDriver 版本不支援 `pierce` 參數在 `query_selector_all()` 中。
+**A**: 目前 ZenDriver 版本不支援 `pierce` 參數在 `query_selector_all()` 中。
 
 **錯誤示例**：
 ```python
@@ -744,10 +744,10 @@ search_id, count = await tab.send(cdp.dom.perform_search(
 
 2. **所有元素都不可用**：
    - 找到按鈕但都是 `disabled`
-   - 關鍵字匹配後沒有符合的結果
+   - 關鍵字比對後沒有符合的結果
 
-3. **CDP 調用失敗**：
-   - `perform_search()` 拋出異常
+3. **CDP 呼叫失敗**：
+   - `perform_search()` 丟出異常
    - `describe_node()` 失敗（節點已從 DOM 移除）
    - `get_box_model()` 失敗（元素不可見）
 
@@ -763,7 +763,7 @@ search_id, count = await tab.send(cdp.dom.perform_search(
 
 ### Q3: 如何避免 CBOR Stack Overflow 錯誤？
 
-**A**: CBOR 錯誤發生在 `get_document()` 遞歸獲取整個 DOM 樹時。
+**A**: CBOR 錯誤發生在 `get_document()` 遞迴獲取整個 DOM 樹時。
 
 **錯誤訊息**：
 ```
@@ -784,8 +784,8 @@ root_node_id = doc_result.node_id
 ```
 
 **原理**：
-- `depth=0`：只獲取根節點自身，不遞歸子節點
-- `depth=-1`：遞歸獲取所有子孫節點（會導致巨大數據量）
+- `depth=0`：只獲取根節點自身，不遞迴子節點
+- `depth=-1`：遞迴獲取所有子孫節點（會導致巨大資料量）
 - Pierce Method 使用搜尋，不需要完整的樹結構
 
 ---
@@ -806,9 +806,9 @@ document.querySelectorAll('button.btn-buy')  // 返回 []
 ```
 
 **為何 CDP 可以**：
-- CDP (Chrome DevTools Protocol) 是瀏覽器內部協議
+- CDP (Chrome DevTools Protocol) 是瀏覽器內部協定
 - 具有更高權限，可以穿透 Shadow DOM 邊界
-- `include_user_agent_shadow_dom=True` 啟用 Shadow DOM 遍歷
+- `include_user_agent_shadow_dom=True` 啟用 Shadow DOM 走訪
 
 **對比**：
 | 方法 | Shadow DOM 支援 | 權限等級 |
@@ -816,7 +816,7 @@ document.querySelectorAll('button.btn-buy')  // 返回 []
 | JavaScript `querySelectorAll()` | ❌ 無法穿透 closed | 頁面腳本 |
 | ZenDriver `tab.find()` | ❌ 基於 JavaScript | 頁面腳本 |
 | CDP `perform_search()` | ✅ 原生穿透 | 瀏覽器內部 |
-| CDP `dom_snapshot.capture_snapshot()` | ✅ 平坦化訪問 | 瀏覽器內部 |
+| CDP `dom_snapshot.capture_snapshot()` | ✅ 平坦化存取 | 瀏覽器內部 |
 
 ---
 
@@ -846,7 +846,7 @@ for attempt in range(max_attempts):
 # ✅ 適應性：根據實際情況調整
 ```
 
-**實測數據**：
+**實測資料**：
 - 第一次執行（Angular 未載入）：6.6 秒後發現 0 個按鈕 → 回退
 - 第二次執行（Angular 已載入）：1.2 秒找到按鈕 → 立即執行
 
@@ -867,7 +867,7 @@ await tab.send(cdp.dom.discard_search_results(search_id=search_id))
 ```
 
 **注意事項**：
-- ⚠️ **清理後不能再用**：`discard_search_results()` 後不能再調用 `get_search_results()`
+- ⚠️ **清理後不能再用**：`discard_search_results()` 後不能再呼叫 `get_search_results()`
 - ⚠️ **防禦性 try-except**：清理失敗不應影響主流程
 
 ```python
@@ -882,7 +882,7 @@ except:
 
 ### Q7: 如何處理多個 Shadow DOM 層級？
 
-**A**: `include_user_agent_shadow_dom=True` 會自動遍歷所有 Shadow DOM 層級。
+**A**: `include_user_agent_shadow_dom=True` 會自動走訪所有 Shadow DOM 層級。
 
 **多層 Shadow DOM 結構**：
 ```html
@@ -904,9 +904,9 @@ search_id, count = await tab.send(cdp.dom.perform_search(
 ))
 ```
 
-**無需手動遍歷**：
-- ✅ CDP 內部會遞歸遍歷所有 Shadow DOM
-- ✅ 找到所有匹配的元素（無論在哪一層）
+**無需手動走訪**：
+- ✅ CDP 內部會遞迴走訪所有 Shadow DOM
+- ✅ 找到所有比對的元素（無論在哪一層）
 - ✅ 開發者只需處理搜尋結果
 
 ---
@@ -915,12 +915,12 @@ search_id, count = await tab.send(cdp.dom.perform_search(
 
 ### 關鍵成就
 
-1. **性能突破**：60-70% 速度提升（10-15秒 → 2-5秒）
+1. **效能突破**：60-70% 速度提升（10-15秒 → 2-5秒）
 2. **成功率提升**：第一次 20% → 95%+
-3. **技術創新**：從優化 DOMSnapshot 發現了更優的 Pierce Method
+3. **技術創新**：從最佳化 DOMSnapshot 發現了更優的 Pierce Method
 4. **實戰驗證**：ibon 日期選擇完整實作，實測通過
 
-### 適用場景
+### 適用情境
 
 **推薦使用 Pierce Method**：
 - ✅ 處理 closed Shadow DOM
@@ -929,7 +929,7 @@ search_id, count = await tab.send(cdp.dom.perform_search(
 - ✅ 按需查詢特定元素
 
 **仍使用 DOMSnapshot**：
-- ✅ 需要提取複雜的關聯數據（如表格、清單）
+- ✅ 需要提取複雜的關聯資料（如表格、清單）
 - ✅ 作為 Pierce Method 的 Fallback
 - ✅ 需要分析整個 DOM 結構
 
@@ -938,12 +938,12 @@ search_id, count = await tab.send(cdp.dom.perform_search(
 1. **Primary → Fallback 模式**：Pierce 優先，失敗回退 DOMSnapshot
 2. **智慧等待**：輪詢檢查，找到即執行
 3. **資源管理**：必須清理搜尋會話
-4. **錯誤處理**：分層處理，防禦性編程
-5. **靈活匹配**：不強制格式，直接使用文本匹配
+4. **錯誤處理**：分層處理，防禦性程式設計
+5. **靈活比對**：不強制格式，直接使用文字比對
 
 ### 參考資源
 
-- **ZenDriver 官方文檔**：https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html
+- **ZenDriver 官方文件**：https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html
 - **實作範例**：`src/nodriver_tixcraft.py` Line 6368-6724
 - **測試驗證**：`.temp/manual_logs.txt` Line 24-70
 - **API 參考**：`docs/06-api-reference/nodriver_api_guide.md`
@@ -951,6 +951,6 @@ search_id, count = await tab.send(cdp.dom.perform_search(
 
 ---
 
-**文檔版本**：2025-10-26
+**文件版本**：2025-10-26
 **作者**：Tickets Hunter Development Team
 **最後更新**：ibon 日期選擇 Pierce Method 完整實作

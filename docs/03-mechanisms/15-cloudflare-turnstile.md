@@ -30,7 +30,7 @@ document.querySelector('.cf-turnstile')   // KKTIX 登入頁查得到，Cityline
 iframe 的 box model。也不要拿容器 class 當「有沒有挑戰」的判斷依據——見下方
 「驗證邏輯」，點擊後的成功判定本來就不該先分類挑戰形態。
 
-但 **CDP 協議可以找到**：
+但 **CDP 協定可以找到**：
 
 | 方法 | 能否找到 |
 |------|----------|
@@ -41,7 +41,7 @@ iframe 的 box model。也不要拿容器 class 當「有沒有挑戰」的判�
 
 ### `verify_cf()` 無效
 
-zendriver 繼承自 nodriver 的 `verify_cf()` 使用 OpenCV 模板匹配截圖來找 checkbox。
+zendriver 繼承自 nodriver 的 `verify_cf()` 使用 OpenCV 範本比對截圖來找 checkbox。
 在實際 Cloudflare 頁面上**完全無效**（返回 None，checkbox 不會被點擊）。
 
 ## 架構設計
@@ -74,7 +74,7 @@ Method 3: verify_cf 模板匹配               ← 最後手段（效果差）
 
 點擊後**不預先判斷挑戰形態**，改為接受任何一種成功訊號（`wait_for_challenge_cleared()`）：
 
-| 訊號 | 對應場景 |
+| 訊號 | 對應情境 |
 |------|----------|
 | response 欄位出現 token | 嵌入式 widget 原地解開 |
 | response 欄位消失 | 頁面已離開挑戰 |

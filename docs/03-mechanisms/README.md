@@ -1,6 +1,6 @@
 # 12-Stage 搶票機制文件索引
 
-**文件說明**：提供 12 階段搶票自動化機制的完整索引與導覽，便於查找相關文件
+**文件說明**：提供 12 階段搶票自動化機制的完整索引與導覽，便於尋找相關文件
 **最後更新**：2026-06-10
 
 ---
@@ -83,13 +83,13 @@ docs/03-mechanisms/
 **文件**：[04-date-selection.md](./04-date-selection.md)
 
 **核心技術**：
-- Early Return Pattern（優先級驅動關鍵字匹配）
+- Early Return Pattern（優先順序驅動關鍵字比對）
 - Conditional Fallback（條件回退機制）
 - Shadow DOM Penetration（iBon - DOMSnapshot）
 
 **主要範例平台**：TixCraft
 
-**適用場景**：
+**適用情境**：
 - 實作新平台的日期選擇功能
 - 了解 Feature 003: Keyword Priority Fallback
 - 學習 Shadow DOM 處理技術
@@ -106,16 +106,16 @@ docs/03-mechanisms/
 **文件**：[05-area-selection.md](./05-area-selection.md)
 
 **核心技術**：
-- Early Return Pattern（關鍵字優先匹配）
+- Early Return Pattern（關鍵字優先比對）
 - Conditional Fallback（智慧回退）
 - keyword_exclude（排除關鍵字過濾）
 - Ticket Availability Check（票數檢查）
 
 **主要範例平台**：TixCraft
 
-**適用場景**：
+**適用情境**：
 - 實作新平台的區域選擇功能
-- 了解 AND/OR 邏輯關鍵字匹配
+- 了解 AND/OR 邏輯關鍵字比對
 - 學習票數可用性檢查機制
 
 **關鍵程式碼片段**：
@@ -132,14 +132,14 @@ docs/03-mechanisms/
 
 **核心技術**：
 - ddddocr OCR 引擎（圖形驗證碼辨識）
-- 問答匹配引擎（KKTIX 問答式驗證碼）
+- 問答比對引擎（KKTIX 問答式驗證碼）
 - 自動答題機制（KKTIX, v2.0+）
 - fail_list 機制（避免重複錯誤答案）
 - 人類化延遲（隨機延遲模擬真人）
 
 **主要範例平台**：KKTIX（問答式 + 自動答題）+ TixCraft（OCR）
 
-**適用場景**：
+**適用情境**：
 - 實作圖形驗證碼 OCR 辨識
 - 實作問答式驗證碼處理
 - 實作自動答題功能（v2.0+）
@@ -164,11 +164,11 @@ docs/03-mechanisms/
 ### Stage 2: 身份驗證
 - Cookie 登入（TixCraft）
 - 帳號密碼登入（KKTIX, iBon）
-- 自動登入檢測
+- 自動登入偵測
 
 ### Stage 3: 頁面監控
 - 即將開賣頁面自動重載（TixCraft）
-- 售罄檢測
+- 售罄偵測
 - 頁面狀態監控
 - 版面自動偵測（TicketPlus, v2.0+）
 
@@ -179,13 +179,13 @@ docs/03-mechanisms/
 
 ### Stage 8: 表單填寫
 - 個人資料自動填寫
-- 自訂問題答案匹配
+- 自訂問題答案比對
 - 必填欄位驗證
 - 實名認證處理（FamiTicket, iBon, v2.0+）
 
 ### Stage 9: 同意條款處理
 - 自動勾選同意條款
-- 特殊對話框處理（TicketPlus）
+- 特殊對話方塊處理（TicketPlus）
 - 實名制卡片接受
 
 ### Stage 10: 訂單確認與送出
@@ -196,12 +196,12 @@ docs/03-mechanisms/
 ### Stage 11: 排隊與付款
 - 排隊狀態監控（Cityline）
 - 付款頁面處理
-- 超時重試
+- 逾時重試
 
 ### Stage 12: 錯誤處理與重試
 - 全域錯誤處理
 - 重試策略
-- 錯誤日誌記錄
+- 錯誤記錄
 
 **注意**：以上機制的完整規格請參考 [12-Stage 標準文件](../02-development/ticket_automation_standard.md)
 
@@ -216,7 +216,7 @@ docs/03-mechanisms/
 **文件**：[kktix-reference.md](../04-implementation/platform-examples/kktix-reference.md)
 
 **平台特色**：
-- **問答式驗證碼**：最具挑戰性的驗證碼類型
+- **問答式驗證碼**：最具挑戰性的驗證碼型別
 - **價格列表模式**：兩階段區域選擇（價格表 + 票數輸入）
 - **批次擷取票種列**：先取得所有票種文字與 input index，再做關鍵字配對
 - **fail_list 機制**：智慧答案選擇避免重複錯誤
@@ -271,19 +271,19 @@ docs/03-mechanisms/
 **初次接觸專案**：
 1. [12-Stage 標準](../02-development/ticket_automation_standard.md) - 了解完整流程
 2. [Stage 4: 日期選擇](./04-date-selection.md) - 學習核心機制
-3. [Stage 5: 區域選擇](./05-area-selection.md) - 理解關鍵字匹配
+3. [Stage 5: 區域選擇](./05-area-selection.md) - 理解關鍵字比對
 4. [KKTIX 參考實作](../04-implementation/platform-examples/kktix-reference.md) - 完整範例
 
 **開發新平台**：
 1. [12-Stage 標準](../02-development/ticket_automation_standard.md) - 確認功能需求
 2. 相關機制文件（Stage 4, 5, 7）- 實作細節
 3. 相似平台參考實作 - 程式碼範例
-4. [程式碼結構分析](../02-development/structure.md) - 函數索引
+4. [程式碼結構分析](../02-development/structure.md) - 函式索引
 
 **除錯問題**：
-1. [除錯方法論](../internal/testing-debugging/debugging_methodology.md) - 系統化除錯
+1. [測試執行指南](../02-development/testing_execution_guide.md) - 標準測試流程
 2. 相關機制文件 FAQ - 常見問題
-3. [疑難排解索引](../internal/troubleshooting/README.md) - 已知問題解決方案
+3. [使用者手冊](../../guide/README.md) - 常見設定與操作問題
 
 ---
 
@@ -291,18 +291,18 @@ docs/03-mechanisms/
 
 所有機制文件遵循以下設計原則：
 
-### 1. Early Return Pattern（優先級驅動）
+### 1. Early Return Pattern（優先順序驅動）
 
-**核心理念**：關鍵字按優先級排列,第一個匹配立即停止。
+**核心理念**：關鍵字按優先順序排列,第一個比對立即停止。
 
 **應用階段**：Stage 4（日期選擇）、Stage 5（區域選擇）
 
 **優勢**：
-- 確保優先級較高的選項先被選中
+- 確保優先順序較高的選項先被選取
 - 避免掃描所有選項後再選擇
 - 符合使用者的直覺期望
 
-**詳細說明**：[Feature 003: Keyword Priority Fallback](../../specs/003-keyword-priority-fallback/implementation-guide.md)
+**詳細說明**：[Stage 4 日期選擇](04-date-selection.md)、[Stage 5 區域選擇](05-area-selection.md)
 
 ---
 
@@ -355,7 +355,7 @@ docs/03-mechanisms/
 - 平台設定：拓元、KKTIX、Cityline 專用選項
 
 **不支援**（需重啟）：
-- 瀏覽器類型、WebDriver 類別、視窗大小
+- 瀏覽器型別、WebDriver 類別、視窗大小
 - 帳號登入資訊（Cookie、帳號密碼）
 - 網路設定（Port、Proxy）
 
@@ -391,11 +391,11 @@ docs/03-mechanisms/
 **背景**：
 - 選擇模式邏輯曾在專案中重複 8+ 次
 - 不同開發者可能使用不同格式（底線 vs 空格）
-- 重複代碼增加維護負擔
+- 重複程式碼增加維護負擔
 
 **共用函式**（定義於 `util.py`，v2025.12.18 更新）：
 
-| 函式 | 用途 | 參數 | 返回值 |
+| 函式 | 用途 | 參數 | 回傳值 |
 |------|------|------|--------|
 | `get_target_index_by_mode()` | 計算目標索引 | 列表長度, 模式 | int 或 None |
 | `get_target_item_from_matched_list()` | 取得目標物件 | 物件列表, 模式 | 物件或 None |
@@ -432,18 +432,18 @@ else:
 |------|------|-----------|------|
 | 從上到下 | `CONST_FROM_TOP_TO_BOTTOM` | `from top to bottom`, `from_top_to_bottom` | 選第一個 (index: 0) |
 | 從下到上 | `CONST_FROM_BOTTOM_TO_TOP` | `from bottom to top`, `from_bottom_to_top` | 選最後一個 (index: -1) |
-| 中間 | `CONST_CENTER` | `center` | 選中間 (index: length // 2) |
+| 中間 | `CONST_CENTER` | `center` | 選取間 (index: length // 2) |
 | 隨機 | `CONST_RANDOM` | `random` | 隨機選擇 |
 
 **應用階段**：Stage 4（日期選擇）、Stage 5（區域選擇）
 
 **重構記錄**（v2025.12.18 更新）：
 - 新增 `get_target_index_by_mode()` 基礎函式
-- 重構 `get_target_item_from_matched_list()` 內部調用基礎函式
-- 統一 UDN、iBon、FamiTicket 共 8 處重複代碼
+- 重構 `get_target_item_from_matched_list()` 內部呼叫基礎函式
+- 統一 UDN、iBon、FamiTicket 共 8 處重複程式碼
 - 支援底線格式（`from_bottom_to_top`）向後相容
 - **新增 `get_debug_mode()`**：替換 28 個直接索引存取，避免 KeyError
-- **新增 `parse_keyword_string_to_array()`**：替換 9 個 json.loads 模式，簡化約 73 行代碼
+- **新增 `parse_keyword_string_to_array()`**：替換 9 個 json.loads 模式，簡化約 73 行程式碼
 
 ---
 
@@ -452,26 +452,25 @@ else:
 ### 核心文件
 
 - 📖 [12-Stage 標準](../02-development/ticket_automation_standard.md) - 完整流程規範
-- 🏗️ [程式碼結構分析](../02-development/structure.md) - 函數索引
+- 🏗️ [程式碼結構分析](../02-development/structure.md) - 函式索引
 - 📋 [開發指南](../02-development/development_guide.md) - 開發規範
 - 📋 [程式碼範本](../02-development/coding_templates.md) - 寫法範本
 
 ### API 參考
 
 - 📖 [Zendriver API 指南](../06-api-reference/zendriver_api_guide.md) - 瀏覽器自動化主要參考
-- 📋 [CDP 協議參考](../06-api-reference/cdp_protocol_reference.md) - Chrome DevTools Protocol
+- 📋 [CDP 協定參考](../06-api-reference/cdp_protocol_reference.md) - Chrome DevTools Protocol
 - 📋 [ddddocr API 指南](../06-api-reference/ddddocr_api_guide.md) - OCR 引擎
 - 📋 [NoDriver API 指南（已棄用）](../06-api-reference/nodriver_api_guide.md) - 遷移前參考，勿直接照抄
 
 ### 測試與除錯
 
-- 🧪 [測試執行指南](../internal/testing-debugging/testing_execution_guide.md) - 標準測試流程
-- 🐛 [除錯方法論](../internal/testing-debugging/debugging_methodology.md) - 系統化除錯
+- 🧪 [測試執行指南](../02-development/testing_execution_guide.md) - 標準測試流程
 
 ### 疑難排解
 
-- 🔧 [疑難排解索引](../internal/troubleshooting/README.md) - 已知問題解決方案
-- 🔧 [iBon Cookie 疑難排解](../internal/troubleshooting/ibon_cookie_troubleshooting.md) - iBon 特定問題
+- 🔧 [使用者手冊](../../guide/README.md) - 安裝、設定與常見問題
+- 🔧 [ibon Queue-IT 常見問題](../../guide/ibon-queue-it-faq.md) - ibon 排隊說明
 
 ---
 
@@ -512,7 +511,7 @@ else:
 
 ### 撰寫新機制文件
 
-**文件模板**：參考 `04-date-selection.md` 的結構
+**文件範本**：參考 `04-date-selection.md` 的結構
 
 **必須包含的章節**：
 1. **概述**：目的、輸入、輸出、關鍵技術

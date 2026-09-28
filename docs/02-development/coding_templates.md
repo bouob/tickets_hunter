@@ -1,11 +1,11 @@
 # 搶票程式標準架構與範本
 
-**文件說明**：提供 Tickets Hunter 專案的程式碼範本、12 階段實作檢查清單與跨平台可重用代碼片段
+**文件說明**：提供 Tickets Hunter 專案的程式碼範本、12 階段實作檢查清單與跨平台可重用程式碼片段
 **最後更新**：2026-06-10
 
 ---
 
-> Tickets Hunter 多平台搶票系統統一代碼範本庫
+> Tickets Hunter 多平台搶票系統統一程式碼範本庫
 
 ## 📚 **文件參考指南**
 
@@ -13,15 +13,15 @@
 
 - **開發規範與 ZenDriver First 策略**：`development_guide.md`
 - **12 階段詳細定義**：`ticket_automation_standard.md`
-- **平台函數對照表**：`structure.md`
+- **平台函式對照表**：`structure.md`
 
 ---
 
 ## 📖 **本文件包含的內容**
 
-1. **標準範本庫** - 各功能模組的代碼範本（ZenDriver 和 Chrome 版本）
+1. **標準範本庫** - 各功能模組的程式碼範本
 2. **實作完整度檢查表** - 平台認證標準
-3. **平台完成度評分** - 當前各平台的實作狀態
+3. **平台完成度評分** - 目前各平台的實作狀態
 4. **2025 開發建議** - ZenDriver First 優先策略
 
 ---
@@ -43,7 +43,7 @@
 
 ### 檢查清單與評分
 - **實作完整度檢查表** → 白金/金/銀級標準
-- **平台完成度總覽** → 當前各平台狀態
+- **平台完成度總覽** → 目前各平台狀態
 - **2025 開發建議** → ZenDriver First 策略
 
 ---
@@ -83,11 +83,11 @@ async def nodriver_platform_function_name(tab, config_dict, ...):
 ```
 
 **DebugLogger 最佳實踐**：
-- ✅ 函數開頭建立 `debug = util.create_debug_logger(config_dict)`
+- ✅ 函式開頭建立 `debug = util.create_debug_logger(config_dict)`
 - ✅ 使用 `debug.log()` 取代 `if show_debug_message: print()`
-- ✅ 使用 `[NoDriver]` 前綴區分引擎
+- ✅ 使用 `[NoDriver]` 字首區分引擎
 - ✅ 詳細記錄非同步操作狀態
-- ✅ 捕獲並記錄所有異常
+- ✅ 捕捉並記錄所有異常
 - ✅ 使用 f-string 格式化輸出
 
 **時間戳行為**：
@@ -205,53 +205,6 @@ async def nodriver_{platform}_main(tab, url, config_dict, ocr=None):
 
 ---
 
-### 🥈 **傳統範本 - Chrome 主程式架構（維護模式）**
-
-```python
-def {platform}_main(driver, url, config_dict, ocr=None):
-    """
-    Chrome 版本主流程控制（維護模式）
-
-    Args:
-        driver: WebDriver 實例
-        url: 當前頁面 URL
-        config_dict: 設定字典
-        ocr: OCR 辨識器 (可選)
-
-    說明:
-        - 同步架構
-        - 僅維護既有功能，不接受新功能
-        - 新平台請使用 ZenDriver 版本開發
-    """
-    debug = util.create_debug_logger(config_dict)
-
-    # 模組層級狀態管理（_state = {} 於檔案頂部宣告一次）
-    if "fail_list" not in _state:
-        _state.update({
-            "fail_list": [],
-            "start_time": None,
-            "done_time": None,
-        })
-
-    debug.log(f"[Chrome] {platform}_main: processing URL: {url}")
-
-    # URL 路由邏輯 (同步版本)
-    if '/login' in url:
-        {platform}_login(driver, config_dict)
-    elif '/event' in url:
-        _state["start_time"] = time.time()
-        {platform}_date_auto_select(driver, config_dict)
-        {platform}_area_auto_select(driver, config_dict)
-    elif '/ticket' in url:
-        {platform}_assign_ticket_number(driver, config_dict)
-        if ocr:
-            {platform}_auto_ocr(driver, config_dict, ocr)
-
-    debug.log(f"[Chrome] {platform}_main completed")
-```
-
----
-
 ## 📅 **日期選擇範本**
 
 ### 🏅 **推薦範本 - ZenDriver 日期選擇**
@@ -363,63 +316,6 @@ async def nodriver_{platform}_date_auto_select(tab, config_dict):
 
 ---
 
-### 🥈 **傳統範本 - Chrome 日期選擇**
-```python
-def {platform}_date_auto_select(driver, config_dict):
-    """
-    自動選擇演出日期
-    """
-    debug = util.create_debug_logger(config_dict)
-    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
-
-    debug.log(f"date_keyword: {date_keyword}")
-
-    is_date_assigned = False
-    matched_blocks = []
-
-    # 查找日期元素
-    date_list = None
-    try:
-        date_list = driver.find_elements(By.CSS_SELECTOR, 'div.date-item, .date-option, .performance-date')
-    except Exception as exc:
-        debug.log(f"find date elements Exception: {exc}")
-
-    if date_list:
-        date_keyword_array = date_keyword.split(' ')
-
-        for date_row in date_list:
-            date_text = ""
-            try:
-                date_text = date_row.get_attribute("innerText")
-                if date_text is None:
-                    date_text = date_row.text
-            except Exception as exc:
-                debug.log(f"get date text Exception: {exc}")
-                continue
-
-            if date_text:
-                date_text = util.format_keyword_string(date_text)
-                debug.log(f"date_text: {date_text}")
-
-                # 關鍵字比對
-                is_match_date = util.is_matched_by_keyword(date_text, date_keyword_array)
-                if is_match_date:
-                    matched_blocks.append(date_row)
-
-        # 選擇目標日期
-        if matched_blocks:
-            target_date = util.get_target_item_from_matched_list(matched_blocks, config_dict["date_auto_select"]["mode"])
-            if target_date:
-                try:
-                    driver.execute_script("arguments[0].click();", target_date)
-                    is_date_assigned = True
-                    debug.log("date auto select success")
-                except Exception as exc:
-                    debug.log(f"date click Exception: {exc}")
-
-    return is_date_assigned
-```
-
 ### 🥈 **銀級 - ZenDriver 日期選擇** (簡化版範本)
 
 ```python
@@ -504,7 +400,7 @@ async def nodriver_{platform}_date_auto_select(tab, config_dict):
 #### 使用說明
 
 **邏輯規則**：
-- **OR 邏輯**：按陣列順序，找到第一個匹配就選擇
+- **OR 邏輯**：按陣列順序，找到第一個比對就選擇
 - **AND 邏輯**：空格分隔表示必須全部包含
 - **空字串**：不使用關鍵字，改用自動選擇模式（random/從上到下/從下到上）
 
@@ -514,200 +410,9 @@ async def nodriver_{platform}_date_auto_select(tab, config_dict):
 - 建議關鍵字越精確越好，避免誤選
 
 #### 關鍵字解析規範
-```python
-# Chrome 版本（維護模式）
-area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
-area_keyword_array = []
-try:
-    area_keyword_array = json.loads("["+ area_keyword +"]")
-except Exception as exc:
-    area_keyword_array = []
-
-# ZenDriver 版本 (必須對齊標準)
-area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
-area_keyword_array = []
-try:
-    area_keyword_array = json.loads("["+ area_keyword +"]")
-except Exception as exc:
-    area_keyword_array = []
-```
-
-### Chrome 版本（維護模式）
-```python
-def {platform}_area_auto_select(driver, config_dict):
-    """
-    自動選擇座位區域
-    """
-    debug = util.create_debug_logger(config_dict)
-    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
-
-    debug.log(f"area_keyword: {area_keyword}")
-
-    is_area_assigned = False
-    matched_blocks = []
-
-    # 查找區域元素
-    area_list = None
-    try:
-        area_list = driver.find_elements(By.CSS_SELECTOR, 'div.area-item, .seat-area, .zone-option')
-    except Exception as exc:
-        debug.log(f"find area elements Exception: {exc}")
-
-    if area_list:
-        # 使用標準關鍵字解析
-        area_keyword_array = []
-        try:
-            area_keyword_array = json.loads("["+ area_keyword +"]")
-        except Exception as exc:
-            area_keyword_array = []
-
-        for area_keyword_item in area_keyword_array:
-            for area_row in area_list:
-                area_text = ""
-                try:
-                    area_text = area_row.get_attribute("innerText")
-                    if area_text is None:
-                        area_text = area_row.text
-                except Exception as exc:
-                    debug.log(f"get area text Exception: {exc}")
-                    continue
-
-                if area_text:
-                    area_text = util.format_keyword_string(area_text)
-                    debug.log(f"area_text: {area_text}")
-
-                    # 關鍵字比對 (支援 AND 邏輯)
-                    area_keyword_array_and = area_keyword_item.split(' ')
-                    is_match_area = util.is_matched_by_keyword(area_text, area_keyword_array_and)
-                    if is_match_area:
-                        matched_blocks.append(area_row)
-
-            # 如果找到匹配項目就停止
-            if matched_blocks:
-                break
-
-        # 選擇目標區域
-        if matched_blocks:
-            target_area = util.get_target_item_from_matched_list(matched_blocks, config_dict["area_auto_select"]["mode"])
-            if target_area:
-                try:
-                    driver.execute_script("arguments[0].click();", target_area)
-                    is_area_assigned = True
-                    debug.log("area auto select success")
-                except Exception as exc:
-                    debug.log(f"area click Exception: {exc}")
-
-    return is_area_assigned
-```
-
----
-
 ## 🎟️ **票券數量選擇範本**
 
-### Chrome 版本（維護模式）
-```python
-def {platform}_assign_ticket_number(driver, config_dict):
-    """
-    自動分配票券數量
-    """
-    debug = util.create_debug_logger(config_dict)
-    ticket_number = config_dict["ticket_number"]
-
-    debug.log(f"ticket_number: {ticket_number}")
-
-    is_ticket_number_assigned = False
-
-    # 查找票數輸入框或選擇器
-    ticket_input = None
-    try:
-        # 嘗試多種選擇器
-        selectors = [
-            'input[name="ticket_number"]',
-            'select[name="quantity"]',
-            'input.ticket-count',
-            '.quantity-selector input'
-        ]
-
-        for selector in selectors:
-            try:
-                ticket_input = driver.find_element(By.CSS_SELECTOR, selector)
-                if ticket_input:
-                    break
-            except:
-                continue
-
-    except Exception as exc:
-        debug.log(f"find ticket input Exception: {exc}")
-
-    if ticket_input:
-        try:
-            # 清空並輸入票數
-            ticket_input.clear()
-            ticket_input.send_keys(str(ticket_number))
-            is_ticket_number_assigned = True
-
-            debug.log("ticket number assigned success")
-
-        except Exception as exc:
-            debug.log(f"assign ticket number Exception: {exc}")
-
-    return is_ticket_number_assigned
-```
-
----
-
 ## ✅ **同意條款處理範本**
-
-### Chrome 版本（維護模式）
-```python
-def {platform}_ticket_agree(driver, config_dict):
-    """
-    自動勾選同意條款
-    """
-    debug = util.create_debug_logger(config_dict)
-
-    debug.log("checking agreement checkboxes")
-
-    is_agree_success = False
-
-    # 查找同意條款選項
-    agree_checkboxes = None
-    try:
-        selectors = [
-            'input[type="checkbox"]',
-            'input#agree',
-            '.agreement-checkbox input',
-            'input[name*="agree"]'
-        ]
-
-        for selector in selectors:
-            try:
-                agree_checkboxes = driver.find_elements(By.CSS_SELECTOR, selector)
-                if agree_checkboxes:
-                    break
-            except:
-                continue
-
-    except Exception as exc:
-        debug.log(f"find agreement checkboxes Exception: {exc}")
-
-    if agree_checkboxes:
-        for checkbox in agree_checkboxes:
-            try:
-                # 檢查是否已勾選
-                is_checked = checkbox.is_selected()
-                if not is_checked:
-                    # 使用 JavaScript 點擊確保成功
-                    driver.execute_script("arguments[0].click();", checkbox)
-                    is_agree_success = True
-
-                    debug.log("agreement checkbox checked")
-
-            except Exception as exc:
-                debug.log(f"checkbox click Exception: {exc}")
-
-    return is_agree_success
-```
 
 ### ZenDriver 版本 【推薦使用】
 ```python
@@ -755,77 +460,6 @@ async def nodriver_{platform}_ticket_agree(tab, config_dict):
 ---
 
 ## 🆔 **實名認證處理範本**
-
-### Chrome 版本（維護模式）
-```python
-def {platform}_real_name_verify(driver, config_dict):
-    """
-    自動填寫實名認證資料
-    """
-    debug = util.create_debug_logger(config_dict)
-    real_name = config_dict["advanced"]["{platform}_real_name"].strip()
-    id_number = config_dict["advanced"]["{platform}_id_number"].strip()
-
-    debug.log(f"real_name: {real_name}")
-    debug.log(f"id_number: {id_number[:3]}***")  # 隱藏部分身分證號
-
-    is_real_name_filled = False
-
-    if len(real_name) > 0 and len(id_number) > 0:
-        try:
-            # 查找姓名欄位
-            name_input = None
-            name_selectors = [
-                'input[name="real_name"]',
-                'input[name="name"]',
-                'input.real-name',
-                'input#real_name'
-            ]
-
-            for selector in name_selectors:
-                try:
-                    name_input = driver.find_element(By.CSS_SELECTOR, selector)
-                    if name_input:
-                        break
-                except:
-                    continue
-
-            # 查找身分證號欄位
-            id_input = None
-            id_selectors = [
-                'input[name="id_number"]',
-                'input[name="identity"]',
-                'input.id-number',
-                'input#id_number'
-            ]
-
-            for selector in id_selectors:
-                try:
-                    id_input = driver.find_element(By.CSS_SELECTOR, selector)
-                    if id_input:
-                        break
-                except:
-                    continue
-
-            # 填寫資料
-            if name_input:
-                name_input.clear()
-                name_input.send_keys(real_name)
-
-            if id_input:
-                id_input.clear()
-                id_input.send_keys(id_number)
-
-            if name_input and id_input:
-                is_real_name_filled = True
-
-                debug.log("real name verification filled")
-
-        except Exception as exc:
-            debug.log(f"real name verification Exception: {exc}")
-
-    return is_real_name_filled
-```
 
 ### ZenDriver 版本 【推薦使用】
 ```python
@@ -902,106 +536,7 @@ async def nodriver_{platform}_real_name_verify(tab, config_dict):
 
 ## 🔐 **登入處理範本**
 
-### Chrome 版本（維護模式）
-```python
-def {platform}_login(driver, config_dict):
-    """
-    平台登入處理
-    """
-    debug = util.create_debug_logger(config_dict)
-    account = config_dict["advanced"]["{platform}_account"]
-    password = config_dict["advanced"]["{platform}_password_plaintext"].strip()
-
-    if password == "":
-        password = util.decryptMe(config_dict["advanced"]["{platform}_password"])
-
-    debug.log(f"account: {account}")
-
-    is_login_success = False
-
-    if len(account) > 0 and len(password) > 0:
-        try:
-            # 查找登入表單
-            account_input = driver.find_element(By.CSS_SELECTOR, 'input[name="email"], input[name="account"], input[type="email"]')
-            password_input = driver.find_element(By.CSS_SELECTOR, 'input[name="password"], input[type="password"]')
-
-            if account_input and password_input:
-                account_input.clear()
-                account_input.send_keys(account)
-
-                password_input.clear()
-                password_input.send_keys(password)
-
-                # 查找登入按鈕
-                login_button = driver.find_element(By.CSS_SELECTOR, 'button[type="submit"], input[type="submit"], .btn-login')
-                if login_button:
-                    driver.execute_script("arguments[0].click();", login_button)
-                    is_login_success = True
-
-                    debug.log("login form submitted")
-
-        except Exception as exc:
-            debug.log(f"login Exception: {exc}")
-
-    return is_login_success
-```
-
----
-
 ## 🎨 **OCR 驗證碼處理範本**
-
-### Chrome 版本（維護模式）
-```python
-def {platform}_auto_ocr(driver, config_dict, ocr, Captcha_Browser, ocr_captcha_image_source):
-    """
-    自動 OCR 驗證碼處理
-    """
-    debug = util.create_debug_logger(config_dict)
-    force_submit = config_dict["ocr_captcha"]["force_submit"]
-
-    debug.log("starting OCR captcha processing")
-
-    is_captcha_solved = False
-
-    # 查找驗證碼輸入框
-    captcha_input = None
-    try:
-        captcha_input = driver.find_element(By.CSS_SELECTOR, 'input[name="captcha"], input.captcha-input, #verifyCode')
-    except Exception as exc:
-        debug.log(f"find captcha input Exception: {exc}")
-
-    if captcha_input and ocr:
-        # 獲取 OCR 答案
-        ocr_answer = {platform}_get_ocr_answer(driver, ocr, ocr_captcha_image_source, Captcha_Browser)
-
-        if ocr_answer and len(ocr_answer.strip()) > 0:
-            ocr_answer = ocr_answer.strip()
-
-            debug.log(f"ocr_answer: {ocr_answer}")
-
-            # 驗證答案長度 (依平台調整)
-            if len(ocr_answer) == 4:  # 或其他平台特定長度
-                try:
-                    captcha_input.clear()
-                    captcha_input.send_keys(ocr_answer)
-
-                    if force_submit:
-                        # 自動提交
-                        submit_button = driver.find_element(By.CSS_SELECTOR, 'button[type="submit"], input[type="submit"]')
-                        if submit_button:
-                            driver.execute_script("arguments[0].click();", submit_button)
-
-                    is_captcha_solved = True
-
-                    debug.log("captcha OCR success")
-
-                except Exception as exc:
-                    debug.log(f"captcha input Exception: {exc}")
-
-    return is_captcha_solved
-```
-
----
 
 ## 📝 **錯誤處理與重試機制**
 
@@ -1041,10 +576,10 @@ def {platform}_function_with_retry(driver, config_dict, max_retry=3):
 
 > 統一的暫停檢查機制，確保使用者可隨時中斷執行
 
-### 核心暫停檢查函數
+### 核心暫停檢查函式
 
 #### `check_and_handle_pause(config_dict)`
-主要暫停檢查函數，所有平台函數都應使用此統一入口。
+主要暫停檢查函式，所有平台函式都應使用此統一入口。
 
 **位置**：`src/nodriver_common.py`
 
@@ -1054,8 +589,8 @@ def {platform}_function_with_retry(driver, config_dict, max_retry=3):
 - `verbose = true` → 顯示 "BOT Paused."
 - `verbose = false` → 不顯示訊息
 
-**使用場景**：
-1. 函數開始時檢查
+**使用情境**：
+1. 函式開始時檢查
 2. 長時間迴圈中定期檢查
 3. 關鍵操作前檢查
 
@@ -1083,14 +618,14 @@ async def nodriver_platform_function(tab, config_dict):
 
 ---
 
-### 暫停輔助函數
+### 暫停輔助函式
 
 #### 1. `sleep_with_pause_check(tab, seconds, config_dict)`
 取代 `tab.sleep()`，在等待期間檢查暫停狀態。
 
 **位置**：`src/nodriver_common.py`
 
-**使用時機**：需要延遲等待的 ZenDriver 函數
+**使用時機**：需要延遲等待的 ZenDriver 函式
 
 **範本**：
 ```python
@@ -1254,7 +789,7 @@ async def nodriver_platform_date_auto_select(tab, config_dict):
 ### 重要規則與最佳實踐
 
 #### 1. **統一使用 `check_and_handle_pause()`**
-- ✅ 正確：使用統一函數
+- ✅ 正確：使用統一函式
   ```python
   if await check_and_handle_pause(config_dict):
       return False
@@ -1273,17 +808,16 @@ async def nodriver_platform_date_auto_select(tab, config_dict):
 - 保持行為一致性
 
 #### 3. **僅在 ZenDriver 版本實作**
-- Chrome Driver 版本不支援暫停機制
 - 保持兩個版本的功能差異性
 - ZenDriver 版本的優勢之一
 
 #### 4. **暫停後的處理**
-- 檢測到暫停後應該 `return` 而非 `break`
-- 返回值應該表示操作未完成（通常是 `False`）
-- 確保函數狀態一致性
+- 偵測到暫停後應該 `return` 而非 `break`
+- 回傳值應該表示操作未完成（通常是 `False`）
+- 確保函式狀態一致性
 
 #### 5. **檢查時機建議**
-- **必須**：函數開始時檢查
+- **必須**：函式開始時檢查
 - **建議**：長時間操作前檢查（如 JavaScript 執行）
 - **必須**：長時間迴圈內每次迭代檢查
 - **建議**：延遲等待時使用暫停版本（`sleep_with_pause_check`）
@@ -1292,14 +826,13 @@ async def nodriver_platform_date_auto_select(tab, config_dict):
 
 ### 檢查清單
 
-開發 ZenDriver 函數時，確保：
-- [ ] 函數開始時呼叫 `check_and_handle_pause()`
+開發 ZenDriver 函式時，確保：
+- [ ] 函式開始時呼叫 `check_and_handle_pause()`
 - [ ] 所有 `tab.sleep()` 改用 `sleep_with_pause_check()`
 - [ ] 所有 `asyncio.sleep()` 改用 `asyncio_sleep_with_pause_check()`
 - [ ] 長時間迴圈內加入暫停檢查
 - [ ] 暫停後返回適當的失敗值（通常是 `False`）
 - [ ] 不要直接檢查 `CONST_MAXBOT_INT28_FILE`
-- [ ] 確保與 Chrome Driver 版本的功能區隔
 
 ---
 
@@ -1326,10 +859,10 @@ async def nodriver_platform_date_auto_select(tab, config_dict):
 {platform}_date_auto_select(driver, url, config_dict, domain_name)
 ```
 **核心邏輯**:
-- **關鍵字匹配**: JSON 陣列格式支援 AND/OR 邏輯
-- **售罄檢測**: 過濾 "選購一空"、"已售完"、"Sold out" 等狀態
-- **即將開賣**: 檢測 "開賣倒數" 並自動重載頁面
-- **多語言支援**: 繁中、英文、日文界面適配
+- **關鍵字比對**: JSON 陣列格式支援 AND/OR 邏輯
+- **售罄偵測**: 過濾 "選購一空"、"已售完"、"Sold out" 等狀態
+- **即將開賣**: 偵測 "開賣倒數" 並自動重載頁面
+- **多語言支援**: 繁中、英文、日文介面適配
 - **選擇模式**: from top to bottom, center, random
 
 #### 3. 座位區域選擇模組 (Area Selection)
@@ -1339,9 +872,9 @@ async def nodriver_platform_date_auto_select(tab, config_dict):
 ```
 **智慧選擇邏輯**:
 - **剩餘座位檢查**: 避免選擇座位不足的區域 (檢查字體標註的剩餘數量)
-- **關鍵字過濾**: 支援多關鍵字 AND 邏輯匹配
+- **關鍵字過濾**: 支援多關鍵字 AND 邏輯比對
 - **排除關鍵字**: 避開不想選擇的區域
-- **優先級排序**: 依選擇模式決定優先順序
+- **優先順序排序**: 依選擇模式決定優先順序
 
 #### 4. 票數分配模組 (Ticket Quantity)
 ```python
@@ -1350,8 +883,8 @@ async def nodriver_platform_date_auto_select(tab, config_dict):
 ```
 **適應性選擇器**:
 - **多選擇器支援**: `.mobile-select`, `select.form-select`, `input[type="text"]`
-- **區域綁定**: 根據選中區域自動定位對應票數選擇器
-- **數量驗證**: 檢查當前值避免重複設定
+- **區域繫結**: 根據選取區域自動定位對應票數選擇器
+- **數量驗證**: 檢查目前值避免重複設定
 - **回退機制**: 目標數量不可選時回退至 1 張
 
 #### 5. 驗證碼處理模組 (CAPTCHA/OCR)
@@ -1394,7 +927,7 @@ async def nodriver_platform_date_auto_select(tab, config_dict):
 {platform}_check_register_status(driver, url)
 ```
 **關鍵監控點**:
-- **搶票成功**: 檢測到 `/checkout` 頁面
+- **搶票成功**: 偵測到 `/checkout` 頁面
 - **排隊狀態**: 監控排隊頁面變化
 - **錯誤頁面**: 自動回退或重新整理
 - **效能追蹤**: 計算搶票耗時
@@ -1413,11 +946,11 @@ async def nodriver_platform_date_auto_select(tab, config_dict):
 
 ### 進階功能模組 (6/6)
 - [x] **智慧重試**: 自動重新整理與重試機制
-- [x] **多語言支援**: 繁中/英文/日文界面適配
-- [x] **效能優化**: DOM 查找快取與最小化等待
+- [x] **多語言支援**: 繁中/英文/日文介面適配
+- [x] **效能最佳化**: DOM 尋找快取與最小化等待
 - [x] **音效提醒**: 搶票成功與失敗音效
 - [x] **除錯模式**: 完整的 debug 輸出系統
-- [x] **擴充套件整合**: Chrome Extension 協作模式
+- [x] **擴充套件整合**: 瀏覽器擴充功能協作模式
 
 ### 平台特殊功能
 - [x] **TixCraft**: 區域多選擇器、即將開賣重載、驗證碼 Toast 提示
@@ -1432,10 +965,10 @@ async def nodriver_platform_date_auto_select(tab, config_dict):
 - [x] **Debug 標準**: `debug = util.create_debug_logger(config_dict)`
 - [x] **異常處理**: 所有 DOM 操作包覆 try-catch
 - [x] **狀態追蹤**: 模組層級 `_state` dict 管理
-- [x] **註解完整**: 函數用途、參數說明、回傳值說明
+- [x] **註解完整**: 函式用途、參數說明、回傳值說明
 
 #### 效能與可靠性
-- [x] **選擇器優化**: 使用高效能 CSS 選擇器
+- [x] **選擇器最佳化**: 使用高效能 CSS 選擇器
 - [x] **等待機制**: 適當的 sleep 與 WebDriverWait
 - [x] **重試邏輯**: 關鍵操作最多重試 3-19 次
 - [x] **記憶體管理**: 及時釋放大型物件
@@ -1501,70 +1034,38 @@ async def nodriver_{platform}_login(tab, config_dict):
 
 **注意事項**:
 - 需安裝 `opencv-python` 套件
-- 目前僅支援英文界面驗證
-- 建議在登入、頁面跳轉後調用
+- 目前僅支援英文介面驗證
+- 建議在登入、頁面跳轉後呼叫
 
 ---
 
 ## 🎫 **TicketPlus 平台特殊實作**
 
-### 區域選擇特殊模式
-TicketPlus 使用展開式面板選擇，與其他平台不同：
-
-```python
-# Chrome 版本（維護模式）
-def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
-    """展開式面板處理"""
-    # 支援三種佈局樣式
-    # style_1: 舊版展開式
-    # style_2: 新版簡單式
-    # style_3: Vue.js 佈局
-
-def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_item, current_layout_style):
-    """自動選擇區域（展開式面板模式）"""
-    # 取代標準的 ticketplus_area_auto_select()
-
-# ZenDriver 版本
-async def nodriver_ticketplus_select_ticket_simplified(tab, config_dict, area_keyword):
-    """簡化的票種選擇（統一處理三種佈局）"""
-```
-
 ### 登入處理
 ```python
-# Chrome 版本
-def ticketplus_account_auto_fill(driver, config_dict):
-    """自動填寫帳密並登入"""
-
-def ticketplus_account_sign_in(driver, config_dict):
-    """執行登入動作"""
-
-# 實際使用時整合為 ticketplus_login() 概念
+async def nodriver_ticketplus_is_signin(tab)                    # 判斷是否已登入
+async def nodriver_ticketplus_account_auto_fill(tab, config_dict)  # 填入帳密
+async def nodriver_ticketplus_account_sign_in(tab, config_dict)    # 送出登入
 ```
 
-### 彈窗處理機制
+### 彈出視窗處理機制
 ```python
-# 實名制彈窗
-def ticketplus_accept_realname_card(driver):
-    """處理實名制確認彈窗"""
-
-# 其他活動彈窗
-def ticketplus_accept_other_activity(driver):
-    """處理其他活動推薦彈窗"""
-
-# 訂單失敗彈窗
-def ticketplus_accept_order_fail(driver):
-    """處理訂單失敗情況"""
+async def nodriver_ticketplus_accept_realname_card(tab)     # 實名制彈出視窗
+async def nodriver_ticketplus_accept_other_activity(tab)    # 其他活動推薦
+async def nodriver_ticketplus_accept_order_fail(tab)        # 訂單失敗
 ```
 
-### 特殊函數映射
-由於 TicketPlus 的特殊實作方式，函數映射如下：
+### 與標準階段的對應
 
-| 標準函數 | TicketPlus 實作 | 說明 |
+TicketPlus 的實作與 12 階段標準有三處刻意偏離：
+
+| 標準階段 | TicketPlus 實作 | 說明 |
 |---------|----------------|------|
-| `ticketplus_area_auto_select()` | `ticketplus_order_expansion_panel()` | 使用展開式面板 |
-| `ticketplus_login()` | `ticketplus_account_auto_fill()` | 整合登入流程 |
-| `ticketplus_real_name_verify()` | `ticketplus_accept_realname_card()` | 彈窗處理方式 |
-| `ticketplus_get_ocr_answer()` | `ticketplus_order_ocr()` | OCR 處理整合 |
+| 5 區域選擇 + 6 票數設定 | `nodriver_ticketplus_unified_select()` | 展開式面板，兩階段在同一頁完成，因此合併為單一函式 |
+| 7 CAPTCHA | 無 | 目前活動不使用圖形驗證碼，改用優惠代碼 `order_exclusive_code`。`ocr` 與 `Captcha_Browser` 參數僅為簽章穿透，函式內未使用 |
+| 2 身分驗證 | `nodriver_ticketplus_account_sign_in()` | 字尾為 `_sign_in` 而非規範的 `_signin`，屬既有偏離 |
+
+版面差異由 `nodriver_ticketplus_detect_layout_style()` 判定後分派。
 
 ---
 
@@ -1579,7 +1080,7 @@ debug.log(f"DOM elements found: {len(element_list)}")
 debug.log(f"operation result: {is_success}")
 ```
 
-### 常用除錯代碼
+### 常用除錯程式碼
 ```python
 debug = util.create_debug_logger(config_dict)
 
@@ -1597,143 +1098,6 @@ debug.log(f"page title: {driver.title}")
 ## 🚀 **完整平台實作範例**
 
 ### 基於實際 TixCraft/KKTIX 分析的標準模版
-
-```python
-# Chrome 版本（維護模式）完整實作範例
-# 模組層級狀態（檔案頂部宣告一次）
-_state = {}
-
-def example_platform_main(driver, url, config_dict, ocr, Captcha_Browser):
-    """
-    標準搶票平台主程式範本
-    整合所有 8 個核心功能模組
-    """
-    debug = util.create_debug_logger(config_dict)
-
-    # 模組層級狀態管理
-    if "fail_list" not in _state:
-        _state.update({
-            "fail_list": [],                # OCR 失敗答案記錄
-            "start_time": None,             # 搶票開始時間
-            "done_time": None,              # 搶票完成時間
-            "elapsed_time": None,           # 總耗時
-            "played_sound_ticket": False,   # 音效狀態
-            "played_sound_order": False,
-            "retry_count": 0,               # 重試計數器
-        })
-
-    # URL 路由分發
-    domain_name = url.split('/')[2]
-
-    # 1. 登入流程
-    if '/login' in url or '/sign_in' in url:
-        if config_dict["advanced"]["example_platform_account"]:
-            is_login_success = example_platform_login(driver, config_dict)
-            debug.log(f"login result: {is_login_success}")
-
-    # 2. 主要購票流程
-    elif '/event' in url or '/activity' in url:
-        _state["start_time"] = time.time()
-
-        # 日期選擇
-        if config_dict["date_auto_select"]["enable"]:
-            is_date_selected = example_platform_date_auto_select(driver, url, config_dict, domain_name)
-            debug.log(f"date selection result: {is_date_selected}")
-
-    elif '/ticket/area' in url or '/seats' in url:
-        # 座位區域選擇
-        if config_dict["area_auto_select"]["enable"]:
-            example_platform_area_auto_select(driver, url, config_dict)
-            _state["retry_count"] += 1
-
-            # 冷卻機制
-            if _state["retry_count"] >= (60 * 15):
-                _state["retry_count"] = 0
-                time.sleep(5)
-
-    elif '/ticket/ticket' in url or '/booking' in url:
-        # 票數分配與驗證碼處理
-        _state["done_time"] = time.time()
-
-        # 同意條款
-        is_agree_at_webdriver = not (
-            config_dict["browser"] in ["chrome", "edge", "brave"] and
-            config_dict["advanced"]["chrome_extension"]
-        )
-        if is_agree_at_webdriver:
-            example_platform_ticket_main_agree(driver, config_dict)
-
-        # 票數分配
-        is_ticket_assigned = example_platform_assign_ticket_number(driver, config_dict)
-
-        # OCR 驗證碼
-        if is_ticket_assigned and config_dict["ocr_captcha"]["enable"]:
-            example_platform_auto_ocr(driver, config_dict, ocr, Captcha_Browser, domain_name)
-
-        # 音效提醒
-        if config_dict["advanced"]["play_sound"]["ticket"]:
-            if not _state["played_sound_ticket"]:
-                play_sound_while_ordering(config_dict)
-            _state["played_sound_ticket"] = True
-
-    # 3. 成功檢測
-    elif '/checkout' in url or '/confirm' in url:
-        # 計算搶票效能
-        if _state["start_time"] and _state["done_time"]:
-            bot_elapsed_time = _state["done_time"] - _state["start_time"]
-            if _state["elapsed_time"] != bot_elapsed_time:
-                print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
-            _state["elapsed_time"] = bot_elapsed_time
-
-        # 成功音效
-        if config_dict["advanced"]["play_sound"]["order"]:
-            if not _state["played_sound_order"]:
-                play_sound_while_ordering(config_dict)
-            _state["played_sound_order"] = True
-
-        # 成功提醒
-        checkout_url = f"https://{domain_name}/checkout"
-        print(f"搶票成功, 請前往該帳號訂單查看: {checkout_url}")
-
-        if not config_dict["advanced"]["headless"]:
-            import webbrowser
-            webbrowser.open_new(checkout_url)
-
-    # 4. 錯誤處理
-    else:
-        # 重置狀態
-        _state["fail_list"] = []
-        _state["played_sound_ticket"] = False
-        _state["retry_count"] = 0
-
-# ZenDriver 版本範例 (簡化版)
-async def nodriver_example_platform_main(tab, url, config_dict, ocr, Captcha_Browser):
-    """
-    ZenDriver 版本標準範本
-    """
-    debug = util.create_debug_logger(config_dict)
-
-    # 共用模組層級 _state（初始化邏輯同 Chrome 版本）
-    # ... 相同的初始化邏輯 ...
-
-    # URL 路由 (使用 await)
-    if '/login' in url:
-        if config_dict["advanced"]["example_platform_account"]:
-            await nodriver_example_platform_login(tab, config_dict)
-
-    elif '/event' in url:
-        if config_dict["date_auto_select"]["enable"]:
-            await nodriver_example_platform_date_auto_select(tab, url, config_dict, domain_name)
-
-    elif '/ticket/area' in url:
-        if config_dict["area_auto_select"]["enable"]:
-            await nodriver_example_platform_area_auto_select(tab, url, config_dict)
-
-    elif '/ticket/ticket' in url:
-        await nodriver_example_platform_ticket_main(tab, config_dict, ocr, Captcha_Browser, domain_name)
-
-    # ... 其他流程相同 ...
-```
 
 ### 🔧 **關鍵設計模式**
 
@@ -1794,7 +1158,7 @@ print("elapsed time:", "{:.3f}".format(elapsed_time))
 ### 🎯 **平台實作評分標準**
 
 #### 🏅 **白金級認證標準** (95%+)
-- [ ] **8個核心函數完整實作**
+- [ ] **8個核心函式完整實作**
   - [ ] `{platform}_main()` - 主流程控制
   - [ ] `{platform}_date_auto_select()` - 日期選擇
   - [ ] `{platform}_area_auto_select()` - 區域選擇
@@ -1804,32 +1168,32 @@ print("elapsed time:", "{:.3f}".format(elapsed_time))
   - [ ] `{platform}_ticket_agree()` - 同意條款
   - [ ] `{platform}_check_status()` - 狀態監控
 
-- [ ] **代碼品質標準**
+- [ ] **程式碼品質標準**
   - [ ] 無 TODO 標記
   - [ ] 完整異常處理
   - [ ] 統一 debug 輸出格式
-  - [ ] 完整函數註解
+  - [ ] 完整函式註解
 
 - [ ] **功能驗證標準**
   - [ ] 實戰測試通過
-  - [ ] 支援多語言界面
+  - [ ] 支援多語言介面
   - [ ] 智慧重試機制
   - [ ] 效能追蹤機制
 
 #### 🥇 **金級認證標準** (80-95%)
-- [ ] **6個主要函數實作**
+- [ ] **6個主要函式實作**
   - [ ] 核心購票流程完整
   - [ ] 基本錯誤處理機制
   - [ ] 平台特殊功能支援
 
-- [ ] **代碼品質標準**
+- [ ] **程式碼品質標準**
   - [ ] 少量 TODO (≤3個)
   - [ ] 基本異常處理
   - [ ] debug 輸出規範
 
 #### 🥈 **銀級認證標準** (60-80%)
 - [ ] **基本架構完整**
-  - [ ] 主要流程可運行
+  - [ ] 主要流程可執行
   - [ ] 基本功能實作
 
 - [ ] **需要改善項目**
@@ -1840,47 +1204,31 @@ print("elapsed time:", "{:.3f}".format(elapsed_time))
 ### 🚨 **開發檢查清單**
 
 #### **開始新平台開發前**
-- [ ] 選擇參考範本 (建議白金級 Chrome TixCraft)
+- [ ] 選擇參考範本（建議 `platforms/tixcraft.py`，見 `docs/04-implementation/platform-examples/tixcraft-reference.md`）
 - [ ] 確認平台特殊需求
 - [ ] 建立測試環境
 - [ ] 閱讀平台技術文件
 
 #### **開發過程中**
-- [ ] 遵循標準函數命名
+- [ ] 遵循標準函式命名
 - [ ] 實作標準 debug 輸出
-- [ ] 每個函數加入異常處理
+- [ ] 每個函式加入異常處理
 - [ ] 定期執行實戰測試
 
 #### **完成開發後**
 - [ ] 使用完整度檢查表評分
 - [ ] 清理所有 TODO 標記
-- [ ] 更新 platforms.md 函數對照
+- [ ] 更新 platforms.md 函式對照
 - [ ] 執行完整功能測試
 
-### 📊 **目前平台完成度總覽** (2025.10 更新)
+### 📊 **平台完成度總覽**
 
-| 平台 | ZenDriver版本 ⭐ | Chrome版本 | 推薦引擎 | 狀態 |
-|------|:-------------:|:----------:|:--------:|:----:|
-| **TixCraft** | 🏅 白金級 (92%) | 🥈 銀級 (95%) | **ZenDriver** | ✅ 生產可用 |
-| **KKTIX** | 🏅 白金級 (90%) | 🥈 銀級 (90%) | **ZenDriver** | ✅ 生產可用 |
-| **TicketPlus** | 🏅 白金級 (95%) | 🥈 銀級 (98%) | **ZenDriver** | ✅ 生產可用 |
-| **iBon** | 🥇 金級 (80%) | 🥈 銀級 (75%) | **ZenDriver** | ✅ 可用 |
-| **Cityline** | 🥈 銀級 (60%) | 🥈 銀級 (72%) | Chrome | 🔄 開發中 |
-| **TicketMaster** | 🥈 銀級 (55%) | 🥈 銀級 (78%) | Chrome | 🔄 開發中 |
-| **年代售票** | 🚧 規劃中 (0%) | 🥈 銀級 (70%) | Chrome | 📋 待移植 |
-| **寬宏售票** | 🚧 規劃中 (0%) | 🥈 銀級 (68%) | Chrome | 📋 待移植 |
-
-**圖例說明**：
-- ⭐ ZenDriver: 推薦使用（反偵測、高效能，zendriver 是 nodriver 的活躍 fork）
-- Chrome: 傳統方案（過渡期、測試用）
-- ✅ 生產可用: 實測穩定，可用於正式環境
-- ✅ 可用: 基本功能完整，建議追蹤更新
-- 🔄 開發中: 持續改進中
-- 📋 待移植: 規劃從 Chrome 移植至 ZenDriver
+平台完成度以 `docs/02-development/structure.md` 的「平台實作狀態」表為單一真相源，
+本文件不重複維護一份，避免兩邊數字互相矛盾。
 
 ---
 
-### ⭐ **2025 開發建議 (ZenDriver First)**
+### ⭐ **開發建議**
 
 #### **優先採用策略**
 
@@ -1892,16 +1240,6 @@ print("elapsed time:", "{:.3f}".format(elapsed_time))
    - ✅ 非同步架構，效能優異
    - ✅ 實戰驗證，穩定可靠
 3. **學習路徑**: async/await → ZenDriver API → 平台業務邏輯
-
-**維護舊專案** (逐步遷移):
-1. **短期**: 保持 Chrome 版本運作
-2. **中期**: 逐步改寫為 ZenDriver
-3. **長期**: 統一 ZenDriver
-
-**特殊需求場景**:
-1. **快速測試除錯**: 使用 Chrome 版本 (API 豐富)
-2. **需要相容舊環境**: 使用 Chrome 版本
-3. **生產環境搶票**: 優先使用 ZenDriver
 
 ---
 
@@ -1925,9 +1263,7 @@ print("elapsed time:", "{:.3f}".format(elapsed_time))
 | 需求情境 | 推薦方案 | 理由 |
 |---------|---------|------|
 | 正式搶票 | ZenDriver TixCraft/KKTIX/TicketPlus | 反偵測 + 高成功率 |
-| 開發測試 | Chrome TixCraft | 除錯容易 + API 豐富 |
 | 學習研究 | ZenDriver TixCraft | 架構完整 + 文件齊全 |
-| 快速原型 | Chrome 任意平台 | 開發速度快 |
 | 平台移植 | 參考 ZenDriver 三大平台 | 設計模式一致 |
 
 ---
@@ -1935,8 +1271,8 @@ print("elapsed time:", "{:.3f}".format(elapsed_time))
 此分級系統確保開發者能夠：
 - ✅ 選擇最適合的技術方案
 - ✅ 遵循 ZenDriver First 策略
-- ✅ 建立一致的代碼品質標準
+- ✅ 建立一致的程式碼品質標準
 - ✅ 提升整體系統可維護性
 ---
 
-**最後更新**: 2026-06-10
+**最後更新**: 2026-09-16

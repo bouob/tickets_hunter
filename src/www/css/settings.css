@@ -267,7 +267,36 @@ textarea {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
+    /* Positioning context for the transient run message below */
+    position: relative;
+}
+
+/* The 搶票 status message lives in the same row but must not take part in the
+   centring: it appears for three seconds after the button is pressed, and in
+   normal flow it would shove the four buttons left and let them snap back when
+   it clears. Overlaying it on the right keeps the buttons on the centre line at
+   all times. */
+.action-bar-inner #run_btn_pressed_message {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    max-width: 30%;
+    text-align: right;
+}
+
+/* Below md there is no room to overlay the message beside the buttons, so it
+   returns to the flow on its own centred line. */
+@media (max-width: 767.98px) {
+    .action-bar-inner #run_btn_pressed_message {
+        position: static;
+        transform: none;
+        flex-basis: 100%;
+        max-width: none;
+        text-align: center;
+    }
 }
 
 [data-bs-theme="dark"] .action-bar {

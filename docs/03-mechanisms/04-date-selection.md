@@ -1,6 +1,6 @@
 # 機制 04：日期選擇 (Stage 4)
 
-**文件說明**：詳細說明搶票系統的日期選擇機制、關鍵字匹配與自動回退策略
+**文件說明**：詳細說明搶票系統的日期選擇機制、關鍵字比對與自動回退策略
 **最後更新**：2026-08-24
 
 ---
@@ -11,7 +11,7 @@
 **輸入**：日期關鍵字（支援 AND/OR 邏輯）+ 選擇模式
 **輸出**：選定的日期 + 點擊購票按鈕
 **關鍵技術**：
-- **Early Return Pattern**（早期返回模式）：優先級驅動的關鍵字匹配
+- **Early Return Pattern**（早期返回模式）：優先順序驅動的關鍵字比對
 - **Conditional Fallback**（條件回退）：智慧回退機制
 - **Shadow DOM Penetration**（Shadow DOM 穿透）：處理 closed Shadow DOM
 
@@ -63,7 +63,7 @@
 
 ## 關鍵程式碼片段
 
-### 1. Early Return Pattern（關鍵字優先匹配）
+### 1. Early Return Pattern（關鍵字優先比對）
 
 **範例來源**：TixCraft（`src/platforms/tixcraft.py`，`nodriver_tixcraft_date_auto_select`）
 
@@ -124,10 +124,10 @@ except Exception as e:
 ```
 
 **關鍵設計理念**：
-- 關鍵字按優先級排列（第 1 個最優先）
-- 一旦匹配成功，**立即停止**，不再嘗試後續關鍵字
+- 關鍵字按優先順序排列（第 1 個最優先）
+- 一旦比對成功，**立即停止**，不再嘗試後續關鍵字
 - 避免「掃描所有關鍵字再選擇」的舊邏輯
-- **T005-T007 標記**：TixCraft 的完整除錯日誌實作
+- **T005-T007 標記**：TixCraft 的完整除錯記錄實作
 
 ---
 
@@ -241,21 +241,21 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
 
 **為什麼需要 DOMSnapshot？**
 - iBon 使用 **closed Shadow DOM**（`shadowRoot.mode = 'closed'`）
-- 標準 DOM API 無法訪問
-- DOMSnapshot 將 Shadow DOM **平坦化**為單一文檔結構
+- 標準 DOM API 無法存取
+- DOMSnapshot 將 Shadow DOM **平坦化**為單一文件結構
 - 可直接查詢和操作 Shadow DOM 內部元素
 
 ---
 
 ## 平台實作差異
 
-| 平台 | 選擇器類型 | Shadow DOM | 特殊處理 | 函式名稱 | 完成度 |
+| 平台 | 選擇器型別 | Shadow DOM | 特殊處理 | 函式名稱 | 完成度 |
 |------|-----------|-----------|---------|---------|--------|
 | **KKTIX** | Table rows | ❌ 無 | 支援 register_status 區域 | `nodriver_kktix_date_auto_select()` | 100% ✅ |
 | **TixCraft** | Button list | ❌ 無 | 檢查 `data-href` 屬性 | `nodriver_tixcraft_date_auto_select()` | 95% ⚠️ |
 | **iBon** | Button list | ✅ Closed | **DOMSnapshot 平坦化**策略 | `nodriver_ibon_date_auto_select()` | 100% ✅ |
 | **TicketPlus** | `div#buyTicket div.sesstion-item` | ❌ 無 | 雙路徑：Vue data 導航 → 注入 JS 點擊 | `nodriver_ticketplus_date_auto_select()` | 100% ✅ |
-| **KHAM** | Table rows | ❌ 無 | 支援 3 域名變體 (kham/ticket/udn) | `nodriver_kham_date_auto_select()` | 100% ✅ |
+| **KHAM** | Table rows | ❌ 無 | 支援 3 網域變體 (kham/ticket/udn) | `nodriver_kham_date_auto_select()` | 100% ✅ |
 | **UDN** | Session blocks | ❌ 無 | 複用 KHAM 邏輯 (`div.yd_session-block`) | `nodriver_kham_date_auto_select()` | 100% ✅ |
 
 **程式碼位置**（`src/platforms/`）：
@@ -285,7 +285,7 @@ Vue data 路徑在正式版 Vue 未暴露 `__vue__` 時會回傳 `ready:false`�
 
 這有兩個必要理由：
 
-1. **不能只靠 Python 端掃 DOM 的那份清單。** `formated_area_list` 雖然套過排除，但它只被當成「有沒有場次可選」的閘門，不是候選來源。若只依賴它，排除就退化成 all-or-nothing：全部場次被排除時正確地不選，但只排除其中幾場時，兩條路徑仍會選中被排除的場次。
+1. **不能只靠 Python 端掃 DOM 的那份清單。** `formated_area_list` 雖然套過排除，但它只被當成「有沒有場次可選」的閘門，不是候選來源。若只依賴它，排除就退化成 all-or-nothing：全部場次被排除時正確地不選，但只排除其中幾場時，兩條路徑仍會選取被排除的場次。
 2. **判定必須留在 Python 端。** 在 JS 內用 `includes()` 比對會失去 `util.format_keyword_string()` 的全形空白正規化與空格 AND 邏輯，導致 TicketPlus 的排除語意與其他平台不一致。
 
 注入 JS 路徑因此拆成「收集 → Python 過濾 → 點擊」三段：收集階段回傳每列的 index 與 `textContent`，Python 端算出允許的 index 清單，再以 `json.dumps()` 傳回點擊階段做 `filter`。兩段共用模組常數 `_TICKETPLUS_SESSION_CONTAINERS_JS` 定義候選集，避免兩次查詢的認定分歧導致 index 錯位。
@@ -298,7 +298,7 @@ Vue data 路徑在正式版 Vue 未暴露 `__vue__` 時會回傳 `ready:false`�
   - [ ] 支援 AND 邏輯（空格分隔）
   - [ ] 支援 OR 邏輯（逗號/分號分隔）
   - [ ] 實作 Early Return Pattern
-  - [ ] 關鍵字優先級遞減匹配
+  - [ ] 關鍵字優先順序遞減比對
 
 - [ ] **條件回退機制（Feature 003）**
   - [ ] 實作 `date_auto_fallback` 開關
@@ -318,13 +318,13 @@ Vue data 路徑在正式版 Vue 未暴露 `__vue__` 時會回傳 `ready:false`�
 
 - [ ] **除錯輸出**
   - [ ] Verbose 模式除錯訊息
-  - [ ] 關鍵字匹配日誌
-  - [ ] 回退觸發日誌
+  - [ ] 關鍵字比對記錄
+  - [ ] 回退觸發記錄
 
 - [ ] **錯誤處理**
   - [ ] 無可用日期時的處理
   - [ ] 點擊失敗時的重試機制
-  - [ ] 異常捕獲與日誌
+  - [ ] 異常捕捉與記錄
 
 ---
 
@@ -332,7 +332,7 @@ Vue data 路徑在正式版 Vue 未暴露 `__vue__` 時會回傳 `ready:false`�
 
 ### Q1: 為什麼需要 Early Return Pattern？
 
-**A**: 確保**優先級較高的關鍵字先被匹配**。
+**A**: 確保**優先順序較高的關鍵字先被比對**。
 
 **舊邏輯問題**（已棄用）：
 ```python
@@ -355,13 +355,13 @@ for keyword in ["10/03", "10/04", "10/05"]:
 **實務案例**：
 - 使用者設定：`"\"10/03 週六\",\"10/04 週日\",\"任意日期\""`
 - 期望：優先選 10/03，其次 10/04，最後才考慮其他
-- Early Return 確保：一旦 10/03 可用，立即選擇，不會因為「任意日期」匹配更多而選錯
+- Early Return 確保：一旦 10/03 可用，立即選擇，不會因為「任意日期」比對更多而選錯
 
 ---
 
 ### Q2: 條件回退什麼時候觸發？
 
-**A**: 當**所有關鍵字都無法匹配**時，根據 `date_auto_fallback` 設定決定行為。
+**A**: 當**所有關鍵字都無法比對**時，根據 `date_auto_fallback` 設定決定行為。
 
 **觸發條件**：
 ```python
@@ -380,7 +380,7 @@ if matched_blocks is None or len(matched_blocks) == 0:
 2. **`date_auto_fallback = true`**：
    - 使用 `auto_select_mode` 從可用選項中選擇
    - 自動完成購票流程
-   - **用途**：「只要能買到票就好」的場景
+   - **用途**：「只要能買到票就好」的情境
 
 ---
 
@@ -390,7 +390,7 @@ if matched_blocks is None or len(matched_blocks) == 0:
 
 **問題**：
 - iBon 使用 `closed` Shadow DOM
-- 標準 API 無法訪問：`element.shadowRoot === null`
+- 標準 API 無法存取：`element.shadowRoot === null`
 
 **解決方案**：
 ```python
@@ -425,7 +425,7 @@ for doc in documents:
 }
 ```
 
-**格式 2：不帶引號（兼容舊版）**
+**格式 2：不帶引號（相容舊版）**
 ```json
 {
   "date_keyword": "10/03,10/04,10/05"
@@ -466,8 +466,6 @@ for i, kw in enumerate(keyword_array):
 
 ## 相關文件
 
-- 📋 [Feature 003: Keyword Priority Fallback](../../specs/003-keyword-priority-fallback/implementation-guide.md) - 完整實作指南
-- 📊 [規格驗證矩陣](../05-validation/spec-validation-matrix.md) - FR-017, FR-018, FR-019
 - 🔧 [KKTIX 參考實作](../04-implementation/platform-examples/kktix-reference.md)
 - 🔧 [iBon 參考實作](../04-implementation/platform-examples/ibon-reference.md) - Shadow DOM 範例
 - 📖 [12-Stage 標準](../02-development/ticket_automation_standard.md) - 完整 12 階段流程
@@ -489,4 +487,4 @@ for i, kw in enumerate(keyword_array):
 - ✅ 新增 `util.parse_keyword_string_to_array()` 統一關鍵字解析
 - ✅ 新增 `util.get_target_index_by_mode()` 統一選擇模式計算
 - ✅ 新增 `util.get_debug_mode()` 安全讀取 debug 設定
-- ✅ 簡化約 73 行重複代碼
+- ✅ 簡化約 73 行重複程式碼

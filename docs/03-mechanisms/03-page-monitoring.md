@@ -7,7 +7,7 @@
 
 ## 概述
 
-頁面監控是主迴圈的核心，系統以 50ms 間隔持續輪詢當前 URL，根據 URL 中的平台網域與路徑特徵，分派至對應平台的 `_main` 函式處理。每個平台的 `_main` 函式再依 URL 路徑將請求路由至對應的 12 階段處理器。
+頁面監控是主迴圈的核心，系統以 50ms 間隔持續輪詢目前 URL，根據 URL 中的平台網域與路徑特徵，分派至對應平台的 `_main` 函式處理。每個平台的 `_main` 函式再依 URL 路徑將請求路由至對應的 12 階段處理器。
 
 **核心目標**：即時偵測頁面變化並分派至正確的階段處理器。
 
@@ -36,7 +36,7 @@ while True:
 
 ### URL 取得機制
 
-`nodriver_current_url()`（`src/nodriver_common.py`）透過 `tab.js_dumps('window.location.href')` 取得當前頁面 URL。若瀏覽器連線中斷（WebSocket 500、WinError 1225 等），設定 `is_quit_bot = True` 終止程式。
+`nodriver_current_url()`（`src/nodriver_common.py`）透過 `tab.js_dumps('window.location.href')` 取得目前頁面 URL。若瀏覽器連線中斷（WebSocket 500、WinError 1225 等），設定 `is_quit_bot = True` 終止程式。
 
 ### 迴圈前置處理
 
@@ -45,7 +45,7 @@ while True:
 1. **設定熱更新**：`reload_config()` 監控 `settings.json` 修改時間
 2. **URL 變化偵測**：URL 改變時印出新 URL、寫入 `MAXBOT_LAST_URL.txt`、重置 Cloudflare 狀態
 3. **暫停處理**：暫停中僅處理 KKTIX 登入，其餘跳過
-4. **Cloudflare 偵測**：URL 變化時檢測 Cloudflare 挑戰頁面，最多重試 3 次
+4. **Cloudflare 偵測**：URL 變化時偵測 Cloudflare 挑戰頁面，最多重試 3 次
 
 ---
 
@@ -121,7 +121,7 @@ while True:
 
 ### 全域 Alert Handler
 
-各平台在 `_main` 首次呼叫時註冊 CDP `JavascriptDialogOpening` handler，自動處理彈窗：
+各平台在 `_main` 首次呼叫時註冊 CDP `JavascriptDialogOpening` handler，自動處理彈出視窗：
 
 - **售完提示**：自動關閉並進入冷卻延遲
 - **驗證碼錯誤**：標記 `captcha_alert_detected` 供重試邏輯使用
@@ -186,6 +186,6 @@ while True:
 **解法**：手動在瀏覽器中完成 Cloudflare 驗證，或檢查反偵測參數
 
 ### 購票完成後程式未停止
-**症狀**：購票成功後程式繼續運行
+**症狀**：購票成功後程式繼續執行
 **原因**：設計如此 — 為了支援多開實例獨立運作，不自動暫停
 **解法**：這是預期行為；如需停止，用設定介面的暫停鈕，或手動建立暫停檔（default 實例為根目錄 `MAXBOT_INT28_IDLE.txt`，具名實例為 `instances/<id>/MAXBOT_INT28_IDLE.txt`）

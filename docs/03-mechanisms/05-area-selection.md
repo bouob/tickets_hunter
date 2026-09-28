@@ -1,6 +1,6 @@
 # 機制 05：區域選擇 (Stage 5)
 
-**文件說明**：詳細說明搶票系統的區域選擇機制、座位區域匹配與自動選擇策略
+**文件說明**：詳細說明搶票系統的區域選擇機制、座位區域比對與自動選擇策略
 **最後更新**：2026-07-02
 
 ---
@@ -11,7 +11,7 @@
 **輸入**：區域關鍵字（支援 AND 邏輯）+ 選擇模式 + 排除關鍵字
 **輸出**：選定的座位區域 + 點擊區域按鈕
 **關鍵技術**：
-- **Early Return Pattern**（早期返回模式）：優先級驅動的關鍵字匹配
+- **Early Return Pattern**（早期返回模式）：優先順序驅動的關鍵字比對
 - **Batch Candidate Fetch**（批次候選資料擷取）：先擷取所有區域文字與狀態，再在本機配對
 - **Conditional Fallback**（條件回退）：智慧回退機制
 - **keyword_exclude**（排除關鍵字）：過濾不想要的區域
@@ -98,7 +98,7 @@ is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(
 
 ---
 
-### 2. Early Return Pattern（關鍵字優先匹配）
+### 2. Early Return Pattern（關鍵字優先比對）
 
 **範例來源**：TixCraft (`src/platforms/tixcraft.py:nodriver_tixcraft_area_auto_select`)
 
@@ -124,10 +124,10 @@ if not keyword_matched:
 ```
 
 **關鍵設計理念**：
-- 關鍵字按優先級排列（第 1 個最優先）
-- 一旦匹配成功，**立即停止**，不再嘗試後續關鍵字
+- 關鍵字按優先順序排列（第 1 個最優先）
+- 一旦比對成功，**立即停止**，不再嘗試後續關鍵字
 - 避免「掃描所有關鍵字再選擇」的舊邏輯
-- **T011-T014 標記**：TixCraft 的完整除錯日誌實作
+- **T011-T014 標記**：TixCraft 的完整除錯記錄實作
 
 ---
 
@@ -161,7 +161,7 @@ if matched_blocks is None or len(matched_blocks) == 0:
 - **預設值**：`area_auto_fallback = false`（嚴格模式）
 - **嚴格模式**（false）：關鍵字失敗時**不自動選擇**，避免誤購不想要的區域
 - **自動模式**（true）：關鍵字失敗時，回退到 `auto_select_mode` 選擇可用選項
-- **T022-T024 標記**：完整的條件回退邏輯與日誌
+- **T022-T024 標記**：完整的條件回退邏輯與記錄
 
 ---
 
@@ -315,7 +315,7 @@ if config_dict["ticket_number"] > 1 and not allow_less_tickets:
 
 ### 7. 選擇模式索引計算（v2025.12.18 新增）
 
-**使用統一的 `util.get_target_index_by_mode()` 函數**：
+**使用統一的 `util.get_target_index_by_mode()` 函式**：
 
 ```python
 # v2025.12.18: 使用統一的選擇模式索引計算（推薦）
@@ -352,31 +352,31 @@ elif auto_select_mode == "from bottom to top":
 
 ### 8. 重繪環境下的區域點擊（Cityline 模式，v1.4 新增）
 
-**適用場景**：頁面在選擇過程中持續重繪（售罄狀態非同步載入、主迴圈每輪重新點擊日期），配對階段抓到的 element handle 在點擊前就已失效（detached）。
+**適用情境**：頁面在選擇過程中持續重繪（售罄狀態非同步載入、主迴圈每輪重新點擊日期），配對階段抓到的 element handle 在點擊前就已失效（detached）。
 
 **問題**：失效 handle 的 `query_selector('input[type=radio]')` 回傳 None，radio 靜默沒點 → Stage 5 回傳 False → 日期↔區域無限迴圈（Issue #367 的「跳動」現象）。
 
 **解法**（`src/platforms/cityline.py`）：
 
-1. **乾淨匹配文字**：`_cityline_area_match_text()` 只抽取 `.price-degree`（區名）+ `.price-num`（價格）組成匹配字串，不用整列文字。整列含狀態字、剩餘座位、隱藏 i18n 等雜訊，短關鍵字（如 `"GA"`、`"799"`）會誤中雜訊而選錯區，且誤中方式因活動而異。
-2. **單次過濾**：`_cityline_collect_available_areas()` 一次把售罄與 `keyword_exclude` 濾掉，關鍵字匹配與條件回退共用同一份乾淨候選清單——被排除的區域不可能在回退時被自動選中。
+1. **乾淨比對文字**：`_cityline_area_match_text()` 只抽取 `.price-degree`（區名）+ `.price-num`（價格）組成比對字串，不用整列文字。整列含狀態字、剩餘座位、隱藏 i18n 等雜訊，短關鍵字（如 `"GA"`、`"799"`）會誤中雜訊而選錯區，且誤中方式因活動而異。
+2. **單次過濾**：`_cityline_collect_available_areas()` 一次把售罄與 `keyword_exclude` 濾掉，關鍵字比對與條件回退共用同一份乾淨候選清單——被排除的區域不可能在回退時被自動選取。
 3. **live-DOM 重查點擊**：`_cityline_click_area_radio()` 在單次 `tab.evaluate` 內用乾淨文字對即時 DOM 重查該列並點擊 radio（原子操作，無 stale handle、無時間差）；失敗才回退到原 handle，找不到 radio 時明確記 log（不再靜默）。
 
-**與標準模式的關係**：Stage 5 主流程不變——共用 `util.is_row_match_keyword()` 匹配、條件回退機制、`util.get_target_item_from_matched_list()` 選擇——僅「匹配文字來源」與「點擊執行」兩步為平台特有處理。其他平台頁面在選擇期間穩定，直接點擊配對階段的 handle 即可；若日後有平台出現同類重繪競態，可複用此模式。
+**與標準模式的關係**：Stage 5 主流程不變——共用 `util.is_row_match_keyword()` 比對、條件回退機制、`util.get_target_item_from_matched_list()` 選擇——僅「比對文字來源」與「點擊執行」兩步為平台特有處理。其他平台頁面在選擇期間穩定，直接點擊配對階段的 handle 即可；若日後有平台出現同類重繪競態，可複用此模式。
 
 ---
 
 ## 平台實作差異
 
-| 平台 | 選擇器類型 | Shadow DOM | 特殊處理 | 函數名稱 | 完成度 |
+| 平台 | 選擇器型別 | Shadow DOM | 特殊處理 | 函式名稱 | 完成度 |
 |------|-----------|-----------|---------|---------|--------|
 | **TixCraft** | Link list | ❌ 無 | 檢查 `font` 票數資訊 | `nodriver_tixcraft_area_auto_select()` | 100% ✅ |
 | **KKTIX** | Price table | ❌ 無 | 批次擷取票種列，兩階段：價格表 + 票數輸入 | `nodriver_kktix_assign_ticket_number()` | 100% ✅ |
 | **iBon** | Button list | ✅ Closed | **DOMSnapshot 平坦化**策略 | `nodriver_ibon_area_auto_select()` | 100% ✅ |
-| **TicketPlus** | Expansion panel | ❌ 無 | 需先展開 area 面板 | `nodriver_ticketplus_area_auto_select()` | 100% ✅ |
+| **TicketPlus** | Expansion panel | ❌ 無 | 需先展開 area 面板 | `nodriver_ticketplus_unified_select()` | 100% ✅ |
 | **KHAM** | Table rows | ❌ 無 | Table mode + Seat map 雙模式 | `nodriver_kham_area_auto_select()` | 100% ✅ |
 | **UDN** | Table rows | ❌ 無 | 複用 KHAM 邏輯 (`table.yd_ticketsTable`) | `nodriver_kham_area_auto_select()` | 100% ✅ |
-| **Cityline** | Radio list (`div.form-check`) | ❌ 無 | 乾淨匹配文字（`.price-degree`+`.price-num`）+ **live-DOM 重查點擊**（抗重繪，見片段 8） | `nodriver_cityline_area_auto_select()` | 100% ✅ |
+| **Cityline** | Radio list (`div.form-check`) | ❌ 無 | 乾淨比對文字（`.price-degree`+`.price-num`）+ **live-DOM 重查點擊**（抗重繪，見片段 8） | `nodriver_cityline_area_auto_select()` | 100% ✅ |
 
 **主要程式碼位置**：
 - **TixCraft**: `src/platforms/tixcraft.py` (`nodriver_tixcraft_area_auto_select`, 主要參考範例) ⭐
@@ -394,7 +394,7 @@ elif auto_select_mode == "from bottom to top":
   - [ ] 支援 AND 邏輯（空格分隔）
   - [ ] 支援 OR 邏輯（逗號分隔）
   - [ ] 實作 Early Return Pattern
-  - [ ] 關鍵字優先級遞減匹配
+  - [ ] 關鍵字優先順序遞減比對
 
 - [ ] **條件回退機制（Feature 003）**
   - [ ] 實作 `area_auto_fallback` 開關
@@ -415,14 +415,14 @@ elif auto_select_mode == "from bottom to top":
 
 - [ ] **除錯輸出**
   - [ ] Verbose 模式除錯訊息
-  - [ ] 關鍵字匹配日誌（包含 AND 邏輯詳細資訊）
-  - [ ] 回退觸發日誌
-  - [ ] 票數檢查日誌
+  - [ ] 關鍵字比對記錄（包含 AND 邏輯詳細資訊）
+  - [ ] 回退觸發記錄
+  - [ ] 票數檢查記錄
 
 - [ ] **錯誤處理**
   - [ ] 無可用區域時的處理
   - [ ] 點擊失敗時的重試機制
-  - [ ] 異常捕獲與日誌
+  - [ ] 異常捕捉與記錄
 
 ---
 
@@ -430,7 +430,7 @@ elif auto_select_mode == "from bottom to top":
 
 ### Q1: 為什麼區域選擇需要 Early Return Pattern？
 
-**A**: 確保**優先級較高的區域關鍵字先被匹配**。
+**A**: 確保**優先順序較高的區域關鍵字先被比對**。
 
 **舊邏輯問題**（已棄用）：
 ```python
@@ -453,7 +453,7 @@ for keyword in ["搖滾A", "搖滾B", "任意區域"]:
 **實務案例**：
 - 使用者設定：`"\"搖滾A區\",\"搖滾B區\",\"任意區域\""`
 - 期望：優先選搖滾A，其次搖滾B，最後才考慮其他
-- Early Return 確保：一旦搖滾A可用，立即選擇，不會因為「任意區域」匹配更多而選錯
+- Early Return 確保：一旦搖滾A可用，立即選擇，不會因為「任意區域」比對更多而選錯
 
 ---
 
@@ -479,14 +479,14 @@ for keyword in ["搖滾A", "搖滾B", "任意區域"]:
 ```
 
 **結果**：
-- 即使「搖滾區輪椅席」匹配 `area_keyword`，也會被 `keyword_exclude` 排除
+- 即使「搖滾區輪椅席」比對 `area_keyword`，也會被 `keyword_exclude` 排除
 - 確保不會誤選身障專用區域
 
 ---
 
 ### Q3: 條件回退什麼時候觸發？
 
-**A**: 當**所有區域關鍵字都無法匹配**時，根據 `area_auto_fallback` 設定決定行為。
+**A**: 當**所有區域關鍵字都無法比對**時，根據 `area_auto_fallback` 設定決定行為。
 
 **觸發條件**：
 ```python
@@ -504,13 +504,13 @@ if is_need_refresh and matched_blocks is None:
 2. **`area_auto_fallback = true`**：
    - 使用 `auto_select_mode` 從可用選項中選擇
    - 自動完成購票流程
-   - **用途**：「只要能買到票就好」的場景
+   - **用途**：「只要能買到票就好」的情境
 
 ---
 
 ### Q4: AND 邏輯如何使用？
 
-**A**: 使用**空格分隔**關鍵字，實現「必須同時包含」的邏輯。
+**A**: 使用**空格分隔**關鍵字，實作「必須同時包含」的邏輯。
 
 **範例 1：單一關鍵字（OR 邏輯）**
 ```json
@@ -519,7 +519,7 @@ if is_need_refresh and matched_blocks is None:
 }
 ```
 解析結果：`["搖滾A區", "搖滾B區", "搖滾C區"]`
-- 匹配其中**任一個**即可（OR 邏輯）
+- 比對其中**任一個**即可（OR 邏輯）
 
 **範例 2：AND 邏輯（空格分隔）**
 ```json
@@ -533,9 +533,9 @@ if is_need_refresh and matched_blocks is None:
 
 **實務應用**：
 - **避免誤選**：`"搖滾 特別 加演"` → 只選「搖滾特別加演場」，不選普通「搖滾場」
-- **精確匹配**：`"A區 前排"` → 只選「A區前排」，不選「A區後排」
+- **精確比對**：`"A區 前排"` → 只選「A區前排」，不選「A區後排」
 
-**除錯日誌範例**：
+**除錯記錄範例**：
 ```
 [AREA KEYWORD] Checking keyword #1: 搖滾 A區
 [AREA KEYWORD]   Matching AND keywords: ['搖滾', 'A區']
@@ -548,13 +548,11 @@ if is_need_refresh and matched_blocks is None:
 
 ## 相關文件
 
-- 📋 [Feature 003: Keyword Priority Fallback](../../specs/003-keyword-priority-fallback/implementation-guide.md) - 完整實作指南
-- 📊 [規格驗證矩陣](../05-validation/spec-validation-matrix.md) - FR-020, FR-021, FR-022
 - 🔧 [TixCraft 參考實作](../04-implementation/platform-examples/tixcraft-reference.md) - 主要參考範例
 - 🔧 [KKTIX 參考實作](../04-implementation/platform-examples/kktix-reference.md) - 價格表模式
 - 🔧 [iBon 參考實作](../04-implementation/platform-examples/ibon-reference.md) - Shadow DOM 範例
 - 📖 [12-Stage 標準](../02-development/ticket_automation_standard.md) - 完整 12 階段流程
-- 🏗️ [程式碼結構分析](../02-development/structure.md) - 函數位置索引
+- 🏗️ [程式碼結構分析](../02-development/structure.md) - 函式位置索引
 
 ---
 
@@ -565,7 +563,7 @@ if is_need_refresh and matched_blocks is None:
 | v1.0 | 2024 | 初版：基本區域選擇邏輯 |
 | v1.1 | 2025-10 | 新增 AND 邏輯支援 + keyword_exclude |
 | v1.2 | 2025-11 | Feature 003: Early Return + Conditional Fallback |
-| v1.3 | 2025-12-18 | util 共用函數重構 |
+| v1.3 | 2025-12-18 | util 共用函式重構 |
 | **v1.4** | **2026-07-02** | **Cityline 抗重繪模式（Issue #366/#367）** |
 
 **v1.3 重大變更**：
@@ -575,6 +573,6 @@ if is_need_refresh and matched_blocks is None:
 - ✅ 統一 UDN、iBon、FamiTicket 等 8 個重複選擇模式實作
 
 **v1.4 重大變更**：
-- ✅ Cityline 改用乾淨匹配文字（`.price-degree` + `.price-num`），短關鍵字不再誤中列內雜訊
+- ✅ Cityline 改用乾淨比對文字（`.price-degree` + `.price-num`），短關鍵字不再誤中列內雜訊
 - ✅ Cityline 點擊改為 live-DOM 重查（單次 `tab.evaluate`），修復頁面重繪導致的 stale handle 靜默失敗
 - ✅ 新增片段 8「重繪環境下的區域點擊」，平台差異表補 Cityline 列
