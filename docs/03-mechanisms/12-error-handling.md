@@ -7,7 +7,7 @@
 
 ## 概述
 
-錯誤處理貫穿整個購票流程。系統需要識別錯誤類型，決定重試或放棄，並在適當時機通知使用者。主要透過 `try/except` 包覆關鍵操作，搭配 CDP 事件處理器攔截 JavaScript alert。
+錯誤處理貫穿整個購票流程。系統需要識別錯誤型別，決定重試或放棄，並在適當時機通知使用者。主要透過 `try/except` 包覆關鍵操作，搭配 CDP 事件處理器攔截 JavaScript alert。
 
 **核心目標**：在不中斷主流程的前提下，最大化錯誤恢復能力。
 
@@ -45,7 +45,7 @@
 
 關鍵字清單：`['暫無票', '已售完', 'Sold Out', 'sold out', '完売']`
 
-### 2. Alert 對話框處理
+### 2. Alert 對話方塊處理
 
 系統透過 CDP 事件處理器自動攔截 JavaScript alert。
 
@@ -106,7 +106,7 @@
 - 一旦成功取得非空 URL 即歸零，並記錄 `[URL DIAG] websocket recovered after N silent errors`
 - 主迴圈的 `[URL DIAG] empty url` 節流訊息會附上 `silent_ws_errors=N`，兩條訊息可交叉對照
 
-閾值取 15 的依據：主迴圈約每 50ms 輪詢一次，15 次代表已經接近一秒完全讀不到 URL，
+門檻值取 15 的依據：主迴圈約每 50ms 輪詢一次，15 次代表已經接近一秒完全讀不到 URL，
 遠超過任何正常導航的瞬時抖動。
 
 **刻意不做的兩件事**：不自動重連（重建 tab/browser 連線動到共用基礎設施，且難以測試，
@@ -124,7 +124,7 @@
 
 大部分平台操作使用固定次數重試：
 
-| 場景 | 最大次數 | 間隔 | 程式碼位置 |
+| 情境 | 最大次數 | 間隔 | 程式碼位置 |
 |------|---------|------|-----------|
 | Cloudflare 挑戰 | 3 次 | 遞增（3 + retry * 2 秒） | `nodriver_common.py`（handle_cloudflare_challenge） |
 | KKTIX 按鈕點擊 | 3 次 | 固定重試 | `platforms/kktix.py` |
@@ -143,7 +143,7 @@ TixCraft 售完偵測使用非阻塞式冷卻機制：
 `area_retry_count`（`platforms/tixcraft.py` 的 `_state`）：
 - 選票區域每次嘗試失敗 +1
 - 達到 60*15（15 分鐘）次後重置
-- 短期內連續失敗 10 次後也重置，防止無限循環
+- 短期內連續失敗 10 次後也重置，防止無限迴圈
 
 ### 自動刷新頁面
 
@@ -175,8 +175,8 @@ TixCraft 售完偵測使用非阻塞式冷卻機制：
 
 1. **try/except 包覆所有 DOM 操作**：每個 `tab.evaluate()`、`tab.query_selector()` 都有 except
 2. **靜默失敗不中斷流程**：大部分 except 回傳 False 或 None，讓主迴圈繼續
-3. **關鍵操作才記錄日誌**：使用 `debug.log()` 而非 `print()`，由 verbose 設定控制
-4. **一次性日誌**：使用旗標（如 `submit_notfound`、`waiting_page_logged`）避免重複輸出
+3. **關鍵操作才記錄**：使用 `debug.log()` 而非 `print()`，由 verbose 設定控制
+4. **一次性記錄**：使用旗標（如 `submit_notfound`、`waiting_page_logged`）避免重複輸出
 
 ---
 

@@ -1,6 +1,6 @@
 # 平台實作參考：Cityline
 
-**文件說明**：Cityline (城市電腦售票) 平台的完整實作參考，涵蓋香港票務系統、多域名處理、Cloudflare Turnstile 驗證等技術實作指南。
+**文件說明**：Cityline (城市電腦售票) 平台的完整實作參考，涵蓋香港票務系統、多網域處理、Cloudflare Turnstile 驗證等技術實作指南。
 **最後更新**：2025-12-02
 
 ---
@@ -30,14 +30,14 @@
 - Cookie 接受處理
 
 ⚠️ **挑戰**：
-- 多域名架構（cityline.com / shows.cityline.com / venue.cityline.com）
+- 多網域架構（cityline.com / shows.cityline.com / venue.cityline.com）
 - Cloudflare Turnstile 驗證
-- 登入模態對話框處理
+- 登入模態對話方塊處理
 - 按鈕等待啟用機制
 
 ### 特殊機制
 
-1. **多域名架構**
+1. **多網域架構**
    - `cityline.com/Events.html` - 首頁/登入
    - `shows.cityline.com` - 活動詳情頁面
    - `venue.cityline.com/eventDetail` - 日期選擇
@@ -49,7 +49,7 @@
    - 自動偵測按鈕狀態
    - 最長等待 60 秒
 
-3. **登入模態對話框**
+3. **登入模態對話方塊**
    - 購票過程中可能彈出登入提示
    - 自動偵測並處理 Cookie 注入
 
@@ -59,13 +59,12 @@
 
 ---
 
-## 核心函數索引
+## 核心函式索引
 
-| 階段 | 函數名稱 | 行數 | 說明 |
+| 階段 | 函式名稱 | 行數 | 說明 |
 |------|---------|------|------|
 | Main | `nodriver_cityline_main()` | 15820 | 主控制流程（URL 路由）|
 | Stage 2 | `nodriver_cityline_login()` | 14912 | 帳號登入 |
-| Stage 2 | `nodriver_cityline_handle_login_redirect()` | 14971 | 登入後轉跳處理 |
 | Stage 3 | `nodriver_cityline_cookie_accept()` | 15652 | Cookie 接受處理 |
 | Stage 3 | `nodriver_cityline_clean_ads()` | 15767 | 廣告清除 |
 | Stage 4 | `nodriver_cityline_date_auto_select()` | 15073 | 日期自動選擇 |
@@ -77,7 +76,7 @@
 | Stage 10 | `nodriver_cityline_next_button_press()` | 15495 | 下一步按鈕 |
 | Stage 10 | `nodriver_cityline_continue_button_press()` | 15272 | 繼續按鈕 |
 | Stage 12 | `nodriver_cityline_check_shopping_basket()` | 15564 | 購物車頁面（成功偵測）|
-| Util | `nodriver_cityline_check_login_modal()` | 15181 | 登入模態對話框檢測 |
+| Util | `nodriver_cityline_check_login_modal()` | 15181 | 登入模態對話方塊偵測 |
 | Util | `nodriver_cityline_close_second_tab()` | 15634 | 關閉第二分頁 |
 | Util | `nodriver_cityline_auto_retry_access()` | 14898 | 自動重試存取 |
 
@@ -87,7 +86,7 @@
 
 ## URL 路由表
 
-| URL 模式 | 頁面類型 | 處理函數 |
+| URL 模式 | 頁面型別 | 處理函式 |
 |---------|---------|---------|
 | `cityline.com/Events.html` | 首頁 | Cookie 接受 + 廣告清除 |
 | `cityline.com/Login.html` | 登入頁面 | `nodriver_cityline_login()` |
@@ -111,7 +110,7 @@ async def nodriver_cityline_press_buy_button(tab, config_dict):
     """等待並點擊購票按鈕"""
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
-    print("[CITYLINE] Waiting for buy ticket button to appear...")
+    debug.log("[CITYLINE] Waiting for buy ticket button to appear...")
 
     max_wait = 60  # 最長等待 60 秒
     check_interval = 0.5
@@ -149,11 +148,11 @@ async def nodriver_cityline_press_buy_button(tab, config_dict):
 
         if result.get('clicked'):
             if show_debug_message:
-                print(f"[CITYLINE] Buy button clicked via {result.get('selector')}")
+                debug.log(f"[CITYLINE] Buy button clicked via {result.get('selector')}")
             return True
 
         if result.get('disabled') and attempt % 10 == 0:
-            print(f"[CITYLINE] Still waiting for button... ({attempt * check_interval:.1f}s elapsed)")
+            debug.log(f"[CITYLINE] Still waiting for button... ({attempt * check_interval:.1f}s elapsed)")
 
         await asyncio.sleep(check_interval)
 
@@ -162,11 +161,11 @@ async def nodriver_cityline_press_buy_button(tab, config_dict):
 
 ---
 
-## 特殊設計 2: 登入模態對話框處理
+## 特殊設計 2: 登入模態對話方塊處理
 
 ### 挑戰
 
-在購票過程中，Cityline 可能彈出登入模態對話框，需要自動處理。
+在購票過程中，Cityline 可能彈出登入模態對話方塊，需要自動處理。
 
 ### 解決方案
 
@@ -193,7 +192,7 @@ async def nodriver_cityline_check_login_modal(tab, config_dict):
 
     if result.get('hasModal'):
         if show_debug_message:
-            print("[CITYLINE LOGIN MODAL] Login modal detected, waiting for button to be enabled...")
+            debug.log("[CITYLINE LOGIN MODAL] Login modal detected, waiting for button to be enabled...")
 
         # 等待按鈕啟用或使用者完成登入
         # ...
@@ -244,7 +243,7 @@ async def nodriver_cityline_close_second_tab(tab, url):
 
 ```python
 # 等待 Cloudflare Turnstile 驗證完成
-print("[CITYLINE DATE] Waiting 3 seconds for Cloudflare Turnstile...")
+debug.log("[CITYLINE DATE] Waiting 3 seconds for Cloudflare Turnstile...")
 await asyncio.sleep(3.0)
 
 # 檢查是否通過驗證
@@ -302,7 +301,7 @@ turnstile_result = await tab.evaluate('''
 **檢查項目**：
 1. 手動確認頁面上是否有倒數計時
 2. 檢查是否有 Cloudflare 驗證提示
-3. 啟用 `verbose` 查看等待狀態
+3. 啟用 `verbose` 檢視等待狀態
 
 ### Q2: 登入後沒有轉跳到活動頁面？
 
@@ -315,10 +314,10 @@ turnstile_result = await tab.evaluate('''
 
 ### Q3: 區域選擇失敗？
 
-**A**: 關鍵字可能不匹配或區域已售完。
+**A**: 關鍵字可能不比對或區域已售完。
 
 **解決方案**：
-1. 啟用 `verbose` 查看可用區域
+1. 啟用 `verbose` 檢視可用區域
 2. 調整 `area_keyword` 設定
 3. 檢查是否有區域已售完提示
 
@@ -343,7 +342,7 @@ turnstile_result = await tab.evaluate('''
 
 - 📋 [Stage 4: 日期選擇機制](../../03-mechanisms/04-date-selection.md) - 日期選擇邏輯
 - 📋 [Stage 5: 區域選擇機制](../../03-mechanisms/05-area-selection.md) - 區域選擇邏輯
-- 🏗️ [程式碼結構分析](../../02-development/structure.md) - Cityline 函數索引
+- 🏗️ [程式碼結構分析](../../02-development/structure.md) - Cityline 函式索引
 - 📖 [12-Stage 標準](../../02-development/ticket_automation_standard.md) - 完整流程規範
 
 ---
@@ -353,14 +352,14 @@ turnstile_result = await tab.evaluate('''
 | 版本 | 日期 | 變更內容 |
 |------|------|---------|
 | v1.0 | 2024 | 初版：基本功能支援 |
-| v1.1 | 2025-08 | 多域名架構支援 |
+| v1.1 | 2025-08 | 多網域架構支援 |
 | v1.2 | 2025-10 | Cloudflare Turnstile 處理 |
 | **v1.3** | **2025-12** | **登入模態 + 多分頁處理** |
 
 **v1.3 亮點**：
-- ✅ 完整的多域名架構支援
+- ✅ 完整的多網域架構支援
 - ✅ 購票按鈕等待機制（最長 60 秒）
-- ✅ 登入模態對話框自動處理
+- ✅ 登入模態對話方塊自動處理
 - ✅ 多分頁自動關閉
 - ✅ Cookie 接受 + 廣告清除
 - ✅ 購物車成功偵測 + 音效播放

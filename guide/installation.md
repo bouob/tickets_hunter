@@ -2,7 +2,7 @@
 文件說明：協助使用者完成 Tickets Hunter 執行檔版本的安裝與首次執行
 分類：Getting Started (level: 1)
 目標受眾：初學者
-最後更新：2025-11-12
+最後更新：2026-09-16
 -->
 
 # 安裝與首次執行指南
@@ -51,7 +51,7 @@
 
 ```
 tickets_hunter/
-├── nodriver_tixcraft.exe       # NoDriver 搶票引擎
+├── nodriver_tixcraft.exe       # 搶票引擎
 ├── settings.exe                 # 設定編輯器（主要入口）
 │
 ├── _internal/                   # 依賴函式庫（請勿刪除！）
@@ -226,9 +226,9 @@ https://ticket.ibon.com.tw/ActivityInfo/Details/25EXAMPLE
 
 ---
 
-## 🔽 NoDriver 首次自動下載 Chrome
+## 🔽 首次自動下載 Chrome
 
-如果您選擇 **NoDriver** 搶票引擎（推薦），首次執行時會自動下載獨立的 Chrome 瀏覽器。
+搶票引擎首次執行時，會自動下載一份獨立的 Chrome 瀏覽器。
 
 ### 下載過程
 
@@ -238,7 +238,7 @@ https://ticket.ibon.com.tw/ActivityInfo/Details/25EXAMPLE
    ```
 
 2. 下載位置：
-   - Windows：`C:\Users\<您的使用者名稱>\AppData\Local\nodriver\`
+   - Windows：`%LOCALAPPDATA%\nodriver\`
    - 不會影響您現有的 Chrome 瀏覽器
 
 3. 下載時間：約 2-5 分鐘（視網路速度）
@@ -272,7 +272,7 @@ https://ticket.ibon.com.tw/ActivityInfo/Details/25EXAMPLE
 
 **解決方案**：重新解壓縮 ZIP 檔案
 
-### Q3: NoDriver 版本首次執行很慢？
+### Q3: 首次執行很慢？
 
 **原因**：正常現象，首次執行會自動下載 Chrome 瀏覽器（約 100-200MB）
 
@@ -304,7 +304,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 
 **注意**：
 - Windows 版本限定 Windows 10/11（64-bit）
-- 首次執行 NoDriver 時仍需下載 Chrome
+- 首次執行時仍需下載 Chrome
 
 ### Q6: 如何更新到新版本？
 
@@ -320,7 +320,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 
 如果想深入理解搶票邏輯，請參閱：
 
-- **[關鍵字機制詳解](keyword-mechanism.md)** - 深入理解關鍵字匹配、AND/OR 邏輯、自動回退策略
+- **[關鍵字機制詳解](keyword-mechanism.md)** - 深入理解關鍵字比對、AND/OR 邏輯、自動回退策略
 - **[詳細設定說明](settings-guide.md)** - settings.json 完整欄位參考（進階使用者）
 
 ---
@@ -338,4 +338,4 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 
 **安裝完成！祝您搶票成功！** 🎉
 
-*最後更新：2025-11-12*
+*最後更新：2026-09-16*

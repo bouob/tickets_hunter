@@ -29,8 +29,8 @@
 
 **Chrome DevTools Protocol (CDP)** 是一個基於 JSON 的儀表化系統，允許開發工具對 Chromium 及其他 Blink 引擎瀏覽器進行：
 
-- **檢查 (Inspection)** - 查看 DOM、網路請求、控制台訊息
-- **調試 (Debugging)** - 設置斷點、追蹤執行流程
+- **檢查 (Inspection)** - 檢視 DOM、網路請求、控制台訊息
+- **除錯 (Debugging)** - 設定中斷點、追蹤執行流程
 - **分析 (Profiling)** - 效能分析、記憶體監控
 - **自動化 (Automation)** - 模擬使用者操作、注入程式碼
 
@@ -59,7 +59,7 @@ CDP 將功能劃分為多個 **Domain**（領域），每個 Domain 定義：
 
 ### ZenDriver 的 CDP 整合
 
-[ZenDriver](https://zendriver.dev/)（nodriver 的活躍 fork，支援 Chrome 145+）是基於 CDP 構建的 Python 自動化框架：
+[ZenDriver](https://zendriver.dev/)（nodriver 的活躍 fork，支援 Chrome 145+）是基於 CDP 建置的 Python 自動化框架：
 
 ```
 使用者程式碼
@@ -73,9 +73,9 @@ Chrome/Chromium 瀏覽器
 
 ### 為什麼需要直接使用 CDP？
 
-雖然 ZenDriver 提供高階 API（如 `tab.get()`, `element.click()`），但某些場景必須直接使用 CDP：
+雖然 ZenDriver 提供高階 API（如 `tab.get()`, `element.click()`），但某些情境必須直接使用 CDP：
 
-**必須使用 CDP 的場景：**
+**必須使用 CDP 的情境：**
 
 1. **Shadow DOM 操作** - 特別是 closed Shadow DOM（JavaScript 無法穿透）
    - 範例：ibon、KHAM 平台的購票按鈕都在 Shadow DOM 內
@@ -86,7 +86,7 @@ Chrome/Chromium 瀏覽器
 
 3. **底層瀏覽器控制**
    - Cookie 精細管理
-   - 彈窗處理
+   - 彈出視窗處理
    - 網路請求攔截
 
 **優勢：**
@@ -99,15 +99,15 @@ Chrome/Chromium 瀏覽器
 
 ## 基本使用語法
 
-### 1. 導入 CDP 模組
+### 1. 匯入 CDP 模組
 
 ```python
 from zendriver import cdp
 ```
 
-### 2. 發送 CDP 命令
+### 2. 傳送 CDP 命令
 
-使用 `tab.send()` 方法發送 CDP 命令：
+使用 `tab.send()` 方法傳送 CDP 命令：
 
 ```python
 # 基本語法
@@ -134,7 +134,7 @@ CDP 官方文件使用 camelCase，ZenDriver 使用 snake_case：
 
 ### 4. 錯誤處理
 
-CDP 命令可能拋出異常，建議使用 try-except：
+CDP 命令可能丟出異常，建議使用 try-except：
 
 ```python
 try:
@@ -149,11 +149,11 @@ except Exception as e:
 
 ### DOMSnapshot Domain
 
-**用途：** 快速捕獲整個頁面的 DOM 結構，特別適合穿透 Shadow DOM。
+**用途：** 快速捕捉整個頁面的 DOM 結構，特別適合穿透 Shadow DOM。
 
 #### 核心命令：`capture_snapshot`
 
-**官方定義：** 返回文檔快照，包含完整的 DOM 樹（包括 iframe、template 內容、imported documents），以平坦化陣列形式呈現，並附帶佈局和樣式資訊。
+**官方定義：** 返回文件快照，包含完整的 DOM 樹（包括 iframe、template 內容、imported documents），以平坦化陣列形式呈現，並附帶佈局和樣式資訊。
 
 **關鍵特性：** "Shadow DOM in the returned DOM tree is flattened."（Shadow DOM 會被平坦化）
 
@@ -189,7 +189,7 @@ node_values = [strings[i] if i >= 0 else '' for i in nodes.node_value]
 backend_node_ids = list(nodes.backend_node_id)
 ```
 
-#### 使用場景
+#### 使用情境
 
 1. **穿透 closed Shadow DOM** - JavaScript 無法存取的 Shadow DOM
 2. **大規模元素搜尋** - 一次取得所有元素，比多次查詢效率高
@@ -245,8 +245,8 @@ async def find_buttons_in_shadow_dom(tab):
 
 #### 注意事項
 
-1. **記憶體消耗** - 捕獲整個頁面會佔用記憶體，特別是大型頁面
-2. **快照時間點** - 捕獲的是當下狀態，動態內容需要重新捕獲
+1. **記憶體消耗** - 捕捉整個頁面會佔用記憶體，特別是大型頁面
+2. **快照時間點** - 捕捉的是當下狀態，動態內容需要重新捕捉
 3. **backend_node_id** - 用於後續操作（需轉換為 node_id）
 
 ---
@@ -273,7 +273,7 @@ document = await tab.send(cdp.dom.get_document(
 **回傳：** `Node` 物件，包含整個 DOM 樹。
 
 **⚠️ 注意 CBOR Stack Overflow**：
-- 使用 `depth=-1` 會遞歸獲取整個 DOM 樹（可能 6000+ 節點）
+- 使用 `depth=-1` 會遞迴獲取整個 DOM 樹（可能 6000+ 節點）
 - 在複雜頁面可能導致 `CBOR: stack limit exceeded` 錯誤
 - **建議**：使用 `depth=0` 只獲取根節點，配合 `perform_search()` 按需查詢
 
@@ -302,12 +302,12 @@ await tab.send(cdp.dom.discard_search_results(search_id=search_id))
 **用途：** 在整個頁面搜尋元素，自動穿透 Shadow DOM（包括 closed Shadow DOM）。
 
 **參數：**
-- `query` (str)：搜尋條件（支援 CSS selector、XPath、純文本）
+- `query` (str)：搜尋條件（支援 CSS selector、XPath、純文字）
 - `include_user_agent_shadow_dom` (bool, optional)：設為 `True` 時穿透 Shadow DOM
 
 **回傳值：**
 - `search_id`：搜尋會話識別碼（用於後續操作）
-- `result_count`：找到的元素數量
+- `result_count`：找到的元質數量
 
 **三步驟工作流程：**
 1. **`perform_search()`** - 執行搜尋，取得 `search_id` 和數量
@@ -315,10 +315,10 @@ await tab.send(cdp.dom.discard_search_results(search_id=search_id))
 3. **`discard_search_results()`** - 清理搜尋會話（釋放資源）
 
 **重要提醒：**
-- ⚠️ **必須清理**：完成後必須調用 `discard_search_results()` 釋放 CDP 資源
-- ⚠️ **會話失效**：清理後不能再對該 `search_id` 調用 `get_search_results()`
+- ⚠️ **必須清理**：完成後必須呼叫 `discard_search_results()` 釋放 CDP 資源
+- ⚠️ **會話失效**：清理後不能再對該 `search_id` 呼叫 `get_search_results()`
 
-**性能優勢（vs DOMSnapshot）：**
+**效能優勢（vs DOMSnapshot）：**
 ```
 Pierce Method (perform_search):
   - 速度：2-5 秒
@@ -354,10 +354,10 @@ except Exception as e:
     pass
 ```
 
-**📖 深入學習**：查看 **[Shadow DOM Pierce Method 完整指南](shadow_dom_pierce_guide.md)** 了解智慧等待、父元素遍歷等進階技巧。
+**📖 深入學習**：檢視 **[Shadow DOM Pierce Method 完整指南](shadow_dom_pierce_guide.md)** 了解智慧等待、父元素走訪等進階技巧。
 
 **參考資料**：
-- ZenDriver/nodriver CDP DOM 文檔：https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html
+- ZenDriver/nodriver CDP DOM 文件：https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html
 - 實作範例：`src/nodriver_tixcraft.py` Line 6368-6724
 
 ##### 3. `push_nodes_by_backend_ids_to_frontend` - 轉換 node ID
@@ -397,7 +397,7 @@ await tab.send(cdp.dom.scroll_into_view_if_needed(
 await tab.send(cdp.dom.focus(node_id=node_id))
 ```
 
-**用途：** 將焦點設置到指定元素（如輸入框）。
+**用途：** 將焦點設定到指定元素（如輸入框）。
 
 ##### 5. `get_box_model` - 取得元素位置
 
@@ -453,7 +453,7 @@ node_desc = await tab.send(cdp.dom.describe_node(
 
 **用途：** 取得節點的詳細資訊（標籤名、屬性、子節點等）。
 
-#### 使用場景
+#### 使用情境
 
 1. **元素精確定位** - 取得元素位置後模擬滑鼠點擊
 2. **Shadow DOM 穿透** - 使用 `get_document(pierce=True)`
@@ -512,7 +512,7 @@ async def click_button_in_shadow_dom(tab, backend_node_id):
 
 ### Input Domain
 
-**用途：** 模擬滑鼠、鍵盤、觸摸輸入，實現真實的使用者操作。
+**用途：** 模擬滑鼠、鍵盤、觸控輸入，實作真實的使用者操作。
 
 #### 核心命令
 
@@ -544,7 +544,7 @@ await tab.send(cdp.input_.dispatch_key_event(
 
 | 參數 | 說明 | 範例 |
 |------|------|------|
-| `type_` | 事件類型 | `'keyDown'`, `'keyUp'`, `'char'` |
+| `type_` | 事件型別 | `'keyDown'`, `'keyUp'`, `'char'` |
 | `code` | 物理按鍵代碼 | `'Enter'`, `'KeyA'`, `'Space'` |
 | `key` | 按鍵邏輯名稱 | `'Enter'`, `'a'`, `' '` |
 | `text` | 輸入的字元 | `'\r'`, `'a'`, `' '` |
@@ -597,7 +597,7 @@ await tab.mouse_click(x=100, y=200, click_count=2)
 
 ##### 3. 其他輸入命令
 
-**觸摸事件：**
+**觸控事件：**
 
 ```python
 # dispatch_touch_event - 觸摸事件（touchStart, touchEnd, touchMove）
@@ -619,7 +619,7 @@ await tab.send(cdp.input_.synthesize_scroll_gesture(
 ))
 ```
 
-#### 使用場景
+#### 使用情境
 
 1. **模擬鍵盤輸入** - 特別是特殊鍵（Enter、Tab、Escape）
 2. **精確滑鼠點擊** - 結合 `get_box_model` 取得座標後點擊
@@ -708,7 +708,7 @@ async def press_enter_key(tab):
 
 #### 核心命令
 
-##### 1. `set_cookie` - 設置 Cookie
+##### 1. `set_cookie` - 設定 Cookie
 
 **語法：**
 
@@ -732,7 +732,7 @@ result = await tab.send(cdp.network.set_cookie(
 |------|------|------|
 | `name` | Cookie 名稱 | `'SID'`, `'ibonqware'` |
 | `value` | Cookie 值 | `'abc123...'` |
-| `domain` | 域名 | `.tixcraft.com`（含子域名）<br>`tixcraft.com`（僅主域名）|
+| `domain` | 網域 | `.tixcraft.com`（含子網域）<br>`tixcraft.com`（僅主網域）|
 | `path` | 路徑 | `'/'`（根路徑） |
 | `secure` | 僅 HTTPS | `True` / `False` |
 | `http_only` | 僅 HTTP | `True` / `False` |
@@ -792,13 +792,13 @@ await tab.send(cdp.network.delete_cookies(
 await tab.send(cdp.network.clear_browser_cookies())
 ```
 
-#### 使用場景
+#### 使用情境
 
-1. **自動登入** - 設置已保存的 Cookie 實現免密碼登入
+1. **自動登入** - 設定已保存的 Cookie 實作免密碼登入
 2. **會話管理** - 在不同頁面間保持登入狀態
 3. **繞過限制** - 某些網站檢查特定 Cookie
 
-#### 範例：設置 TixCraft Cookie 實現自動登入
+#### 範例：設定 TixCraft Cookie 實作自動登入
 
 ```python
 async def set_tixcraft_cookie(driver, tixcraft_sid):
@@ -841,7 +841,7 @@ async def set_tixcraft_cookie(driver, tixcraft_sid):
         return False
 ```
 
-#### 範例：設置 ibon Cookie
+#### 範例：設定 ibon Cookie
 
 ```python
 async def set_ibon_cookie(tab, ibonqware):
@@ -872,20 +872,20 @@ async def set_ibon_cookie(tab, ibonqware):
 
 #### 注意事項
 
-1. **domain 前綴** - `.example.com` 包含所有子域名，`example.com` 僅主域名
-2. **secure 與 http_only** - 根據目標網站的要求設置，錯誤的設置會導致 Cookie 無效
-3. **same_site 屬性** - Chrome 預設為 `'Lax'`，跨站請求需要設置為 `'None'`（且必須 `secure=True`）
-4. **時機** - 通常在導航到目標網站前設置 Cookie
+1. **domain 字首** - `.example.com` 包含所有子網域，`example.com` 僅主網域
+2. **secure 與 http_only** - 根據目標網站的要求設定，錯誤的設定會導致 Cookie 無效
+3. **same_site 屬性** - Chrome 預設為 `'Lax'`，跨站請求需要設定為 `'None'`（且必須 `secure=True`）
+4. **時機** - 通常在導航到目標網站前設定 Cookie
 
 ---
 
 ### Page Domain
 
-**用途：** 頁面導航、截圖、生命週期管理、彈窗處理。
+**用途：** 頁面導航、截圖、生命週期管理、彈出視窗處理。
 
 #### 核心命令
 
-##### 1. `handle_java_script_dialog` - 處理彈窗
+##### 1. `handle_java_script_dialog` - 處理彈出視窗
 
 **語法：**
 
@@ -903,7 +903,7 @@ await tab.send(cdp.page.handle_java_script_dialog(
 ))
 ```
 
-**用途：** 處理 JavaScript 彈窗（`alert`, `confirm`, `prompt`）。
+**用途：** 處理 JavaScript 彈出視窗（`alert`, `confirm`, `prompt`）。
 
 **使用時機：** 當頁面彈出 alert/confirm/prompt 時，必須處理才能繼續操作。
 
@@ -963,7 +963,7 @@ await element.save_screenshot('element.png')
 await tab.send(cdp.page.reload(ignore_cache=True))
 ```
 
-**啟用/禁用 Page 事件：**
+**啟用/停用 Page 事件：**
 
 ```python
 # enable - 啟用 Page domain 通知
@@ -984,13 +984,13 @@ pdf_data = await tab.send(cdp.page.print_to_pdf(
 ))
 ```
 
-#### 使用場景
+#### 使用情境
 
-1. **彈窗處理** - 自動接受/拒絕 alert/confirm
+1. **彈出視窗處理** - 自動接受/拒絕 alert/confirm
 2. **截圖記錄** - 記錄操作過程或錯誤畫面
 3. **頁面控制** - 導航、重新載入
 
-#### 範例：處理驗證碼錯誤彈窗
+#### 範例：處理驗證碼錯誤彈出視窗
 
 ```python
 async def handle_captcha_error_dialog(tab):
@@ -1008,7 +1008,7 @@ async def handle_captcha_error_dialog(tab):
         return False
 ```
 
-#### 範例：截取特定區域並保存
+#### 範例：擷取特定區域並保存
 
 ```python
 async def capture_captcha_area(tab, x, y, width, height):
@@ -1043,7 +1043,7 @@ async def capture_captcha_area(tab, x, y, width, height):
 
 #### 注意事項
 
-1. **彈窗必須處理** - 出現彈窗時必須呼叫 `handle_java_script_dialog`，否則頁面會被阻塞
+1. **彈出視窗必須處理** - 出現彈出視窗時必須呼叫 `handle_java_script_dialog`，否則頁面會被阻塞
 2. **截圖時機** - 確保頁面載入完成再截圖
 3. **ZenDriver 高階 API** - 優先使用 `tab.get()`, `tab.save_screenshot()` 等高階方法
 
@@ -1051,7 +1051,7 @@ async def capture_captcha_area(tab, x, y, width, height):
 
 ### Runtime Domain
 
-**用途：** JavaScript 執行、物件操作、遠端函數呼叫。
+**用途：** JavaScript 執行、物件操作、遠端函式呼叫。
 
 #### 核心命令
 
@@ -1076,7 +1076,7 @@ result = await tab.evaluate('document.title')
 print(result)  # 直接得到值
 ```
 
-##### 2. `call_function_on` - 在物件上呼叫函數
+##### 2. `call_function_on` - 在物件上呼叫函式
 
 **語法：**
 
@@ -1097,7 +1097,7 @@ result = await tab.send(cdp.runtime.call_function_on(
 success = result.result.value
 ```
 
-**用途：** 在特定物件（如 DOM 元素）上執行函數，特別適合操作 Shadow DOM 內的元素。
+**用途：** 在特定物件（如 DOM 元素）上執行函式，特別適合操作 Shadow DOM 內的元素。
 
 ##### 3. 其他 Runtime 命令
 
@@ -1118,11 +1118,11 @@ properties = await tab.send(cdp.runtime.get_properties(
 await tab.send(cdp.runtime.release_object(object_id=remote_object_id))
 ```
 
-#### 使用場景
+#### 使用情境
 
 1. **執行 JavaScript** - 簡單的 DOM 查詢或操作
 2. **物件方法呼叫** - 在特定元素上呼叫方法（如 `click()`）
-3. **複雜操作** - 結合 DOM API 實現精細控制
+3. **複雜操作** - 結合 DOM API 實作精細控制
 
 #### 範例：在 Shadow DOM 元素上呼叫 click()
 
@@ -1161,7 +1161,7 @@ async def click_element_via_runtime(tab, node_id):
 
 1. **優先使用高階 API** - `tab.evaluate()` 比直接使用 CDP 更簡潔
 2. **RemoteObject** - `call_function_on` 需要 `object_id`，必須先使用 `resolve_node` 轉換
-3. **記憶體管理** - 長時間運行時記得釋放不再使用的物件
+3. **記憶體管理** - 長時間執行時記得釋放不再使用的物件
 
 ---
 
@@ -1174,13 +1174,13 @@ async def click_element_via_runtime(tab, node_id):
 | **穿透 Shadow DOM** | `cdp.dom_snapshot.capture_snapshot()` | 平坦化所有 Shadow DOM 結構 | [範例 1](#範例-1搜尋-shadow-dom-內的按鈕domsnapshot) |
 | **元素精確點擊** | `cdp.dom.get_box_model()` + `tab.mouse_click()` | 取得座標後點擊 | [範例 2](#範例-2點擊-shadow-dom-內的按鈕完整流程) |
 | **鍵盤輸入** | `cdp.input_.dispatch_key_event()` | 模擬按鍵（Enter、Tab 等）| [範例 3](#範例-3模擬按下-enter-鍵) |
-| **設置 Cookie** | `cdp.network.set_cookie()` | 實現自動登入 | [範例 4](#範例-4設置-cookie-實現自動登入) |
-| **處理彈窗** | `cdp.page.handle_java_script_dialog()` | 接受/拒絕 alert/confirm | [範例 5](#範例-5處理驗證碼錯誤彈窗) |
+| **設定 Cookie** | `cdp.network.set_cookie()` | 實作自動登入 | [範例 4](#範例-4設定-cookie-實作自動登入) |
+| **處理彈出視窗** | `cdp.page.handle_java_script_dialog()` | 接受/拒絕 alert/confirm | [範例 5](#範例-5處理驗證碼錯誤彈出視窗) |
 | **元素滾動** | `cdp.dom.scroll_into_view_if_needed()` | 滾動至元素可見 | [範例 2](#範例-2點擊-shadow-dom-內的按鈕完整流程) |
 | **取得元素 HTML** | `cdp.dom.get_outer_html()` | 取得元素完整 HTML | - |
-| **截圖** | `cdp.page.capture_screenshot()` | 全頁面或區域截圖 | [範例 6](#範例-6截取驗證碼區域) |
+| **截圖** | `cdp.page.capture_screenshot()` | 全頁面或區域截圖 | [範例 6](#範例-6擷取驗證碼區域) |
 | **執行 JavaScript** | `tab.evaluate()` | 簡單 DOM 查詢 | - |
-| **在元素上呼叫函數** | `cdp.runtime.call_function_on()` | 在特定物件上執行函數 | [範例 7](#範例-7使用-runtime-點擊元素) |
+| **在元素上呼叫函式** | `cdp.runtime.call_function_on()` | 在特定物件上執行函式 | [範例 7](#範例-7使用-runtime-點擊元素) |
 
 ### 按 Domain 分類
 
@@ -1199,7 +1199,7 @@ async def click_element_via_runtime(tab, node_id):
 
 ### 範例 1：搜尋 Shadow DOM 內的按鈕（DOMSnapshot）
 
-**場景：** ibon 購票平台的按鈕位於 closed Shadow DOM 內，JavaScript 無法存取。
+**情境：** ibon 購票平台的按鈕位於 closed Shadow DOM 內，JavaScript 無法存取。
 
 ```python
 async def find_ibon_purchase_buttons(tab):
@@ -1264,9 +1264,9 @@ async def find_ibon_purchase_buttons(tab):
 **關鍵優勢：**
 - DOMSnapshot 自動平坦化所有 Shadow DOM（包含 closed）
 - 一次呼叫即可獲得完整 DOM 結構
-- 性能優異，適合大規模元素搜尋
+- 效能優異，適合大規模元素搜尋
 
-**JavaScript 無法實現（對比）：**
+**JavaScript 無法實作（對比）：**
 ```python
 # JavaScript 無法穿透 closed Shadow DOM
 result = await tab.evaluate('''
@@ -1278,7 +1278,7 @@ result = await tab.evaluate('''
 
 ### 範例 2：點擊 Shadow DOM 內的按鈕（完整流程）
 
-**場景：** 在找到按鈕的 `backend_node_id` 後，執行點擊操作。
+**情境：** 在找到按鈕的 `backend_node_id` 後，執行點擊操作。
 
 ```python
 async def click_ibon_purchase_button(tab, backend_node_id):
@@ -1352,7 +1352,7 @@ ZenDriver mouse_click / CDP Input.dispatch_mouse_event
 
 ### 範例 3：模擬按下 Enter 鍵
 
-**場景：** 在輸入驗證碼後按下 Enter 送出表單。
+**情境：** 在輸入驗證碼後按下 Enter 送出表單。
 
 ```python
 async def submit_form_with_enter(tab):
@@ -1412,9 +1412,9 @@ await tab.send(cdp.input_.dispatch_key_event(
 
 ---
 
-### 範例 4：設置 Cookie 實現自動登入
+### 範例 4：設定 Cookie 實作自動登入
 
-**場景：** 在訪問 TixCraft 前設置已保存的 SID Cookie，實現免密碼登入。
+**情境：** 在存取 TixCraft 前設定已保存的 SID Cookie，實作免密碼登入。
 
 ```python
 async def auto_login_tixcraft(driver, tixcraft_sid):
@@ -1462,7 +1462,7 @@ async def auto_login_tixcraft(driver, tixcraft_sid):
         return False
 ```
 
-**ibon 平台 Cookie 設置（單一 Cookie）：**
+**ibon 平台 Cookie 設定（單一 Cookie）：**
 
 ```python
 async def set_ibon_cookie(tab, ibonqware):
@@ -1493,9 +1493,9 @@ async def set_ibon_cookie(tab, ibonqware):
 
 ---
 
-### 範例 5：處理驗證碼錯誤彈窗
+### 範例 5：處理驗證碼錯誤彈出視窗
 
-**場景：** 驗證碼輸入錯誤後，頁面彈出 alert 提示，必須點擊確定才能繼續。
+**情境：** 驗證碼輸入錯誤後，頁面彈出 alert 提示，必須點擊確定才能繼續。
 
 ```python
 async def handle_captcha_error_dialog(tab):
@@ -1530,9 +1530,9 @@ except:
 
 ---
 
-### 範例 6：截取驗證碼區域
+### 範例 6：擷取驗證碼區域
 
-**場景：** 截取頁面上驗證碼圖片的特定區域，用於 OCR 辨識。
+**情境：** 擷取頁面上驗證碼圖片的特定區域，用於 OCR 辨識。
 
 ```python
 async def capture_captcha_image(tab, x, y, width, height):
@@ -1590,7 +1590,7 @@ await element.save_screenshot('captcha_element.png')
 
 ### 範例 7：使用 Runtime 點擊元素
 
-**場景：** 在 Shadow DOM 元素上呼叫 JavaScript `click()` 方法。
+**情境：** 在 Shadow DOM 元素上呼叫 JavaScript `click()` 方法。
 
 ```python
 async def click_element_via_runtime(tab, node_id):
@@ -1632,7 +1632,7 @@ async def click_element_via_runtime(tab, node_id):
 
 **何時使用：**
 - CDP 滑鼠點擊無效時的備用方案
-- 需要在特定物件上執行自訂函數
+- 需要在特定物件上執行自訂函式
 - 操作 closed Shadow DOM 內的元素
 
 ---
@@ -1643,7 +1643,7 @@ async def click_element_via_runtime(tab, node_id):
 
 - **CDP 官方文件**：https://chromedevtools.github.io/devtools-protocol/
   - 完整的 Domain、命令、事件參考
-  - 各版本協議（tip-of-tree, stable, v1.3）
+  - 各版本協定（tip-of-tree, stable, v1.3）
 
 - **ZenDriver 官方文件**：https://zendriver.dev/ （原 nodriver 文件：https://ultrafunkamsterdam.github.io/nodriver/）
   - ZenDriver Python API 參考
@@ -1656,15 +1656,15 @@ async def click_element_via_runtime(tab, node_id):
   - ZenDriver vs JavaScript 使用決策
   - Shadow DOM 處理範例
 
-- **除錯方法論** - `debugging_methodology.md`
-  - 除錯流程與工具
-  - 常見問題排查
+- **測試執行指南** - `docs/02-development/testing_execution_guide.md`
+  - 標準測試流程
+  - 記錄標籤驗證法
 
 - **程式碼結構** - `structure.md`
-  - 函數索引與位置
+  - 函式索引與位置
   - 各平台實作分析
 
-- **測試執行指南** - `testing_execution_guide.md`
+- **測試執行指南** - `docs/02-development/testing_execution_guide.md`
   - 測試流程與驗證方法
   - 邏輯流程檢查
 
@@ -1675,14 +1675,14 @@ async def click_element_via_runtime(tab, node_id):
 | Shadow DOM 無法存取 | 本文件 | [DOMSnapshot Domain](#domsnapshot-domain) |
 | CDP 點擊失敗 | `zendriver_api_guide.md` | CDP Click Troubleshooting |
 | Cookie 設定無效 | 本文件 | [Network Domain](#network-domain) |
-| 彈窗無法關閉 | 本文件 | [Page Domain](#page-domain) |
+| 彈出視窗無法關閉 | 本文件 | [Page Domain](#page-domain) |
 | ibon 特定問題 | `ibon_nodriver_fixes_2025-10-03.md` | - |
 
 ### 學習路徑建議
 
 **初學者：**
 1. 閱讀 [CDP 概述](#cdp-概述) 了解基本概念
-2. 查看 [基本使用語法](#基本使用語法) 學習如何發送命令
+2. 檢視 [基本使用語法](#基本使用語法) 學習如何傳送命令
 3. 參考 [快速查詢表](#快速查詢表) 找到常用命令
 4. 執行 [實際程式碼範例](#實際程式碼範例) 進行練習
 

@@ -1,6 +1,6 @@
 # ddddocr API 使用指南
 
-**文件說明**：ddddocr 驗證碼 OCR 庫的完整 API 使用指南，涵蓋安裝、基本使用、模型選擇、性能優化與搶票系統整合方案。
+**文件說明**：ddddocr 驗證碼 OCR 庫的完整 API 使用指南，涵蓋安裝、基本使用、模型選擇、效能最佳化與搶票系統整合方案。
 **最後更新**：2026-03-09
 
 ---
@@ -48,11 +48,11 @@ result = ocr.classification(image_bytes)
 print(result)  # 輸出: "AB12"
 ```
 
-## 字符範圍限定 (set_ranges)
+## 字元範圍限定 (set_ranges)
 
 ### 預定義範圍
 
-使用 `set_ranges()` 方法可以限定識別的字符範圍，提高準確度：
+使用 `set_ranges()` 方法可以限定識別的字元範圍，提高準確度：
 
 ```python
 # 0: 純數字 (0-9)
@@ -80,7 +80,7 @@ ocr.set_ranges(6)
 ocr.set_ranges(7)
 ```
 
-### 自定義字符集
+### 自訂字元集
 
 ```python
 # 自定義允許的字符
@@ -180,7 +180,7 @@ result_default = ocr.classification(image)
 result_beta = ocr_beta.classification(image)
 ```
 
-### 2. 自定義模型導入
+### 2. 自訂模型匯入
 
 ```python
 ocr = ddddocr.DdddOcr(
@@ -250,9 +250,9 @@ else:
 - 相對路徑：`assets/model/universal`（相對於程式執行目錄，預設值）
 - 絕對路徑：`C:/path/to/model`
 
-## 性能優化建議
+## 效能最佳化建議
 
-### 1. 全局初始化
+### 1. 全域初始化
 
 ```python
 # 不推薦：每次識別都初始化
@@ -267,9 +267,9 @@ def good_ocr(image):
     return _ocr.classification(image)
 ```
 
-### 2. 字符範圍限定
+### 2. 字元範圍限定
 
-限定字符範圍可以：
+限定字元範圍可以：
 - 提高識別準確度
 - 減少誤判（例如 O 和 0 的混淆）
 - 加快識別速度
@@ -344,7 +344,7 @@ if response.status_code == 200:
 ### Q1: 為什麼識別率不高？
 
 **解決方案**:
-1. 使用 `set_ranges()` 限定字符範圍
+1. 使用 `set_ranges()` 限定字元範圍
 2. 嘗試 `beta=True` 模型
 3. 檢查圖片品質（解析度、清晰度）
 4. 考慮圖片預處理
@@ -352,10 +352,10 @@ if response.status_code == 200:
 ### Q2: 記憶體佔用過高？
 
 **解決方案**:
-- 確保只初始化一次 OCR 物件（全局變數）
+- 確保只初始化一次 OCR 物件（全域變數）
 - 不要在迴圈中重複初始化
 
-### Q3: 某些字符經常誤判？
+### Q3: 某些字元經常誤判？
 
 **解決方案**:
 ```python
@@ -383,13 +383,13 @@ prob_result = ocr.classification(image, probability=True)
 
 ## 版本資訊
 
-- **當前使用版本**: 檢查 `pip show ddddocr`
+- **目前使用版本**: 檢查 `pip show ddddocr`
 - **更新方式**: `pip install --upgrade ddddocr`
 
 ## 注意事項
 
 1. **初始化成本**: 載入模型需要時間和記憶體，務必重複使用同一個 OCR 物件
-2. **字符範圍**: 使用 `set_ranges()` 是提升準確度的最佳方法
+2. **字元範圍**: 使用 `set_ranges()` 是提升準確度的最佳方法
 3. **Beta 模型**: 並非在所有情況下都更好，需實際測試
 4. **圖片格式**: 支援常見格式（JPEG, PNG, BMP 等）
 5. **ARM 架構**: 某些 ARM 平台可能不支援，需要檢查 onnxruntime 相容性

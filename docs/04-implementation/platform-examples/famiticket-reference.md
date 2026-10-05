@@ -44,14 +44,14 @@
    - 支援使用者自訂答案庫
 
 3. **活動頁面處理**
-   - 自動記錄最後訪問的活動 URL
+   - 自動記錄最後存取的活動 URL
    - 登入後自動轉跳回活動頁面
 
 ---
 
-## 核心函數索引
+## 核心函式索引
 
-| 階段 | 函數名稱 | 行數 | 說明 |
+| 階段 | 函式名稱 | 行數 | 說明 |
 |------|---------|------|------|
 | Main | `nodriver_famiticket_main()` | 10145 | 主控制流程（URL 路由）|
 | Stage 2 | `nodriver_fami_login()` | 9188 | 帳號登入 |
@@ -69,7 +69,7 @@
 
 ## URL 路由表
 
-| URL 模式 | 頁面類型 | 處理函數 |
+| URL 模式 | 頁面型別 | 處理函式 |
 |---------|---------|---------|
 | `/Home/User/SignIn` | 登入頁面 | `nodriver_fami_login()` |
 | `/Home/Activity/Info/{id}` | 活動資訊 | `nodriver_fami_activity()` |
@@ -119,7 +119,7 @@ async def nodriver_fami_login(tab, config_dict, show_debug_message=True):
         await asyncio.sleep(1.0)
 
         if show_debug_message:
-            print("[FAMI LOGIN] Login button clicked, waiting for URL change...")
+            debug.log("[FAMI LOGIN] Login button clicked, waiting for URL change...")
 
     return True
 ```
@@ -264,16 +264,16 @@ async def nodriver_fami_home_auto_select(tab, config_dict, last_activity_url, sh
 **A**: 需要補充答案庫。
 
 **解決方案**：
-1. 查看問題日誌
+1. 檢視問題記錄
 2. 補充 `user_guess_string` 設定
 3. 啟用 `auto_guess_options`
 
 ### Q3: 區域選擇失敗？
 
-**A**: 關鍵字可能不匹配。
+**A**: 關鍵字可能不比對。
 
 **解決方案**：
-1. 啟用 `verbose` 查看可用區域
+1. 啟用 `verbose` 檢視可用區域
 2. 調整 `area_keyword` 設定
 3. 確認頁面已完全載入
 
@@ -298,7 +298,7 @@ async def nodriver_fami_home_auto_select(tab, config_dict, last_activity_url, sh
 
 - 📋 [Stage 7: 驗證碼處理機制](../../03-mechanisms/07-captcha-handling.md) - 問答式驗證詳解
 - 📋 [Stage 4: 日期選擇機制](../../03-mechanisms/04-date-selection.md) - 日期選擇邏輯
-- 🏗️ [程式碼結構分析](../../02-development/structure.md) - FamiTicket 函數索引
+- 🏗️ [程式碼結構分析](../../02-development/structure.md) - FamiTicket 函式索引
 - 📖 [12-Stage 標準](../../02-development/ticket_automation_standard.md) - 完整流程規範
 
 ---
@@ -308,7 +308,7 @@ async def nodriver_fami_home_auto_select(tab, config_dict, last_activity_url, sh
 | 版本 | 日期 | 變更內容 |
 |------|------|---------|
 | v1.0 | 2024 | 初版：基本功能支援 |
-| v1.1 | 2025-08 | 登入流程優化 |
+| v1.1 | 2025-08 | 登入流程最佳化 |
 | **v1.2** | **2025-12** | **問答驗證 + 完整文件** |
 
 **v1.2 亮點**：

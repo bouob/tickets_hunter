@@ -5,14 +5,14 @@
 
 ---
 
-> **目標**：確保代碼品質一致性與最佳實踐，適用於所有 WebDriver 類型的搶票系統開發
+> **目標**：確保程式碼品質一致性與最佳實踐，適用於所有 WebDriver 型別的搶票系統開發
 
 ## 寫作風格原則
 
 **開發新功能時必須**：
 1. **遵循架構範本**：參考 `/docs/coding_templates.md` 的標準架構
 2. **參考最佳實踐**：以 ZenDriver 平台實作（TixCraft、KKTIX、TicketPlus、iBon）作為開發標準
-3. **保持一致性**：函數命名、錯誤處理、debug 輸出格式統一
+3. **保持一致性**：函式命名、錯誤處理、debug 輸出格式統一
 
 ## WebDriver 除錯規則
 
@@ -23,7 +23,7 @@
 當除錯或修改 ZenDriver 平台實作時，必須遵循以下流程：
 
 1. **首先查閱 API 指南**
-   - 必須先查看 `/docs/06-api-reference/zendriver_api_guide.md`（主要參考）
+   - 必須先檢視 `/docs/06-api-reference/zendriver_api_guide.md`（主要參考）
    - 舊版 nodriver API 指南已棄用，僅作遷移參考
    - 確認使用的方法是否存在且穩定
    - 優先使用 CDP 原生方法
@@ -45,8 +45,8 @@
    - **Primary → Fallback 模式**：Pierce 失敗時回退 DOMSnapshot
    - **智慧等待**：輪詢檢查元素是否出現，找到即執行（vs 固定延遲）
    - **參考實作**：`nodriver_ibon_date_auto_select_pierce()` (Line 6368-6700)
-   - **詳細文檔**：`/docs/06-api-reference/shadow_dom_pierce_guide.md`
-   - **性能對比**：
+   - **詳細文件**：`/docs/06-api-reference/shadow_dom_pierce_guide.md`
+   - **效能對比**：
      ```
      Pierce Method: 2-5秒, 95%+ 成功率, 1-10 節點處理
      DOMSnapshot:  10-15秒, 20% 成功率, 6000+ 節點處理
@@ -54,10 +54,10 @@
 
 5. **參考標準實作**
    - 以 ZenDriver 平台（TixCraft、KKTIX、TicketPlus、iBon）為開發標準
-   - 確認函數命名規範和錯誤處理模式
+   - 確認函式命名規範和錯誤處理模式
    - 遵循既有的重試機制和等待策略
 
-## 搶票程式標準函數架構（12 階段）
+## 搶票程式標準函式架構（12 階段）
 
 ### 核心設計原則
 
@@ -66,9 +66,9 @@
 
 #### 2. 回退策略 (Fallback Strategy)
 每個功能都有明確的優先策略與回退方案：
-1. **優先策略**：使用使用者指定的關鍵字或參數
+1. **優先策略**：採用使用者指定的關鍵字或參數
 2. **回退策略 1**：關鍵字未命中時使用自動選擇模式
-3. **回退策略 2**：功能禁用時跳過或等待手動操作
+3. **回退策略 2**：功能停用時跳過或等待手動操作
 
 #### 3. 函式拆分原則
 - **原子化**：每個函式只負責一個明確的任務
@@ -90,27 +90,27 @@
 
 #### 階段 3：頁面監控與重載
 - `auto_reload_page()` - 自動重載（通用）
-- `{platform}_close_popup_windows()` - 彈窗處理
+- `{platform}_close_popup_windows()` - 彈出視窗處理
 - 過熱保護、排隊/等候室偵測
 
 #### 階段 4：日期選擇
 - `{platform}_date_auto_select()` - 自動選擇日期
-- 偵測版面類型 → 關鍵字匹配 → mode 回退選擇
+- 偵測版面型別 → 關鍵字比對 → mode 回退選擇
 - 支援多關鍵字、排除過濾、售完狀態處理
 
 #### 階段 5：區域/座位選擇
 - `{platform}_area_auto_select()` - 自動選擇區域
-- 支援關鍵字匹配、排除過濾、自動座位選擇
+- 支援關鍵字比對、排除過濾、自動座位選擇
 - 相鄰座位處理、價格資訊提取
 
 #### 階段 6：票數設定
 - `{platform}_assign_ticket_number()` - 自動設定票數
-- 支援多種版面類型（下拉/輸入框/按鈕/價格清單）
+- 支援多種版面型別（下拉/輸入框/按鈕/價格清單）
 - 票數驗證與調整
 
 #### 階段 7：驗證碼處理
 - `{platform}_auto_ocr()` 或 `{platform}_captcha()` - 驗證碼自動處理
-- 偵測類型 → 圖片提取 → OCR 辨識 → 輸入/回退
+- 偵測型別 → 圖片提取 → OCR 辨識 → 輸入/回退
 - 支援多重重試、手動輸入回退
 
 #### 階段 8：表單填寫
@@ -119,11 +119,11 @@
 
 #### 階段 9：同意條款處理
 - `{platform}_ticket_agree()` - 自動勾選同意條款
-- 支援複選框、單選按鈕、特殊對話框處理
+- 支援核取方塊、選項按鈕、特殊對話方塊處理
 
 #### 階段 10：訂單確認與送出
 - `{platform}_ticket_main()` 或 `{platform}_order()` - 確認並送出訂單
-- 訂單詳情審查 → 送出按鈕點擊 → 確認對話框處理
+- 訂單詳情審查 → 送出按鈕點擊 → 確認對話方塊處理
 - 音效通知、訂單成功驗證
 
 #### 階段 11：排隊與付款
@@ -131,14 +131,14 @@
 - 排隊狀態監控、進度追蹤、逾時處理
 
 #### 階段 12：錯誤處理與重試
-- 全域錯誤分類與日誌記錄
+- 全域錯誤分類與記錄
 - 指數退避重試策略、售完狀態優雅處理
 - 錯誤通知與重試限制
 
-### 每個平台實作必須包含以下核心函數：
+### 每個平台實作必須包含以下核心函式：
 
 #### 1. 主控制器 (Main Controller)
-- `nodriver_{platform}_main()` - NoDriver 版本（推薦，async 函數）
+- `nodriver_{platform}_main()` - NoDriver 版本（推薦，async 函式）
 - `{platform}_main()` - Chrome 版本（維護模式）
 
 #### 2. 核心功能模組
@@ -162,6 +162,25 @@
 - **狀態檢查**：`nodriver_{platform}_check_status()` / `{platform}_check_status()`
 
 > **詳細的 12 階段功能定義、函式拆分規範、設定項目索引表請參考**：[搶票自動化標準功能定義](./ticket_automation_standard.md)
+
+## 註解與文件標準
+
+### 行內註解
+
+**應加入**：不直觀的備援邏輯、平台因應方案、魔術數字、刻意偏離標準之處、跨檔案契約。
+
+**不應加入**：程式碼本身已說明的內容、記錄已帶描述性標籤的、重述函式名稱的。
+
+`.py` 僅用 ASCII 註解，並引用 12 階段編號，例如 `# Stage 4: date selection`。
+
+### 文件撰寫
+
+- `docs/` 每個檔案開頭須有 `**文件說明**` 與 `**最後更新**`（README.md 除外）。
+- **引用程式碼一律以「檔案 + 函式名」定位，禁止寫行號** —— 行號會隨改動腐化，
+  幾次提交後就會指向不相干的地方。
+- 完成前確認：交叉引用指向現有檔案、程式碼範例無語法錯誤。
+
+---
 
 ## 程式碼品質標準
 
@@ -188,7 +207,7 @@ for retry_count in range(max_retry):
 
 ## 暫停機制開發規範
 
-> **適用範圍**：僅限 ZenDriver 版本平台函數（Chrome Driver 不支援）
+> **適用範圍**：僅限 ZenDriver 版本平台函式（Chrome Driver 不支援）
 
 ### 核心原則
 
@@ -213,16 +232,16 @@ for retry_count in range(max_retry):
 #### 1. 檢查時機
 
 **必須檢查的位置：**
-- 函數開始時：每個 ZenDriver 函數入口
+- 函式開始時：每個 ZenDriver 函式入口
 - 長時間迴圈內：每次迭代開始時
 
 **建議檢查的位置：**
 - 長時間操作前：如複雜 JavaScript 執行
-- 延遲等待時：使用暫停版本的 sleep 函數
+- 延遲等待時：使用暫停版本的 sleep 函式
 
-#### 2. 輔助函數優先
+#### 2. 輔助函式優先
 
-使用專用的暫停檢查包裝函數：
+使用專用的暫停檢查包裝函式：
 
 **`sleep_with_pause_check(tab, seconds, config_dict)`**
 - 取代 `tab.sleep()`
@@ -242,14 +261,14 @@ for retry_count in range(max_retry):
 
 #### 3. 暫停後處理
 
-- 檢測到暫停後應該 `return` 而非 `break`
-- 返回值應該表示操作未完成（通常是 `False`）
-- 確保函數狀態一致性
+- 偵測到暫停後應該 `return` 而非 `break`
+- 回傳值應該表示操作未完成（通常是 `False`）
+- 確保函式狀態一致性
 
 ### 開發檢查清單
 
-開發 ZenDriver 函數時，確保：
-- [ ] 函數開始時呼叫 `check_and_handle_pause()`
+開發 ZenDriver 函式時，確保：
+- [ ] 函式開始時呼叫 `check_and_handle_pause()`
 - [ ] 所有 `tab.sleep()` 改用 `sleep_with_pause_check()`
 - [ ] 所有 `asyncio.sleep()` 改用 `asyncio_sleep_with_pause_check()`
 - [ ] 長時間迴圈內加入暫停檢查
@@ -297,7 +316,7 @@ if os.path.exists(CONST_MAXBOT_INT28_FILE):
     return False
 ```
 
-✅ **正確：使用統一函數**
+✅ **正確：使用統一函式**
 ```python
 if await check_and_handle_pause(config_dict):
     return False
@@ -311,7 +330,7 @@ if await check_and_handle_pause(config_dict):
     return False
 ```
 
-✅ **正確：信任統一函數的訊息處理**
+✅ **正確：信任統一函式的訊息處理**
 ```python
 # 訊息已在 check_and_handle_pause() 中處理
 if await check_and_handle_pause(config_dict):
@@ -329,7 +348,7 @@ def platform_function(driver, config_dict):
 ### 相關文件
 
 - [暫停機制範本](./coding_templates.md#暫停機制標準範本) - 完整實作範例
-- [程式結構](./structure.md) - 暫停輔助函數位置
+- [程式結構](./structure.md) - 暫停輔助函式位置
 
 ---
 
@@ -340,13 +359,13 @@ def platform_function(driver, config_dict):
 當修改任何平台功能或共用函式庫時，必須遵循以下流程：
 
 1. **結構查詢優先**
-   - 修改任何平台功能前，必須先查看 `/docs/structure.md`
-   - 確認函數位置和依賴關係
+   - 修改任何平台功能前，必須先檢視 `/docs/structure.md`
+   - 確認函式位置和依賴關係
    - 了解 Chrome 與 ZenDriver 版本差異
 
 2. **影響評估**
    - 檢查修改是否影響其他平台
-   - 確認不會破壞函數呼叫鏈
+   - 確認不會破壞函式呼叫鏈
    - 評估對共用函式庫的影響
    - 驗證不會影響相依功能的正常運作
 
@@ -357,19 +376,19 @@ def platform_function(driver, config_dict):
 
 ## util.py 共用函式庫修改規則
 
-**重要警告：util.py 是所有 WebDriver 類型的共用函式庫**
+**重要警告：util.py 是所有 WebDriver 型別的共用函式庫**
 
 修改 util.py 時必須遵循以下規則：
 
 1. **強制檢查相容性**
-   - 修改 util.py 任何函數前，必須確保 ZenDriver 平台正常運作
+   - 修改 util.py 任何函式前，必須確保 ZenDriver 平台正常運作
    - 確保修改不會破壞 Chrome 版本的功能
    - 優先保證 ZenDriver 版本的穩定性
 
 2. **版本相容性原則**
    - 新增功能應該同時支援 ZenDriver 和 Chrome 版本
    - ZenDriver 特殊格式處理不應影響 Chrome 版本
-   - 避免改變函數簽名或返回值格式
+   - 避免改變函式簽名或回傳值格式
 
 3. **測試範圍（優先順序）**
    - nodriver_tixcraft.py（主迴圈）- 優先測試
@@ -379,8 +398,8 @@ def platform_function(driver, config_dict):
 4. **修改前確認清單**
    - [ ] 查閱對應的 API 指南文件
      - ZenDriver: `/docs/06-api-reference/zendriver_api_guide.md`（主要參考）
-   - [ ] 查看 `/docs/02-development/structure.md` 確認不破壞結構
-   - [ ] 閱讀 ZenDriver 平台使用該函數的所有位置
+   - [ ] 檢視 `/docs/02-development/structure.md` 確認不破壞結構
+   - [ ] 閱讀 ZenDriver 平台使用該函式的所有位置
    - [ ] 確認修改不會改變現有行為
    - [ ] 測試所有 WebDriver 的資料格式相容性
    - [ ] 驗證所有平台核心功能正常
@@ -396,15 +415,15 @@ def platform_function(driver, config_dict):
 #### 階段 1：主流程控制
 - [ ] **主函式** `{platform}_main(driver, url, config_dict)`
   - [ ] 初始化狀態字典 `{platform}_dict`
-  - [ ] URL 路由邏輯（根據不同頁面調用不同處理函式）
-  - [ ] 頁面類型偵測與分流
+  - [ ] URL 路由邏輯（根據不同頁面呼叫不同處理函式）
+  - [ ] 頁面型別偵測與分流
 
 #### 階段 4：日期選擇
 - [ ] **日期自動選擇** `{platform}_date_auto_select(driver, url, config_dict)`
   - [ ] 讀取 `config_dict["date_auto_select"]["enable"]`
-  - [ ] 偵測日期版面類型（按鈕/下拉/日曆）
+  - [ ] 偵測日期版面型別（按鈕/下拉/日曆）
   - [ ] 取得所有日期選項 `get_all_date_options()`
-  - [ ] 關鍵字匹配 `match_date_by_keyword()`（讀取 `date_keyword`）
+  - [ ] 關鍵字比對 `match_date_by_keyword()`（讀取 `date_keyword`）
   - [ ] 回退策略：根據 `mode` 自動選擇（from top/bottom/center/random）
   - [ ] 點擊日期元素 `click_date_element()`
   - [ ] 驗證選擇成功 `verify_date_selected()`
@@ -412,18 +431,18 @@ def platform_function(driver, config_dict):
 #### 階段 5：區域/座位選擇
 - [ ] **區域自動選擇** `{platform}_area_auto_select(driver, url, config_dict)`
   - [ ] 讀取 `config_dict["area_auto_select"]["enable"]`
-  - [ ] 偵測區域版面類型
+  - [ ] 偵測區域版面型別
   - [ ] 取得所有區域選項 `get_all_area_options()`
   - [ ] 套用排除關鍵字 `apply_exclude_keywords()`（讀取 `keyword_exclude`）
-  - [ ] 關鍵字匹配 `match_area_by_keyword()`（讀取 `area_keyword`）
+  - [ ] 關鍵字比對 `match_area_by_keyword()`（讀取 `area_keyword`）
   - [ ] 回退策略：根據 `mode` 自動選擇
   - [ ] 點擊區域元素 `click_area_element()`
-  - [ ] 座位圖處理（若適用）`handle_seat_map()`
+  - [ ] 座點陣圖處理（若適用）`handle_seat_map()`
 
 #### 階段 6：票數設定
 - [ ] **票數自動設定** `{platform}_assign_ticket_number(driver, config_dict)`
   - [ ] 讀取 `config_dict["ticket_number"]`
-  - [ ] 偵測票數版面類型（下拉/輸入框/按鈕/價格清單）
+  - [ ] 偵測票數版面型別（下拉/輸入框/按鈕/價格清單）
   - [ ] 取得票種清單 `get_ticket_types()`
   - [ ] 選擇票數 `select_ticket_number()`
   - [ ] 驗證票數設定 `verify_ticket_selected()`
@@ -432,7 +451,7 @@ def platform_function(driver, config_dict):
 - [ ] **同意條款處理** `{platform}_ticket_agree(driver, config_dict)`
   - [ ] 找到同意條款元素 `find_agreement_elements()`
   - [ ] 勾選所有條款 `check_all_agreements()`
-  - [ ] 處理特殊對話框（若有）
+  - [ ] 處理特殊對話方塊（若有）
   - [ ] 驗證條款已勾選 `verify_agreements_checked()`
 
 #### 階段 10：訂單送出
@@ -440,7 +459,7 @@ def platform_function(driver, config_dict):
   - [ ] 檢視訂單詳情 `review_order_details()`
   - [ ] 找到送出按鈕 `find_submit_button()`
   - [ ] 點擊送出按鈕 `click_submit_button()`
-  - [ ] 處理確認對話框 `handle_confirmation_dialog()`
+  - [ ] 處理確認對話方塊 `handle_confirmation_dialog()`
   - [ ] 播放音效通知（若啟用）`play_sound_notification()`
   - [ ] 驗證訂單送出 `verify_order_submitted()`
 
@@ -455,15 +474,15 @@ def platform_function(driver, config_dict):
   - [ ] 驗證登入成功 `verify_login_success()`
 
 #### 階段 3：頁面監控
-- [ ] **彈窗處理** `{platform}_close_popup_windows(driver)`
-  - [ ] 偵測彈窗類型
-  - [ ] 關閉廣告彈窗
+- [ ] **彈出視窗處理** `{platform}_close_popup_windows(driver)`
+  - [ ] 偵測彈出視窗型別
+  - [ ] 關閉廣告彈出視窗
   - [ ] 接受 Cookie 同意
-  - [ ] 處理平台特定彈窗
+  - [ ] 處理平台特定彈出視窗
 
 #### 階段 7：驗證碼處理
 - [ ] **驗證碼自動處理** `{platform}_auto_ocr(driver, config_dict)`
-  - [ ] 偵測驗證碼類型
+  - [ ] 偵測驗證碼型別
   - [ ] 取得驗證碼圖片 `get_captcha_image()`（讀取 `image_source`）
   - [ ] OCR 辨識 `ocr_recognize()`（讀取 `ocr_captcha.enable`, `beta`）
   - [ ] 輸入驗證碼 `input_captcha_code()`
@@ -472,7 +491,7 @@ def platform_function(driver, config_dict):
   - [ ] 手動輸入回退 `manual_input_fallback()`
 
 #### 階段 12：錯誤處理
-- [ ] **錯誤日誌與重試**
+- [ ] **錯誤記錄與重試**
   - [ ] 在所有關鍵函式加入 try-except
   - [ ] 記錄錯誤訊息（若 `verbose=true`）
   - [ ] 實作重試機制（關鍵操作）
@@ -502,8 +521,8 @@ def platform_function(driver, config_dict):
 - [ ] **密碼輸入** `{platform}_date_password_input()`（如 HKTicketing）
 - [ ] **iframe 處理** `{platform}_travel_iframe()`（如 HKTicketing）
 - [ ] **問卷調查** `{platform}_auto_survey()`（如 Urbtix）
-- [ ] **座位圖選座** `{platform}_seat_auto_select()`（如 年代售票）
-- [ ] **最佳座位算法** `{platform}_find_best_seats()`（如 年代售票）
+- [ ] **座點陣圖選座** `{platform}_seat_auto_select()`（如 年代售票）
+- [ ] **最佳座位演算法** `{platform}_find_best_seats()`（如 年代售票）
 
 ### 檢查清單使用方式
 
@@ -599,7 +618,7 @@ def tixcraft_date_auto_select(driver, url, config_dict):
 
 #### 3. 明確的輸入輸出 (Clear Input/Output)
 
-**定義**：函式的參數和返回值應該類型明確，並有清楚的文檔
+**定義**：函式的參數和回傳值應該型別明確，並有清楚的文件
 
 **範例 ✅ 良好**：
 ```python
@@ -627,11 +646,11 @@ def match_date_by_keyword(dates: list, keyword: str) -> element:
     return None
 ```
 
-**文檔要素**：
+**文件要素**：
 - 功能描述（一句話說明）
-- 參數說明（類型、意義、範例）
-- 返回值說明（類型、意義、特殊情況）
-- 異常說明（可能拋出的異常）
+- 參數說明（型別、意義、範例）
+- 回傳值說明（型別、意義、特殊情況）
+- 異常說明（可能丟出的異常）
 
 ---
 
@@ -710,7 +729,7 @@ def click_element_safe(driver, element, config_dict):
 - [ ] 提供有意義的錯誤訊息（若 verbose=true）
 - [ ] 實作回退方案（多種嘗試方法）
 - [ ] 返回明確的成功/失敗狀態（bool 或 None）
-- [ ] 不要吞掉異常（至少記錄日誌）
+- [ ] 不要吞掉異常（至少記錄）
 
 ---
 
@@ -819,11 +838,11 @@ def tixcraft_captcha(driver, config_dict):
 
 **何時應該拆分函式？**
 
-| 指標 | 建議拆分閾值 | 說明 |
+| 指標 | 建議拆分門檻值 | 說明 |
 |-----|------------|------|
 | 函式行數 | > 50 行 | 考慮拆分成多個小函式 |
 | 巢狀層級 | > 3 層 | 內層邏輯抽取為子函式 |
-| 重複代碼 | 出現 2 次以上 | 抽取為共用函式 |
+| 重複程式碼 | 出現 2 次以上 | 抽取為共用函式 |
 | 註解區塊 | 有明顯分段註解 | 每段抽取為函式 |
 | 條件分支 | > 5 個 if-elif | 考慮使用字典映射或策略模式 |
 
@@ -840,7 +859,7 @@ def tixcraft_captcha(driver, config_dict):
 
 #### 函式命名模式
 
-| 類型 | 命名模式 | 範例 |
+| 型別 | 命名模式 | 範例 |
 |-----|---------|------|
 | NoDriver 平台主函式（推薦） | `async nodriver_{platform}_main()` | `async nodriver_tixcraft_main()` |
 | NoDriver 平台功能函式（推薦） | `async nodriver_{platform}_{function}()` | `async nodriver_kktix_date_auto_select()` |
@@ -851,14 +870,14 @@ def tixcraft_captcha(driver, config_dict):
 
 #### 動詞選擇指南
 
-| 動作類型 | 推薦動詞 | 範例 |
+| 動作型別 | 推薦動詞 | 範例 |
 |---------|---------|------|
 | 取得資料 | `get_`, `fetch_`, `retrieve_` | `get_all_date_options()` |
 | 解析資料 | `parse_`, `extract_` | `parse_area_name()` |
 | 偵測狀態 | `detect_`, `check_`, `is_`, `has_` | `detect_date_layout()` |
-| 查找元素 | `find_`, `locate_` | `find_agreement_elements()` |
+| 尋找元素 | `find_`, `locate_` | `find_agreement_elements()` |
 | 過濾資料 | `filter_`, `exclude_` | `filter_sold_out_dates()` |
-| 匹配資料 | `match_`, `compare_` | `match_date_by_keyword()` |
+| 比對資料 | `match_`, `compare_` | `match_date_by_keyword()` |
 | 操作元素 | `click_`, `input_`, `select_`, `fill_` | `click_date_element()` |
 | 驗證結果 | `verify_`, `validate_`, `ensure_` | `verify_date_selected()` |
 | 處理邏輯 | `handle_`, `process_`, `manage_` | `handle_captcha()` |
@@ -868,4 +887,4 @@ def tixcraft_captcha(driver, config_dict):
 ---
 
 **更新日期**: 2025-10-28
-**相關文件**: [標準功能定義](./ticket_automation_standard.md) | [專案概覽](./project_overview.md) | [程式碼範本](./coding_templates.md) | [函數架構](./structure.md)
+**相關文件**: [標準功能定義](./ticket_automation_standard.md) | [專案概覽](../01-getting-started/project_overview.md) | [程式碼範本](./coding_templates.md) | [函式架構](./structure.md)

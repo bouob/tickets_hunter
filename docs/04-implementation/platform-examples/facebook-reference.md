@@ -34,7 +34,7 @@
 
 當使用者設定的票務平台（如 Cityline、KKTIX 等）使用 Facebook OAuth 登入時，瀏覽器會被重導向至 `facebook.com/login.php`。此時本模組自動：
 
-1. 偵測 URL 前綴為 `https://www.facebook.com/login.php?`
+1. 偵測 URL 字首為 `https://www.facebook.com/login.php?`
 2. 從 `config_dict` 讀取 Facebook 帳密
 3. 自動填入帳號（`#email`）與密碼（`#pass`）
 4. 按下 Enter 鍵送出登入表單
@@ -42,9 +42,9 @@
 
 ---
 
-## 核心函數索引
+## 核心函式索引
 
-| 階段 | 函數名稱 | 行數 | 說明 |
+| 階段 | 函式名稱 | 行數 | 說明 |
 |------|---------|------|------|
 | Stage 2 | `nodriver_facebook_login()` | 328 | 自動填入帳密並送出 |
 | Main | `nodriver_facebook_main()` | 14675 | 入口函式，讀取設定並呼叫 login |
@@ -108,7 +108,7 @@
 ## 相關文件
 
 - 📋 [12-Stage 標準](../../02-development/ticket_automation_standard.md) - 完整流程規範
-- 🏗️ [程式碼結構分析](../../02-development/structure.md) - 函數索引
+- 🏗️ [程式碼結構分析](../../02-development/structure.md) - 函式索引
 - 憑證保護規範 - 詳見專案安全規則
 
 ---

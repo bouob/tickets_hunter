@@ -88,14 +88,14 @@ debug.log("[TAG] message")
 
 **遵循憲法第 I 條 ZenDriver First 原則**
 
-### 優先級 1：ZenDriver（推薦）
+### 優先順序 1：ZenDriver（推薦）
 - **特色**：最強反偵測，進階規避能力
 - **適用**：所有票務網站（推薦預設選擇）
 - **要求**：Python 3.10+，async/await
 - **維護狀態**：✅ 積極開發，接受新功能與 Bug 修復
 - **備注**：zendriver 是 nodriver 的活躍 fork，設定值 `webdriver_type: "nodriver"` 保持不變
 
-### 優先級 2：Chrome（維護模式）
+### 優先順序 2：Chrome（維護模式）
 - **特色**：傳統同步架構，API 穩定
 - **適用**：尚未移植至 ZenDriver 的平台（如 Urbtix）
 - **維護狀態**：⚠️ 僅嚴重錯誤修復，不接受新功能
@@ -222,7 +222,7 @@ tickets_hunter/
 ### ❌ 禁止存取
 - `/node_modules/` - Node.js 依賴包
 - `/.git/` - Git 版本控制
-- `*.log` - 日誌檔案
+- `*.log` - 記錄檔案
 - `*.tmp` - 暫存檔案
 - `/webdriver/*/data/**` - 瀏覽器擴充套件內部資料
 
@@ -244,10 +244,10 @@ development_guide.md  ← 開發規範指南（檢查清單 + 拆分原則）
 
 | 原則 | 關鍵字 | 說明 |
 |------|--------|------|
-| **I. ZenDriver First** | 技術優先級 | ZenDriver > Chrome（維護模式） |
+| **I. ZenDriver First** | 技術優先順序 | ZenDriver > Chrome（維護模式） |
 | **II. 資料結構優先** | 設計先行 | 結構決定一切 |
 | **III. 三問法則** | 決策守門 | 核心？簡單？相容？ |
-| **IV. 單一職責** | 函數設計 | 小函數組合 |
+| **IV. 單一職責** | 函式設計 | 小函式組合 |
 | **V. 設定驅動** | 使用者友善 | settings.json 控制所有行為 |
 
 **完整設計原則**：詳見專案內部文件
@@ -259,4 +259,4 @@ development_guide.md  ← 開發規範指南（檢查清單 + 拆分原則）
 - [設定指南](./setup.md) - 安裝與環境設定
 - [標準功能定義](../02-development/ticket_automation_standard.md) - 12 階段標準
 - [開發規範](../02-development/development_guide.md) - 開發指南
-- [函數結構](../02-development/structure.md) - 函數索引
+- [函式結構](../02-development/structure.md) - 函式索引

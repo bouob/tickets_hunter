@@ -29,7 +29,7 @@
 | TixCraft | （首頁未載入） | — | Client-side JS（按需觸發） | 隨 EPS tmpt |
 | Ticketmaster SG | `ticketmasterasia` | `queue.queue-it.net` (TM SG)、`assets.queue-it.net/ticketmasterasia/...` | Client-side `fetch` 攔截 + `RequestInterceptHelper` | 隨 EPS tmpt |
 
-> **注意**：Ticketmaster SG 於 2026-05-15 從共用的 `tixcraft` 帳號獨立為 `ticketmasterasia`。詳見 [反偵測稽核 2.15 節](../internal/project-tracking/anti-detection-audit.md#215-tixcraft--ticketmaster-sg-同家族對照2026-05-15)。
+> **注意**：Ticketmaster SG 於 2026-05-15 從共用的 `tixcraft` 帳號獨立為 `ticketmasterasia`。
 
 **偵測與等待邏輯**（URL-based，customerId-agnostic）：
 
@@ -50,7 +50,7 @@
 
 兩處邏輯結構相同，sub-state key 統一使用 `queue_it_enter_time`。
 
-**iBon 詳細排查**：[iBon Queue-IT 疑難排解](../internal/troubleshooting/ibon_queue_it_guide.md) ｜ [iBon Queue-IT 機制研究](../internal/platform-research/ibon-queue-it-research.md)
+**iBon 排隊常見問題**：[ibon Queue-IT 常見問題](../../guide/ibon-queue-it-faq.md)
 
 ### 2. 平台內建排隊 — TicketPlus
 
@@ -61,7 +61,7 @@ TicketPlus 使用 Vue.js 實作的頁面內排隊機制。
 透過 JS 評估偵測多種排隊指標：
 - **關鍵字偵測**：「排隊購票中」、「請稍候」、「請勿離開」、「正在處理」等 9 個中文關鍵字
 - **遮罩層偵測**：`.v-overlay__scrim` 元素 opacity 為 1 或 display 非 none
-- **對話框偵測**：`.v-dialog` 內文包含「排隊」或「請稍候」
+- **對話方塊偵測**：`.v-dialog` 內文包含「排隊」或「請稍候」
 
 **排隊監控迴圈**（`nodriver_ticketplus_main()` 內）：
 
@@ -73,7 +73,7 @@ TicketPlus 使用 Vue.js 實作的頁面內排隊機制。
 
 重要設計：
 - 隨機等待 5-10 秒防止固定頻率被偵測（`random.uniform(5.0, 10.0)`）
-- 僅在 URL 變化時輸出日誌，避免重複訊息
+- 僅在 URL 變化時輸出記錄，避免重複訊息
 - 支援暫停機制（`check_and_handle_pause()`）
 
 ### 3. 外部排隊頁面 — HKTicketing
@@ -107,7 +107,7 @@ HKTICKETING_REDIRECT_URL_LIST = [
 FunOne 使用自動重導的等待頁面（`src/platforms/funone.py`）。
 
 - 偵測 `page_type == "WAITING"` 時不執行任何操作
-- 僅記錄一次日誌（`waiting_page_logged` 旗標）
+- 僅記錄一次記錄（`waiting_page_logged` 旗標）
 - 等待平台自動重導到購票頁面
 
 ---
@@ -117,7 +117,7 @@ FunOne 使用自動重導的等待頁面（`src/platforms/funone.py`）。
 系統**不自動進行付款操作**，而是偵測到付款/結帳頁面後：
 
 1. 播放訂單音效通知使用者
-2. 發送 Discord / Telegram 通知
+2. 傳送 Discord / Telegram 通知
 3. Headless 模式下自動開啟瀏覽器視窗
 
 各平台的付款頁面判斷方式：

@@ -1,7 +1,7 @@
 # 票務系統邏輯判斷範本
 
 **文件說明**：提供可重用的日期/區域選擇邏輯流程圖、程式碼範本與實戰應用案例
-**最後更新**：2025-11-12
+**最後更新**：2026-09-16
 
 ---
 
@@ -113,7 +113,7 @@
 
 ### 💻 程式邏輯範本
 
-#### 主函數架構
+#### 主函式架構
 
 ```python
 async def auto_select_date(tab, config_dict):
@@ -163,7 +163,7 @@ async def auto_select_date(tab, config_dict):
 
 ---
 
-#### 關鍵字匹配引擎
+#### 關鍵字比對引擎
 
 ```python
 def match_dates_by_keyword(date_list, date_keyword):
@@ -189,22 +189,22 @@ def match_dates_by_keyword(date_list, date_keyword):
         normalized_text = re.sub(r'\s+', ' ', row_text)
 
         # 檢查每組關鍵字
+        # 注意：陣列元素一律是字串。AND 是「字串內含空格」，不是巢狀陣列。
+        #      '"週六 晚上"' -> ["週六 晚上"]，比對時再以空格切開。
+        #      寫成 '["週六","晚上"]' 會解析成 [["週六","晚上"]]，
+        #      對 list 做 `in` 比對會拋 TypeError。
         for keyword_set in keyword_array:
             is_match = False
 
-            if isinstance(keyword_set, str):
-                # 單一關鍵字匹配
-                normalized_keyword = re.sub(r'\s+', ' ', keyword_set)
-                is_match = normalized_keyword in normalized_text
-
-            elif isinstance(keyword_set, list):
-                # AND 邏輯：所有關鍵字都必須匹配
-                match_results = []
-                for kw in keyword_set:
-                    normalized_kw = re.sub(r'\s+', ' ', kw)
-                    match_results.append(normalized_kw in normalized_text)
-
-                is_match = all(match_results)
+            if ' ' in keyword_set:
+                # AND 邏輯：空格分隔，每個子關鍵字都必須出現
+                is_match = all(
+                    re.sub(r'\s+', ' ', kw) in normalized_text
+                    for kw in keyword_set.split(' ') if kw
+                )
+            else:
+                # 單一關鍵字比對
+                is_match = re.sub(r'\s+', ' ', keyword_set) in normalized_text
 
             if is_match:
                 matched_list.append(element)
@@ -462,7 +462,7 @@ async def click_date_element(tab, target_element):
 
 ### 💻 程式邏輯範本
 
-#### 主函數架構
+#### 主函式架構
 
 ```python
 async def auto_select_area(tab, config_dict):
@@ -540,7 +540,7 @@ async def auto_select_area(tab, config_dict):
 
 ---
 
-#### 區域關鍵字匹配引擎（AND 邏輯）
+#### 區域關鍵字比對引擎（AND 邏輯）
 
 ```python
 async def match_areas_by_keyword(zone_element, keyword_item, config_dict):
@@ -648,7 +648,7 @@ async def has_enough_seats(area_element, ticket_number):
 
 ## 3. 核心可重用機制
 
-### 3.1 關鍵字正規化函數
+### 3.1 關鍵字正規化函式
 
 ```python
 def format_keyword_string(keyword):
@@ -828,7 +828,7 @@ print_match_summary(
 
 ### 案例 1: TixCraft 日期選擇完整流程
 
-#### 場景描述
+#### 情境描述
 - **目標**: 購買「丁噹演唱會」11/16 場次
 - **設定**:
   - `date_keyword`: `"11/16"`
@@ -874,7 +874,7 @@ print_match_summary(
 
 ### 案例 2: TixCraft 區域選擇（AND 邏輯 + 回退）
 
-#### 場景描述
+#### 情境描述
 - **目標**: 選擇包含「208」且「304」的區域，失敗則回退到「305」
 - **設定**:
   - `area_keyword`: `"208 304";"305"`
@@ -937,7 +937,7 @@ print_match_summary(
 
 ### 案例 2.5: TixCraft 區域選擇 - 最終回退到自動模式
 
-#### 場景描述
+#### 情境描述
 - **目標**: 選擇包含「VIP」的區域，失敗則回退到「搖滾區」，全部失敗則使用自動模式
 - **設定**:
   - `area_keyword`: `"VIP";"搖滾區"`
@@ -1007,7 +1007,7 @@ print_match_summary(
 ```
 
 **重點說明**：
-- 當所有關鍵字組都無法匹配時，系統會自動進入「自動模式」
+- 當所有關鍵字組都無法比對時，系統會自動進入「自動模式」
 - 自動模式使用 `auto_select_mode` 設定來選擇區域（此例為 `from top to bottom`）
 - 這確保即使關鍵字設定錯誤，系統仍能自動選擇可用區域
 - 這是一個**三層回退策略**：關鍵字組 1 → 關鍵字組 2 → 自動模式
@@ -1016,7 +1016,7 @@ print_match_summary(
 
 ### 案例 3: 座位數量檢查邏輯
 
-#### 場景描述
+#### 情境描述
 - **需求**: 購買 4 張票，但某些區域只剩 1-3 張
 - **設定**: `ticket_number`: `4`
 
@@ -1080,7 +1080,7 @@ config_dict["keyword_exclude"] = "身障;輪椅"
 ### ✅ 核心設計原則
 
 1. **回退策略**: 分號分隔多組關鍵字，依序嘗試
-2. **AND 邏輯**: 空格分隔子關鍵字，必須全部匹配
+2. **AND 邏輯**: 空格分隔子關鍵字，必須全部比對
 3. **最終回退機制**: 所有關鍵字組都失敗時，自動進入自動模式（空關鍵字 = 接受所有區域）
 4. **選擇策略**: random/top/bottom/center 靈活配置
 5. **點擊回退鏈**: 多種點擊方法確保成功率
@@ -1088,8 +1088,8 @@ config_dict["keyword_exclude"] = "身障;輪椅"
 
 ### 🔧 可重用元件
 
-- `match_dates_by_keyword()` - 日期關鍵字匹配
-- `match_areas_by_keyword()` - 區域關鍵字匹配（AND 邏輯）
+- `match_dates_by_keyword()` - 日期關鍵字比對
+- `match_areas_by_keyword()` - 區域關鍵字比對（AND 邏輯）
 - `select_target_from_list()` - 選擇策略引擎
 - `click_element()` - 點擊回退鏈
 - `has_enough_seats()` - 座位數量檢查
@@ -1115,9 +1115,9 @@ config_dict["keyword_exclude"] = "身障;輪椅"
 #### 核心改進
 
 1. **早期返回模式 (Early Return Pattern)**
-   - **舊邏輯**: 掃描所有關鍵字 → 收集所有匹配 → 從匹配清單中選一個
-   - **新邏輯**: 依優先順序檢查關鍵字 → 第一個匹配成功就**立即停止**
-   - **效能提升**: 約 30% 的檢查時間節省（當第一個關鍵字匹配時）
+   - **舊邏輯**: 掃描所有關鍵字 → 收集所有比對 → 從比對清單中選一個
+   - **新邏輯**: 依優先順序檢查關鍵字 → 第一個比對成功就**立即停止**
+   - **效能提升**: 約 30% 的檢查時間節省（當第一個關鍵字比對時）
 
 2. **條件式遞補 (Conditional Fallback)**
    - **舊邏輯**: 關鍵字全失敗時**自動遞補**至 `auto_select_mode`（可能誤購）
@@ -1311,23 +1311,24 @@ matched_blocks = []
 target_row_found = False
 
 for keyword_index, keyword_item_set in enumerate(keyword_array):
-    if show_debug_message:
-        print(f"[KKTIX DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item_set}")
+    debug.log(f"[KKTIX DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item_set}")
 
     # 檢查所有日期
     for i, session_text in enumerate(formated_session_list_text):
         normalized_session_text = re.sub(r'\s+', ' ', session_text)
         is_match = False
 
-        if isinstance(keyword_item_set, str):
-            # OR 邏輯: 單一關鍵字
-            normalized_keyword = re.sub(r'\s+', ' ', keyword_item_set)
-            is_match = normalized_keyword in normalized_session_text
-        elif isinstance(keyword_item_set, list):
-            # AND 邏輯: 所有關鍵字都必須匹配
-            normalized_keywords = [re.sub(r'\s+', ' ', kw) for kw in keyword_item_set]
-            match_results = [kw in normalized_session_text for kw in normalized_keywords]
-            is_match = all(match_results)
+        # 實務上直接用 util.is_text_match_keyword() 即可，
+        # 以下展開只為說明語意：空格 = AND，陣列元素之間 = OR。
+        if ' ' in keyword_item_set:
+            # AND 邏輯：空格分隔，每個子關鍵字都必須出現
+            is_match = all(
+                re.sub(r'\s+', ' ', kw) in normalized_session_text
+                for kw in keyword_item_set.split(' ') if kw
+            )
+        else:
+            # 單一關鍵字比對
+            is_match = re.sub(r'\s+', ' ', keyword_item_set) in normalized_session_text
 
         if is_match:
             # T006: 關鍵字匹配 - 立即選擇並停止
@@ -1366,7 +1367,7 @@ if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and 
 
 ### 🎯 實戰案例: KKTIX 嚴格模式測試
 
-#### 場景描述
+#### 情境描述
 - **測試目標**: 驗證嚴格模式是否正確拒絕自動選擇
 - **設定**:
   - `date_keyword`: `"日期測試用關鍵字"` (不存在的關鍵字)
@@ -1374,7 +1375,7 @@ if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and 
   - `area_keyword`: `"區域測試用關鍵字"` (不存在的關鍵字)
   - `area_auto_fallback`: `false` (嚴格模式)
 
-#### 實際日誌輸出
+#### 實際記錄輸出
 
 ```
 [KKTIX DATE KEYWORD] Start checking keywords in order: ['日期測試用關鍵字']
@@ -1402,7 +1403,7 @@ if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and 
 [KKTIX DATE SELECT] Session selection completed successfully
 ```
 
-**區域選擇日誌**:
+**區域選擇記錄**:
 ```
 [KKTIX AREA] Keywords (AND logic): ['區域測試用關鍵字']
 [KKTIX] Ticket index 1: 一般票 0 --> TWD$1,880 0 -->
@@ -1430,7 +1431,7 @@ if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and 
 
 #### 欄位說明
 
-| 欄位 | 類型 | 預設值 | 說明 |
+| 欄位 | 型別 | 預設值 | 說明 |
 |------|------|--------|------|
 | `date_auto_fallback` | boolean | `false` | **false**: 嚴格模式 - 關鍵字全失敗時等待手動介入<br>**true**: 自動遞補 - 關鍵字全失敗時自動選擇可用日期 |
 | `area_auto_fallback` | boolean | `false` | **false**: 嚴格模式 - 關鍵字全失敗時等待手動介入<br>**true**: 自動遞補 - 關鍵字全失敗時自動選擇可用區域 |
@@ -1454,7 +1455,7 @@ if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and 
      "area_auto_fallback": true
    }
    ```
-   - 確保程式持續運行
+   - 確保程式持續執行
    - 即使關鍵字設定錯誤也會自動選擇
    - **風險**: 可能購買到不想要的票券
 
@@ -1489,8 +1490,8 @@ if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and 
 - [ ] T017/T021: 安全存取新欄位 (`config_dict.get('date_auto_fallback', False)`)
 - [ ] T004-T008: 早期返回模式實作
 - [ ] T018-T020/T022-T024: 條件式遞補邏輯
-- [ ] 舊邏輯保留於 DEPRECATED 註解區塊（2 週回滾期）
-- [ ] 結構化日誌輸出（英文，避免 cp950 編碼問題）
+- [ ] 舊邏輯保留於 DEPRECATED 註解區塊（2 週復原期）
+- [ ] 結構化記錄輸出（英文，避免 cp950 編碼問題）
 - [ ] 測試驗證（嚴格模式 + 自動模式）
 
 ---

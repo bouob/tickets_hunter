@@ -15,6 +15,15 @@
    - 首次設定流程
    - 開始搶票
 
+### macOS 使用者
+
+**下載 macOS 版，或自行打包**
+
+1. **[macOS 使用指南](macos.md)** - 下載、執行與自行打包
+   - 下載官方 Apple Silicon 版
+   - 解除 Gatekeeper 限制
+   - Intel Mac 或改程式碼者自行打包
+
 ### 開發者 / 進階使用者
 
 **使用 Python 原始碼，可自訂功能**

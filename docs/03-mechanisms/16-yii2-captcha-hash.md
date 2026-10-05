@@ -79,4 +79,3 @@ OCR 辨識 answer
 ## 相關文件
 
 - [Stage 7: 驗證碼處理](07-captcha-handling.md) — 使用者設定說明
-- 內部技術細節：`docs/internal/reference/yii2-captcha-hash.md`
