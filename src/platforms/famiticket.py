@@ -166,7 +166,7 @@ async def nodriver_fami_verify(tab, config_dict, fail_list=None):
         if has_verify_input:
             debug.log("[FAMI VERIFY] Verification input found (#verifyPrefAnswer)")
 
-            answer_string = config_dict["area_auto_select"].get("area_answer", "").strip()
+            answer_string = config_dict["advanced"].get("user_guess_string", "").strip()
             auto_guess_enable = config_dict["advanced"].get("auto_guess_options", False)
 
             answer_list = []
@@ -748,7 +748,7 @@ async def nodriver_famiticket_main(tab, url, config_dict):
             return True
 
         if '/Home/User/SignIn' in url and '/SignInCheck' not in url:
-            fami_account = config_dict["advanced"].get("fami_account", "")
+            fami_account = config_dict["accounts"].get("fami_account", "")
             if len(fami_account) > 4:
                 result = await nodriver_fami_login(tab, config_dict)
 

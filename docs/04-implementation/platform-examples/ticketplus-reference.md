@@ -1,7 +1,7 @@
 # 平台實作參考：TicketPlus
 
 **文件說明**：TicketPlus 平台的完整實作參考，涵蓋排隊偵測、展開面板設計、實名驗證、多版面自動識別等技術實作指南。
-**最後更新**：2026-09-08
+**最後更新**：2026-10-16
 
 ---
 
@@ -337,16 +337,42 @@ for header in panel_headers:
 
 | 用字 | 填入 |
 |------|------|
+| placeholder 為「答案選項」 | **不填**（問答題，要的是答案不是代碼）|
 | 序號、加購 | `discount_code`（優先於卡片用字，「信用卡優惠序號」算序號欄）|
 | 信用卡、卡號、卡友、中國信託、簽帳金融卡、前六碼 | `credit_card_prefix` |
-| 優惠、折扣 | `discount_code` |
-| 以上皆無 | **不填**，並把實際看到的標籤與 placeholder 印進 debug log |
+| 優惠、折扣、專屬代碼、會員 | `discount_code`（「專屬代碼」是遠大預設標題）|
+| 以上皆無 | 只設了 `discount_code` 時填入；兩者都設或只設卡號前碼時**不填** |
 
-最後一列是刻意的：無法辨識的欄位可能是發票載具之類，填錯比漏填糟。若在真實
-卡友專區看到沒被填的欄位，把 log 裡的用字回報回來擴充關鍵字即可。
+`.exclusive-code` 一張訂單只有一個，且是必填：空著就無法送出（#434）。
+所以字樣不認得、而設定裡只有優惠代碼一個候選值時，直接填入。卡號前碼與 ibon
+共用，常是順便帶著的，不往不認得的欄位填。不填時 debug log 會印出標籤與
+placeholder，回報後即可擴充關鍵字。
 
 另外兩道保護：欄位已有值就不覆寫（平台可能預填），設定值長度超過欄位
 `maxlength` 也不填（例如要求前八碼的欄位不會被塞進六碼）。
+
+---
+
+## 代碼框出現條件與場次掃描
+
+購票頁的代碼框由遠大前端依場次設定決定，不登入就能從公開 API 查到：
+
+| 條件 | 來源 |
+|------|------|
+| 場次 `transactionValidType` 有值（實測為 `sk00000523` 這類 key，不是 `"serial"`） | `config/api/v1/get?eventId=…&sessionId=…` → `result.session[]` |
+| 選到的票種帶 `serialKey` | 購票頁商品資料（需登入，未實測） |
+| 標題：`SNDescription[serialKey].tw.title`；為空時顯示預設「請輸入專屬代碼」 | 同場次資料 |
+
+掃描流程（Chrome DevTools MCP 在 ticketplus.com.tw 頁面內執行即可，同源 CORS）：
+
+1. `apis.ticketplus.com.tw/config/api/v1/getS3?path=main/mainEvents.json` → `allEventId`（32 碼 hex）
+2. 每個活動 `getS3?path=event/<hex>/sessions.json` → 場次 hex ID
+3. hex ID 需解密成 `e000001555`／`s000002310` 格式才能查 `config/api/v1/get`：
+   AES-128-CBC，key 與 iv 寫在前端 `app.*.js` 的 webpack 模組 `9263`（版本更新可能變動，以前端為準）
+4. `config/api/v1/get?eventId=<e…>&sessionId=<s…,s…>` → 篩 `transactionValidType` 非空的場次
+
+2026-10-15 實測：85 個活動、136 場，帶序號的 6 場標題都含「序號」（加購序號、限定特別活動序號），
+沒有 `SNDescription` 為空、會顯示「專屬代碼」預設標題的場次。
 
 ---
 
@@ -381,6 +407,7 @@ for header in panel_headers:
 | v1.2 | 2025-10 | 展開面板最佳化 |
 | **v1.3** | **2025-11** | **排隊偵測機制完善** |
 | **v1.4** | **2025-12** | **折扣碼支援 + 文件更新** |
+| v1.5 | 2026-10 | 代碼框補預設標題、會員字樣、問答框與保底填入（#434）；記錄代碼框出現條件與場次掃描 |
 
 **v1.4 亮點**：
 - ✅ 完整的排隊偵測機制（9 個關鍵字 + overlay 偵測）

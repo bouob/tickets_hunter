@@ -4,6 +4,10 @@ on:
   push:
     tags:
       - 'v*'  # Trigger on tags like v2025.11.03
+  # Dry run: builds and verifies both bundles, but creates no release, uploads
+  # nothing, signs nothing and sends no Discord message. Every step that
+  # publishes is gated on github.event_name == 'push'.
+  workflow_dispatch:
 
 permissions:
   contents: write  # Required for creating releases
@@ -14,10 +18,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11.9'
 
@@ -25,7 +29,7 @@ jobs:
         id: get_version
         shell: bash
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then VERSION=${GITHUB_REF#refs/tags/v}; else VERSION=0.0.0-dryrun; fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
@@ -141,7 +145,8 @@ jobs:
           }
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v3
         with:
           name: Tickets Hunter v${{ steps.get_version.outputs.VERSION }}
           body: |
@@ -157,7 +162,7 @@ jobs:
 
       - name: Upload build artifacts (for debugging)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-logs
           path: |
@@ -166,7 +171,7 @@ jobs:
           retention-days: 7
 
       - name: Notify Discord
-        if: success() && env.DISCORD_WEBHOOK_URL != ''
+        if: success() && github.event_name == 'push' && env.DISCORD_WEBHOOK_URL != ''
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           VERSION: ${{ steps.get_version.outputs.VERSION }}
@@ -219,17 +224,17 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11.9'
 
       - name: Get version from tag
         id: get_version
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then VERSION=${GITHUB_REF#refs/tags/v}; else VERSION=0.0.0-dryrun; fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION for macOS arm64"
 
@@ -334,13 +339,18 @@ jobs:
           cat "$SUMS_NAME"
 
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@v2
+        # Skipped on the private repo: attestations there need GitHub
+        # Enterprise Cloud, so a test tag pushed there would fail here
+        # before the assets are uploaded.
+        if: github.event_name == 'push' && !github.event.repository.private
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: ${{ steps.package.outputs.ZIP_NAME }}
 
       - name: Upload assets to the draft release
         # gh release upload only adds assets - it cannot overwrite the release
         # notes that build-windows wrote.
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -352,7 +362,7 @@ jobs:
 
       - name: Upload build artifacts (for debugging)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-logs-macos-arm64
           path: |

@@ -12,6 +12,7 @@ import re
 import time
 
 from zendriver import cdp
+from zendriver.core.keys import SpecialKeys
 
 import util
 from nodriver_common import (
@@ -254,7 +255,7 @@ async def nodriver_hkticketing_login(tab, account, password, config_dict=None):
             debug.log(f"[HKTICKETING LOGIN] Login button click error: {exc}")
             # Fallback: try pressing Enter on password field
             try:
-                await el_pass.send_keys(Keys.ENTER)
+                await el_pass.send_keys(SpecialKeys.ENTER)
                 ret = True
                 debug.log("[HKTICKETING LOGIN] Fallback: pressed Enter key")
             except Exception as exc2:
@@ -263,7 +264,7 @@ async def nodriver_hkticketing_login(tab, account, password, config_dict=None):
         # No login button found, try pressing Enter
         debug.log("[HKTICKETING LOGIN] Login button not found, trying Enter key")
         try:
-            await el_pass.send_keys(Keys.ENTER)
+            await el_pass.send_keys(SpecialKeys.ENTER)
             ret = True
             debug.log("[HKTICKETING LOGIN] Pressed Enter key as fallback")
         except Exception as exc:
@@ -571,7 +572,7 @@ async def nodriver_hkticketing_date_password_input(tab, config_dict, fail_list):
                 try:
                     await el_password.click()
                     await el_password.send_keys(answer_item)
-                    await el_password.send_keys(Keys.ENTER)
+                    await el_password.send_keys(SpecialKeys.ENTER)
 
                     debug.log("[HKTICKETING PASSWORD] Tried password:", answer_item)
 
