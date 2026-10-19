@@ -918,7 +918,7 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
 async def nodriver_ibon_ticket_agree(tab):
     is_finish_checkbox_click = False
     for i in range(3):
-        is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#agreen:not(:checked)')
+        is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#agreen')
         if is_finish_checkbox_click:
             break
     return is_finish_checkbox_click

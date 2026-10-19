@@ -9,6 +9,7 @@ import random
 import util
 from nodriver_common import (
     CONST_FROM_TOP_TO_BOTTOM,
+    CONST_MAXBOT_ANSWER_ONLINE_FILE,
 )
 
 
@@ -166,12 +167,10 @@ async def nodriver_fami_verify(tab, config_dict, fail_list=None):
         if has_verify_input:
             debug.log("[FAMI VERIFY] Verification input found (#verifyPrefAnswer)")
 
-            answer_string = config_dict["advanced"].get("user_guess_string", "").strip()
             auto_guess_enable = config_dict["advanced"].get("auto_guess_options", False)
 
-            answer_list = []
-            if answer_string:
-                answer_list = [ans.strip() for ans in answer_string.split(',') if ans.strip()]
+            # stored as JSON ("a","b") by the settings page, so split(',') keeps the quotes
+            answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
 
             if auto_guess_enable and len(answer_list) == 0:
                 debug.log("[FAMI VERIFY] Auto guess enabled but no implementation yet")
@@ -189,7 +188,7 @@ async def nodriver_fami_verify(tab, config_dict, fail_list=None):
                     (function() {{
                         var input = document.querySelector('#verifyPrefAnswer');
                         if (input) {{
-                            input.value = "{inferred_answer}";
+                            input.value = {json.dumps(inferred_answer)};
                             input.dispatchEvent(new Event('input', {{ bubbles: true }}));
                             var event = new KeyboardEvent('keypress', {{ key: 'Enter', keyCode: 13 }});
                             input.dispatchEvent(event);

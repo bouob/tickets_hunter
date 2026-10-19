@@ -553,7 +553,12 @@ def _drain_url_probe(task):
 
 def _get_url_probe(tab):
     probe = _url_probe_state["task"]
-    if probe is None or probe.done() or _url_probe_state["tab"] is not tab:
+    # A closed websocket ends zendriver's listener without failing the replies
+    # still pending, so a probe sent before the drop never finishes. A fresh
+    # probe reconnects, or raises into the #374 silent-error count.
+    listener = getattr(tab, "listener", None)
+    listener_dead = listener is not None and not listener.running
+    if probe is None or probe.done() or _url_probe_state["tab"] is not tab or listener_dead:
         probe = asyncio.ensure_future(tab.js_dumps('window.location.href'))
         probe.add_done_callback(_drain_url_probe)
         _url_probe_state.update(tab=tab, task=probe)

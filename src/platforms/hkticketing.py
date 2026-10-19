@@ -21,6 +21,7 @@ from nodriver_common import (
     send_discord_notification,
     send_telegram_notification,
     CONST_FROM_TOP_TO_BOTTOM,
+    CONST_MAXBOT_ANSWER_ONLINE_FILE,
 )
 
 __all__ = [
@@ -559,9 +560,9 @@ async def nodriver_hkticketing_date_password_input(tab, config_dict, fail_list):
     if el_password:
         is_password_appear = True
 
-        user_guess_string = config_dict["advanced"]["user_guess_string"]
-        if len(user_guess_string) > 0:
-            answer_list = user_guess_string.split(",")
+        # stored as JSON ("a","b") by the settings page, so split(',') keeps the quotes
+        answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
+        if len(answer_list) > 0:
             for answer_item in answer_list:
                 answer_item = answer_item.strip()
                 if answer_item in fail_list:
