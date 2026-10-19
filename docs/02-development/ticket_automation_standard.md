@@ -1,7 +1,7 @@
 # 搶票自動化標準功能定義
 
 **文件說明**：定義完整搶票程式的 12 階段標準架構、功能模組拆分規範與開發評估標準
-**最後更新**：2026-09-16
+**最後更新**：2026-10-19
 
 ---
 
@@ -167,8 +167,6 @@ config_dict["accounts"]["funone_session_cookie"]       # Cookie（FunOne 專用�
 **設定來源**：
 ```python
 config_dict["advanced"]["auto_reload_page_interval"]    # 重載間隔（秒）
-config_dict["advanced"]["auto_reload_overheat_count"]   # 過熱計數閾值
-config_dict["advanced"]["auto_reload_overheat_cd"]      # 過熱冷卻時間（秒）
 config_dict["advanced"]["reset_browser_interval"]       # 重置瀏覽器間隔（分鐘）
 config_dict["tixcraft"]["auto_reload_coming_soon_page"] # 是否重載即將開賣頁面
 ```
@@ -182,8 +180,6 @@ auto_reload_page(driver, config_dict, state_dict) -> bool
 │   └── detect_error_page(driver) -> bool
 ├── calculate_reload_interval(config_dict, state_dict) -> float
 │   └── 根據設定計算下次重載間隔
-├── check_overheat_status(state_dict, threshold: int) -> bool
-│   └── 檢查是否達到過熱閾值
 ├── reload_with_backoff(driver, state_dict) -> bool
 │   ├── 執行頁面重載
 │   └── 更新狀態字典（重載次數、時間戳等）
@@ -193,8 +189,9 @@ auto_reload_page(driver, config_dict, state_dict) -> bool
 
 **回退策略**：
 1. **優先**：按 `auto_reload_page_interval` 定期重載
-2. **回退 1**：達到 `overheat_count` 時啟動冷卻時間
-3. **回退 2**：若 `auto_reload_coming_soon_page=false`，不重載即將開賣頁面
+2. **回退**：若 `auto_reload_coming_soon_page=false`，不重載即將開賣頁面
+
+> 過熱保護（`auto_reload_overheat_count` / `auto_reload_overheat_cd`）僅存在於舊版 Chrome 擴充功能，2026-02-10 隨擴充功能移除；zendriver 版未實作，設定鍵已於 2026-08-17 移除。
 
 **函式命名規範**：
 - 通用功能：`auto_reload_page()`
@@ -908,8 +905,6 @@ state_manager
 | 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
 | auto_reload_page_interval | `config_dict["advanced"]["auto_reload_page_interval"]` | float | 3.0 | 自動重載間隔（秒） |
-| auto_reload_overheat_count | `config_dict["advanced"]["auto_reload_overheat_count"]` | int | 4 | 過熱計數門檻值 （**目前未接線**：settings.json 有值但無程式讀取）|
-| auto_reload_overheat_cd | `config_dict["advanced"]["auto_reload_overheat_cd"]` | float | 1.0 | 過熱冷卻時間（秒） （**目前未接線**：settings.json 有值但無程式讀取）|
 | reset_browser_interval | `config_dict["advanced"]["reset_browser_interval"]` | int | 0 | 重置瀏覽器間隔（分鐘，0=不重置） |
 
 #### 除錯設定
@@ -1151,7 +1146,7 @@ def select_item(items):
 | 登入功能 | 10 分 | 支援帳密或 Cookie 登入 |
 | 錯誤處理 | 5 分 | 有完整的 try-except 和錯誤記錄 |
 | 彈出視窗處理 | 5 分 | 能處理常見彈出視窗 |
-| 頁面重載 | 5 分 | 支援自動重載與過熱保護 |
+| 頁面重載 | 5 分 | 支援自動重載 |
 
 ### 評分等級
 
