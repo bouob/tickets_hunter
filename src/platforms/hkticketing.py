@@ -566,7 +566,7 @@ async def nodriver_hkticketing_date_password_input(tab, config_dict, fail_list):
             for answer_item in answer_list:
                 answer_item = answer_item.strip()
                 if answer_item in fail_list:
-                    debug.log("[HKTICKETING PASSWORD] Skip failed password:", answer_item)
+                    debug.log("[HKTICKETING PASSWORD] Skip failed password")
                     continue
 
                 # Try this password
@@ -575,7 +575,7 @@ async def nodriver_hkticketing_date_password_input(tab, config_dict, fail_list):
                     await el_password.send_keys(answer_item)
                     await el_password.send_keys(SpecialKeys.ENTER)
 
-                    debug.log("[HKTICKETING PASSWORD] Tried password:", answer_item)
+                    debug.log("[HKTICKETING PASSWORD] Password input completed")
 
                     # Add to fail list (will be removed if successful)
                     if answer_item not in fail_list:
