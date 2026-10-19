@@ -486,10 +486,15 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
         # TicketPlus 2026-05 revamp: a Vue sub-component wrapper div now sits between
         # #buyTicket and .sesstion-item, so a direct-child combinator matches nothing.
         # Use a descendant combinator (still matches the old direct-child layout too).
-        area_list = await tab.query_selector_all('div#buyTicket div.sesstion-item')
-        if area_list and len(area_list) == 0:
-            debug.log("empty date item, need retry.")
+        # The session list renders ~1-2s after load; judging it empty earlier
+        # reloads the page before it ever renders (blank-page reload loop).
+        for _ in range(15):
+            area_list = await tab.query_selector_all('div#buyTicket div.sesstion-item')
+            if area_list:
+                break
             await tab.sleep(0.2)
+        if not area_list:
+            debug.log("date list still empty after 3s wait")
     except Exception as exc:
         debug.log("find #buyTicket fail:", exc)
 
@@ -918,8 +923,8 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
 
                 function isSoldOut(element) {{
                     const text = element.textContent || '';
-                    const soldOutPatterns = [/\u5269\u9918\\s*0(?!\\d)/, /\u5269\u9918\\s*:\\s*0(?!\\d)/, /sold\\s*out/i, /\u552e\u5b8c/, /\u5df2\u552e\u5b8c/, /\u552e\u7f44/, /\u7121\u5eab\u5b58/];
-                    const availablePatterns = [/\u71b1\u8ce3\u4e2d/, /\u71b1\u8ce3/, /\u71b1\u552e/, /\u53ef\u8cfc\u8cb7/, /available/i, /\u5269\u9918\\s*[1-9]\\d*/];
+                    const soldOutPatterns = [/\u5269\u9918\\s*0(?!\\d)/, /\u5269\u9918\\s*[:\uFF1A]\\s*0(?!\\d)/, /sold\\s*out/i, /\u552e\u5b8c/, /\u5df2\u552e\u5b8c/, /\u552e\u7f44/, /\u7121\u5eab\u5b58/];
+                    const availablePatterns = [/\u71b1\u8ce3\u4e2d/, /\u71b1\u8ce3/, /\u71b1\u552e/, /\u53ef\u8cfc\u8cb7/, /available/i, /\u5269\u9918\\s*[:\uFF1A]?\\s*[1-9]\\d*/];
 
                     for (let pattern of soldOutPatterns) {{
                         if (pattern.test(text)) {{
@@ -987,7 +992,9 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
 
                     let target = null;
                     if (keyword1) {{
-                        target = validPanels.find(p => p.name.includes(keyword1) && (!keyword2 || p.name.includes(keyword2)));
+                        // Every hit, then the select order picks one; .find() always took the top hit (#416)
+                        const hits = validPanels.filter(p => p.name.includes(keyword1) && (!keyword2 || p.name.includes(keyword2)));
+                        target = hits[getTargetIndex(hits, autoSelectMode)] || null;
                     }}
                     if (!target && keyword1 && !areaAutoFallback) {{
                         const keywordInSoldOut = soldOutNames.some(n => n.includes(keyword1) && (!keyword2 || n.includes(keyword2)));
@@ -1050,7 +1057,8 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
 
                     let target = null;
                     if (keyword1) {{
-                        target = validRows.find(r => r.name.includes(keyword1) && (!keyword2 || r.name.includes(keyword2)));
+                        const hits = validRows.filter(r => r.name.includes(keyword1) && (!keyword2 || r.name.includes(keyword2)));
+                        target = hits[getTargetIndex(hits, autoSelectMode)] || null;
                     }}
                     if (!target && keyword1 && !areaAutoFallback) {{
                         const keywordInSoldOut = soldOutRowNames.some(n => n.includes(keyword1) && (!keyword2 || n.includes(keyword2)));
@@ -1087,6 +1095,10 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                 for retry in range(5):
                     retry_result = await tab.evaluate(f'''
                         (function() {{
+                            // Sold-out zones swap the plus button for sold-out text (#430)
+                            function isPanelSoldOut(panel) {{
+                                return /\\u5df2\\u552e\\u5b8c/.test(panel.textContent || '');
+                            }}
                             const seatsAreas = document.querySelectorAll('.seats-area');
                             for (let area of seatsAreas) {{
                                 const activeSubPanel = area.querySelector('.v-expansion-panel--active');
@@ -1100,6 +1112,7 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                                         }}
                                         return {{ success: true, clicked: true }};
                                     }}
+                                    if (isPanelSoldOut(activeSubPanel)) return {{ success: false, clicked: false, soldOut: true }};
                                 }}
                             }}
 
@@ -1115,6 +1128,7 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                                         }}
                                         return {{ success: true, clicked: true }};
                                     }}
+                                    if (isPanelSoldOut(panel)) return {{ success: false, clicked: false, soldOut: true }};
                                 }}
                             }}
                             return {{ success: false, clicked: false }};
@@ -1126,6 +1140,9 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                         if retry_parsed.get('clicked', False):
                             debug.log(f"[RETRY] Success on attempt {retry + 1}")
                             is_selected = True
+                            break
+                        if retry_parsed.get('soldOut', False):
+                            debug.log("[RETRY] Expanded panel is sold out, stop retrying")
                             break
 
                     await asyncio.sleep(0.2)
@@ -1917,13 +1934,21 @@ CONST_TICKETPLUS_CARD_KEYWORDS = [
     "前6碼",
 ]
 
-# Wording that marks a serial or discount box.
+# Wording that marks a serial or discount box. "專屬代碼" is TicketPlus's own
+# default wording, shown whenever the event sets no description of its own;
+# "會員" covers member presale codes (issue #434).
 CONST_TICKETPLUS_DISCOUNT_KEYWORDS = [
     "序號",
     "加購",
     "優惠",
     "折扣",
+    "專屬代碼",
+    "會員",
 ]
+
+# Placeholder TicketPlus puts on the box when the event asks a question
+# instead of a code. The answer is not a code, so nothing configured fits it.
+CONST_TICKETPLUS_ANSWER_PLACEHOLDER = "答案選項"
 
 # A card box is never called a serial number, but a card-branded discount
 # campaign routinely is ("信用卡優惠序號"), so serial wording decides first.
@@ -1958,12 +1983,14 @@ CONST_TICKETPLUS_EXCLUSIVE_CODE_SCAN_JS = '''
 def _classify_exclusive_code_field(label, placeholder):
     """Decide which configured value belongs in an .exclusive-code input.
 
-    Returns "credit_card", "discount", or "" for leave it alone. Returning ""
-    is the safe answer: an unrecognized box is far more likely to be something
-    we have no business typing into than one of the two we know.
+    Returns "credit_card", "discount", "answer" for a question box, or "" when
+    the wording names neither. The container only ever holds the event's one
+    serial box, so "" means wording we do not know, not a foreign field.
     """
     text = f"{label} {placeholder}"
 
+    if CONST_TICKETPLUS_ANSWER_PLACEHOLDER in placeholder:
+        return "answer"
     if any(keyword in text for keyword in CONST_TICKETPLUS_DISCOUNT_STRONG_KEYWORDS):
         return "discount"
     if any(keyword in text for keyword in CONST_TICKETPLUS_CARD_KEYWORDS):
@@ -2043,12 +2070,22 @@ async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
             placeholder = field.get('placeholder', '')
             kind = _classify_exclusive_code_field(label, placeholder)
 
-            if not kind:
-                # Filling a field we cannot name is how a discount code ends up
-                # in a card box. Log what it said so the wording can be added.
-                debug.log(f"[EXCLUSIVE CODE] Unrecognized field, leaving it alone "
-                          f"(label='{label}', placeholder='{placeholder}')")
+            if kind == "answer":
+                debug.log(f"[EXCLUSIVE CODE] Question box, not a code; leaving it alone (label='{label}')")
                 continue
+
+            if not kind:
+                # The box is required, so leaving it empty keeps the next button
+                # disabled. With only a discount code set there is one candidate;
+                # a card prefix, shared with ibon, is not typed into unknown wording.
+                if discount_code and not credit_card_prefix:
+                    kind = "discount"
+                    debug.log(f"[EXCLUSIVE CODE] Unrecognized wording, filling the discount code "
+                              f"(label='{label}', placeholder='{placeholder}')")
+                else:
+                    debug.log(f"[EXCLUSIVE CODE] Unrecognized field, leaving it alone "
+                              f"(label='{label}', placeholder='{placeholder}')")
+                    continue
 
             value = values.get(kind, '')
             if not value:

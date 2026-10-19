@@ -3512,6 +3512,20 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
                     console.log('[KHAM SEAT] Stage direction: ' + stageDirection);
                 }}
 
+                // Row labels seen on kham: "17排", "H排", and "B31排" (a letter
+                // prefix on a numbered row, 6樓包廂 at 台北國際會議中心). Letter-only and
+                // number-only rows keep their old values (H -> 8, 17 -> 17); a
+                // prefixed row sorts as a block per letter (B31 -> 2031).
+                function parseRowNum(rowText) {{
+                    const m = rowText.match(/([A-Z]*)(\d*)排/);
+                    if (!m || (!m[1] && !m[2])) return NaN;
+                    let letters = 0;
+                    for (let i = 0; i < m[1].length; i++) {{
+                        letters = letters * 26 + (m[1].charCodeAt(i) - 64);
+                    }}
+                    return m[2] ? letters * 1000 + parseInt(m[2]) : letters;
+                }}
+
                 // Step 1: Find all available seats with REAL DOM positions
                 // Important: Use real TD column index, not filtered array index
                 // This correctly handles spacer TDs (<td>&nbsp;</td>) that represent aisles/separators
@@ -3554,21 +3568,7 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
                                 if (title && title.includes('排') && title.includes('號')) {{
                                     const parts = title.split('-');
                                     if (parts.length >= 3) {{
-                                        // [KHAM] Parse row number (support both letter and number rows)
-                                        let rowNum;
-                                        const rowText = parts[1]; // e.g. "H排" or "17排"
-                                        const letterMatch = rowText.match(/([A-Z]+)排/);
-                                        if (letterMatch) {{
-                                            // Letter row (H排 -> 8, I排 -> 9, etc.)
-                                            const letters = letterMatch[1];
-                                            rowNum = 0;
-                                            for (let i = 0; i < letters.length; i++) {{
-                                                rowNum = rowNum * 26 + (letters.charCodeAt(i) - 64);
-                                            }}
-                                        }} else {{
-                                            // Numeric row
-                                            rowNum = parseInt(rowText.replace('排', ''));
-                                        }}
+                                        const rowNum = parseRowNum(parts[1]); // e.g. "H排", "17排", "B31排"
                                         const seatNum = parseInt(parts[2].replace('號', ''));
                                         if (!isNaN(rowNum) && !isNaN(seatNum)) {{
                                             if (!rows[rowNum]) rows[rowNum] = [];
@@ -3705,21 +3705,7 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
                                 if (title && title.includes('排') && title.includes('號')) {{
                                     const parts = title.split('-');
                                     if (parts.length >= 3) {{
-                                        // [KHAM] Parse row number (support both letter and number rows)
-                                        let rowNum;
-                                        const rowText = parts[1]; // e.g. "H排" or "17排"
-                                        const letterMatch = rowText.match(/([A-Z]+)排/);
-                                        if (letterMatch) {{
-                                            // Letter row (H排 -> 8, I排 -> 9, etc.)
-                                            const letters = letterMatch[1];
-                                            rowNum = 0;
-                                            for (let i = 0; i < letters.length; i++) {{
-                                                rowNum = rowNum * 26 + (letters.charCodeAt(i) - 64);
-                                            }}
-                                        }} else {{
-                                            // Numeric row
-                                            rowNum = parseInt(rowText.replace('排', ''));
-                                        }}
+                                        const rowNum = parseRowNum(parts[1]); // e.g. "H排", "17排", "B31排"
                                         const seatNum = parseInt(parts[2].replace('號', ''));
                                         if (!isNaN(rowNum) && !isNaN(seatNum)) {{
                                             if (!columns[seatNum]) columns[seatNum] = [];
@@ -3887,7 +3873,7 @@ async def nodriver_kham_handle_seat_unavailable(tab, config_dict):
     """
     寬宏售票 UTK0205 座位頁面空位不足時的處理機制：
     1. 首次發現無位時：最多點擊「更新座位」(.btn-update / top.location.reload) 刷新一次。
-    2. 刷新一次後仍無位時：點擊「切換票區」(button.change / showPic) 返回上一頁重新找其他位置。
+    2. 刷新一次後仍無位時：返回票區列表（UTK0204）重新找其他位置。
     """
     global KHAM_SEAT_RELOAD_TRACKER
     debug = util.create_debug_logger(config_dict)
@@ -3958,31 +3944,26 @@ async def nodriver_kham_handle_seat_unavailable(tab, config_dict):
     else:
         # 刷新一次後依然無位：切換票區重新尋找其他位置
         KHAM_SEAT_RELOAD_TRACKER.pop(area_key, None)
-        debug.log(f"[KHAM SEAT] 票區 {area_display} 刷新一次後仍無空位，按下[切換票區]重新找其他位置...")
+        debug.log(f"[KHAM SEAT] 票區 {area_display} 刷新一次後仍無空位，返回票區列表重新找其他位置...")
 
         try:
+            # The 切換票區 button calls showPic(), which only returns to the
+            # previous page on some events; elsewhere it just opens the area
+            # map over the same seat page, and the next round lands on the same
+            # area again (seen 2026-09-24, 6樓包廂). Go back to the area list
+            # (UTK0204) the way showPic does, so area selection picks again
+            # under the user's area keywords. Without history, fall back to it.
             await tab.evaluate('''
                 (() => {
-                    // 1. 優先點擊切換票區按鈕
-                    const changeBtn = document.querySelector('button.change, button[onclick*="showPic"]');
-                    if (changeBtn) {
-                        changeBtn.click();
-                        return { success: true, method: 'btn_click' };
+                    if (window.history.length > 1) {
+                        top.history.back();
+                        return 'history_back';
                     }
-                    // 2. 點擊縮圖
-                    const thumbImg = document.querySelector('img#IMG_THUMB, img.change');
-                    if (thumbImg) {
-                        thumbImg.click();
-                        return { success: true, method: 'thumb_click' };
-                    }
-                    // 3. 呼叫 showPic()
                     if (typeof showPic === 'function') {
                         showPic();
-                        return { success: true, method: 'showPic' };
+                        return 'showPic';
                     }
-                    // 4. 備援：返回上一頁
-                    window.history.back();
-                    return { success: true, method: 'history_back' };
+                    return 'none';
                 })()
             ''')
         except Exception as exc:
@@ -4229,7 +4210,7 @@ async def nodriver_udn_seat_auto_select(tab, config_dict):
                     if (style.includes('icon_chair_empty_1.gif')) {{
                         const title = seat.getAttribute('title');
                         if (title && title.includes('排') && title.includes('號')) {{
-                            // Parse seat info: {區域}-{排號}排-{座號}號
+                            // Parse seat info: {{區域}}-{{排號}}排-{{座號}}號
                             const parts = title.split('-');
                             if (parts.length >= 3) {{
                                 const areaName = parts[0];

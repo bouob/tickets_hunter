@@ -916,10 +916,12 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
     return is_date_assigned
 
 async def nodriver_ibon_ticket_agree(tab):
+    is_finish_checkbox_click = False
     for i in range(3):
-        is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#agreen:not(:checked)')
+        is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#agreen')
         if is_finish_checkbox_click:
             break
+    return is_finish_checkbox_click
 
 async def nodriver_ibon_allow_not_adjacent_seat(tab, config_dict):
     """
@@ -1261,13 +1263,16 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
                 sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
                 is_match = all(sub_kw.lower() in row_text.lower() for sub_kw in sub_keywords)
 
+                # Collect every area this keyword hits: the select order
+                # (from bottom to top / center / random) picks among them below.
+                # Stopping at the first hit always took the top one (#416).
                 if is_match:
-                    # Keyword matched - IMMEDIATELY select and stop
-                    matched_areas = [area]
+                    matched_areas.append(area)
                     target_found = True
-                    debug.log(f"[IBON EVENT AREA KEYWORD] Keyword matched: '{keyword_item}'")
-                    debug.log(f"[IBON EVENT AREA SELECT] Selected area: {area['areaName']} (keyword match)")
-                    break
+
+            if target_found:
+                debug.log(f"[IBON EVENT AREA KEYWORD] Keyword '{keyword_item}' matched "
+                          f"{len(matched_areas)} area(s): {[a['areaName'] for a in matched_areas]}")
 
             # All keywords failed log
             if not target_found:
@@ -1846,13 +1851,16 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                 sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
                 is_match = all(sub_kw.lower() in row_text.lower() for sub_kw in sub_keywords)
 
+                # Collect every area this keyword hits: the select order
+                # (from bottom to top / center / random) picks among them below.
+                # Stopping at the first hit always took the top one (#416).
                 if is_match:
-                    # Keyword matched - IMMEDIATELY select and stop
-                    matched_areas = [area]
+                    matched_areas.append(area)
                     target_found = True
-                    debug.log(f"[IBON AREA KEYWORD] Keyword matched: '{keyword_item}'")
-                    debug.log(f"[IBON AREA SELECT] Selected area: {area['areaName']} (keyword match)")
-                    break
+
+            if target_found:
+                debug.log(f"[IBON AREA KEYWORD] Keyword '{keyword_item}' matched "
+                          f"{len(matched_areas)} area(s): {[a['areaName'] for a in matched_areas]}")
 
             # All keywords failed log
             if not target_found:
@@ -4033,7 +4041,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
     if 'ibon.com.tw/error.html?' in url.lower():
         try:
-            tab.back()
+            await tab.back()
         except Exception as exc:
             pass
 
@@ -4780,8 +4788,8 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             #is_button_clicked = press_button(tab, By.CSS_SELECTOR, 'a.btn.btn-primary')
                             # plan-B, easy and better than plan-A
                             try:
-                                tab.back()
-                                tab.reload()
+                                await tab.back()
+                                await tab.reload()
                             except Exception as exc:
                                 pass
 

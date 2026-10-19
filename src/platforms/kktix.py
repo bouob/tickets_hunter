@@ -214,6 +214,32 @@ CONST_KKTIX_LOGIN_ERROR_JS = '''
 # stream of failed login attempts against KKTIX.
 CONST_KKTIX_SIGNIN_ERROR_COOLDOWN = 60
 
+# Cloudflare can answer the login POST itself with a full-page challenge.
+# Issue #429 was read as "passing it never replays the form body", but a
+# 2026-10-13 run showed the opposite: one click through it landed on back_to,
+# signed in. So it now gets one attempt (see _pass_kktix_post_submit_challenge),
+# and only a challenge that is still there, or a blank sign-in page behind it,
+# is handed to the user; hold off long enough not to retype the form under them.
+CONST_KKTIX_CF_HANDOFF_COOLDOWN = 300
+
+# Nobody clicks a checkbox the instant it renders. Estimated human reaction
+# (see it, move, click), not measured. A managed challenge that clears by itself
+# within this window is left alone. Waiting out Cloudflare's full five-second
+# spinner budget first made every click land at 5s: a 2026-10-15 run sat 5.1s
+# on an interactive challenge that one click then passed in 1s.
+CONST_KKTIX_CF_CLICK_DELAY_RANGE = (1.0, 2.5)
+
+# How long a click through the full-page challenge gets to land somewhere.
+CONST_KKTIX_CF_AFTER_CLICK_WAIT = 8.0
+CONST_KKTIX_CF_POLL_INTERVAL = 0.3
+
+# The registration form is an AngularJS template: until it compiles, the raw
+# {{'new.xxx' | translate}} expressions sit in the DOM. The readiness check used
+# to key on the terms-checkbox label only, which KKTIX removed in 2026-10 (web
+# and app), so any translate expression of the template now marks "not yet
+# rendered". Verified on a live page: 5 in the raw HTML, 0 after compile.
+CONST_KKTIX_UNRENDERED_TEMPLATE_MARKER = "{{'new."
+
 
 async def _get_kktix_submit_target(tab, debug):
     """Viewport coordinates of the login submit button, or None.
@@ -259,15 +285,17 @@ async def _ensure_kktix_turnstile_token(tab, config_dict, debug):
     if not await has_turnstile_token_field(tab):
         return True
 
-    # A managed widget solves itself, so look before clicking. The short window
-    # covers one that is mid-flight; anything longer is dead time on an
-    # interactive widget, which is what KKTIX actually serves.
-    token = await wait_for_turnstile_token(tab, timeout=0.5, show_debug=debug.enabled)
+    # A managed widget solves itself, so look before clicking. The window is a
+    # human reaction time rather than the bare minimum: KKTIX serves an
+    # interactive widget, and a click landing ~0.5s after the form was typed
+    # is not how a person behaves.
+    delay = random.uniform(*CONST_KKTIX_CF_CLICK_DELAY_RANGE)
+    token = await wait_for_turnstile_token(tab, timeout=delay, show_debug=debug.enabled)
     if token:
         debug.log(f"[KKTIX SIGNIN] Turnstile already solved (len={len(token)})")
         return True
 
-    debug.log("[KKTIX SIGNIN] Turnstile needs a click")
+    debug.log(f"[KKTIX SIGNIN] Turnstile needs a click (no token after {delay:.1f}s)")
     await solve_turnstile_checkbox(tab, show_debug=debug.enabled)
     token = await wait_for_turnstile_token(tab, show_debug=debug.enabled)
     if token:
@@ -278,6 +306,55 @@ async def _ensure_kktix_turnstile_token(tab, config_dict, debug):
     return False
 
 
+async def _poll_kktix_signin_outcome(tab, config_dict, timeout):
+    """Watch the page behind a post-submit challenge until it settles.
+
+    Returns (state, url). state is "signed_in" once the URL leaves the login
+    page, "form_back" when the login form shows again (the challenge passed but
+    the login did not go through), "paused", or "challenge" when neither
+    happened within timeout.
+    """
+    deadline = time.time() + timeout
+    current_url = ""
+    while True:
+        if await check_and_handle_pause(config_dict):
+            return "paused", current_url
+        try:
+            current_url = await tab.evaluate('window.location.href') or ""
+            if 'kktix.' in current_url and not is_kktix_login_page(current_url):
+                return "signed_in", current_url
+            if await tab.query_selector("#user_login") is not None:
+                return "form_back", current_url
+        except Exception:
+            # Reads throw mid-navigation; the next poll sees where it went.
+            pass
+        if time.time() >= deadline:
+            return "challenge", current_url
+        await asyncio.sleep(CONST_KKTIX_CF_POLL_INTERVAL)
+
+
+async def _pass_kktix_post_submit_challenge(tab, config_dict, debug):
+    """Give a full-page challenge that replaced the login POST one chance.
+
+    Watch it for as long as a person would take to react; if it has not
+    cleared by itself by then, click it once. Returns (state, url) as
+    _poll_kktix_signin_outcome does.
+    """
+    seen_at = time.time()
+    click_after = random.uniform(*CONST_KKTIX_CF_CLICK_DELAY_RANGE)
+
+    state, current_url = await _poll_kktix_signin_outcome(tab, config_dict, click_after)
+    if state != "challenge":
+        debug.log(f"[KKTIX SIGNIN] Challenge settled without a click: {state}")
+        return state, current_url
+
+    if not await solve_turnstile_checkbox(tab, show_debug=debug.enabled):
+        debug.log("[KKTIX SIGNIN] Challenge checkbox not found; nothing to click")
+        return "challenge", current_url
+    debug.log(f"[KKTIX SIGNIN] Clicked the challenge {time.time() - seen_at:.1f}s after it was seen")
+    return await _poll_kktix_signin_outcome(tab, config_dict, CONST_KKTIX_CF_AFTER_CLICK_WAIT)
+
+
 async def nodriver_kktix_signin(tab, url, config_dict):
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
@@ -285,18 +362,21 @@ async def nodriver_kktix_signin(tab, url, config_dict):
 
     debug = util.create_debug_logger(config_dict)
 
-    debug.log("nodriver_kktix_signin:", url)
-
     # Wrong credentials do not become right on the next pass, and the main loop
     # comes back here every time while the URL sits on the login page. Report
     # once, then stay quiet for a while instead of hammering KKTIX.
     last_error = _state.get("signin_error")
     if last_error:
-        message, failed_at = last_error
-        if time.time() - failed_at < CONST_KKTIX_SIGNIN_ERROR_COOLDOWN:
-            debug.log(f"[KKTIX SIGNIN] Holding off after a login failure: {message}")
+        message, failed_at, cooldown = last_error
+        if time.time() - failed_at < cooldown:
+            if not _state.get("signin_hold_logged"):
+                debug.log(f"[KKTIX SIGNIN] Holding off for {cooldown}s after a login failure: {message}")
+                _state["signin_hold_logged"] = True
             return False
         _state.pop("signin_error", None)
+        _state.pop("signin_hold_logged", None)
+
+    debug.log("nodriver_kktix_signin:", url)
 
     # 解析 back_to 參數取得真正的目標頁面
     # Remember it: a trip through a Cloudflare interstitial can strip the query
@@ -387,19 +467,16 @@ async def nodriver_kktix_signin(tab, url, config_dict):
             # target exists, finds nothing, and never looks again - the bot then
             # idles forever.
             #
-            # That trap is now worse rather than better, because the main loop
-            # skips Cloudflare entirely on this page (is_kktix_login_page): if
-            # we returned mid-redirect, nobody at all would clear a transit
-            # interstitial. So the wait stays, and the loop below solves such an
-            # interstitial itself, once, rather than waiting for a handler that
-            # is no longer listening.
+            # The one early return below is different: a full-page challenge
+            # that replaced the form after the POST gets one attempt here, and
+            # is handed to the user if that fails (see
+            # CONST_KKTIX_CF_HANDOFF_COOLDOWN).
             max_wait = 10
             check_interval = 0.3
             max_attempts = int(max_wait / check_interval)
             login_completed = False
             url_error_count = 0
             last_url_exc = ""
-            solved_transit_challenge = False
 
             for attempt in range(max_attempts):
                 # 登入後檢查暫停
@@ -422,18 +499,36 @@ async def nodriver_kktix_signin(tab, url, config_dict):
                         if login_error:
                             debug.log(f"[KKTIX SIGNIN] Login failed: {login_error}")
                             print(f"[KKTIX] 登入失敗：{login_error}")
-                            _state["signin_error"] = (login_error, time.time())
+                            _state["signin_error"] = (login_error, time.time(),
+                                                      CONST_KKTIX_SIGNIN_ERROR_COOLDOWN)
                             return False
 
-                    # Still on the login page well after submitting usually means
-                    # a Cloudflare transit page took over. Clear it once -- the
-                    # main loop will not, and repeated attempts during a redirect
-                    # are what used to break the challenge.
-                    if attempt == 10 and not solved_transit_challenge:
-                        if await detect_cloudflare_challenge(tab, show_debug=debug.enabled):
-                            debug.log("[KKTIX SIGNIN] Clearing the Cloudflare transit page")
-                            await handle_cloudflare_challenge(tab, config_dict, max_retry=1)
-                            solved_transit_challenge = True
+                    # Still on the login page with the form gone means Cloudflare
+                    # replaced it after the POST. Give it one attempt; only hand
+                    # it to the user when that does not sign in (issue #429).
+                    # The #user_login check keeps the form's own Turnstile
+                    # widget from being read as that challenge. Checked every
+                    # round: a single check at 3s held back a challenge that was
+                    # already up, and never saw one that came later.
+                    if attempt >= 3 and await tab.query_selector("#user_login") is None \
+                            and await detect_cloudflare_challenge(tab, show_debug=debug.enabled):
+                        debug.log("[KKTIX SIGNIN] Cloudflare challenge replaced the form after submit")
+                        outcome, outcome_url = await _pass_kktix_post_submit_challenge(
+                            tab, config_dict, debug)
+                        if outcome == "signed_in":
+                            login_completed = True
+                            debug.log(f"[KKTIX SIGNIN] Login completed through the challenge, "
+                                      f"redirected to: {outcome_url}")
+                            break
+                        if outcome == "paused":
+                            return False
+                        message = "Cloudflare 攔截登入，請在瀏覽器手動完成驗證後自行按登入"
+                        debug.log(f"[KKTIX SIGNIN] Challenge ended as '{outcome}'; "
+                                  f"handing off to the user")
+                        print(f"[KKTIX] {message}")
+                        _state["signin_error"] = (message, time.time(),
+                                                  CONST_KKTIX_CF_HANDOFF_COOLDOWN)
+                        return False
                 except Exception as exc:
                     # Report the first failure with its attempt index, then only
                     # the summary below; printing every attempt floods the log.
@@ -1820,6 +1915,32 @@ def _kktix_selected_member_code_is_unfilled(qualification):
     return False
 
 
+async def nodriver_kktix_satisfy_qualification(tab, config_dict):
+    """Select the purchase qualification and fill its member code.
+
+    Split out of nodriver_kktix_handle_qualification_and_next so the question
+    path runs it too: nodriver_kktix_reg_captcha presses next on its own, so on
+    events that also ask a question the member code was never filled (#436).
+
+    Returns:
+        dict: the qualification state after this attempt.
+    """
+    qualification = await nodriver_kktix_check_qualification(tab, config_dict)
+
+    if qualification.get("status") == "pending":
+        clicked = await nodriver_kktix_select_qualification(tab, config_dict, qualification)
+        # Fill when this round selected an option, and also when KKTIX had
+        # already selected the only one for us - the code field is fillable
+        # either way, and requiring a click of our own deadlocked #403.
+        if clicked or _kktix_selected_member_code_is_unfilled(qualification):
+            # The code field belongs to the selected option, so fill it only
+            # now - filling it earlier targeted the wrong (or no) option.
+            await nodriver_kktix_order_member_code(tab, config_dict)
+            qualification = await nodriver_kktix_check_qualification(tab, config_dict)
+
+    return qualification
+
+
 async def nodriver_kktix_handle_qualification_and_next(tab, config_dict,
                                                        button_clicked_in_captcha=False):
     """Satisfy any purchase qualification, then press next (#377 / #375).
@@ -1834,18 +1955,7 @@ async def nodriver_kktix_handle_qualification_and_next(tab, config_dict,
     """
     debug = util.create_debug_logger(config_dict)
 
-    qualification = await nodriver_kktix_check_qualification(tab, config_dict)
-
-    if qualification.get("status") == "pending":
-        clicked = await nodriver_kktix_select_qualification(tab, config_dict, qualification)
-        # Fill when this round selected an option, and also when KKTIX had
-        # already selected the only one for us - the code field is fillable
-        # either way, and requiring a click of our own deadlocked #403.
-        if clicked or _kktix_selected_member_code_is_unfilled(qualification):
-            # The code field belongs to the selected option, so fill it only
-            # now - filling it earlier targeted the wrong (or no) option.
-            await nodriver_kktix_order_member_code(tab, config_dict)
-            qualification = await nodriver_kktix_check_qualification(tab, config_dict)
+    qualification = await nodriver_kktix_satisfy_qualification(tab, config_dict)
 
     if qualification.get("status") == "pending":
         debug.log(f"[KKTIX QUALIFICATION] Still pending "
@@ -2260,9 +2370,10 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                 if await check_and_handle_pause(config_dict):
                     return fail_list, played_sound_ticket
 
-                # The member code belongs to a qualification option, so it is
-                # filled after that option is selected - see
-                # nodriver_kktix_handle_qualification_and_next below.
+                # Qualification and member code go in before the question:
+                # nodriver_kktix_reg_captcha presses next by itself, and then
+                # the handler below never runs (#436).
+                await nodriver_kktix_satisfy_qualification(tab, config_dict)
                 if await check_and_handle_pause(config_dict):
                     return fail_list, played_sound_ticket
 
@@ -2506,8 +2617,6 @@ async def nodriver_kktix_main(tab, url, config_dict):
                     debug.log(f"[KKTIX] Post-modal reload failed: {reload_exc}")
                 return False
 
-            _state["start_time"] = time.time()
-
             is_dom_ready = False
             try:
                 html_body = await tab.get_content()
@@ -2515,7 +2624,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
                 if html_body:
                     if len(html_body) > 10240:
                         if "registrationsNewApp" in html_body:
-                            if not "{{'new.i_read_and_agree_to'" in html_body:
+                            if CONST_KKTIX_UNRENDERED_TEMPLATE_MARKER not in html_body:
                                 is_dom_ready = True
             except Exception as exc:
                 #print(exc)
@@ -2533,8 +2642,15 @@ async def nodriver_kktix_main(tab, url, config_dict):
                 if await nodriver_kktix_redirect_to_signin_if_guest(tab, url, config_dict):
                     return False
 
-                # 勾選同意條款 - 使用精確的 ID 選擇器
-                is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#person_agree_terms:not(:checked)')
+                # Stage 9: terms. KKTIX removed this checkbox in 2026-10; only
+                # tick it where it still shows, since the helper's retries cost
+                # ~0.2s every round on pages without it.
+                terms_selector = '#person_agree_terms:not(:checked)'
+                try:
+                    if await tab.query_selector(terms_selector):
+                        await nodriver_check_checkbox(tab, terms_selector)
+                except Exception as exc:
+                    debug.log(f"[KKTIX] Terms checkbox lookup failed: {exc}")
 
                 # Telemetry only. This used to gate the ticket flow with the
                 # meaning "the form looks filled in, so do not run again", but
@@ -2563,6 +2679,9 @@ async def nodriver_kktix_main(tab, url, config_dict):
 
                 if config_dict["kktix"]["auto_fill_ticket_number"] and not is_press_cooldown:
                     debug.log("[KKTIX] Executing ticket selection logic...")
+                    # Paired with done_time: rounds skipped by the cooldown
+                    # must not move the start past the end.
+                    _state["start_time"] = time.time()
                     _state["fail_list"], _state["played_sound_ticket"] = await nodriver_kktix_reg_new_main(tab, config_dict, _state["fail_list"], _state["played_sound_ticket"])
                     _state["done_time"] = time.time()
         else:
@@ -2626,7 +2745,6 @@ async def nodriver_kktix_main(tab, url, config_dict):
             if config_dict["advanced"]["headless"]:
                 if not _state["is_popup_checkout"]:
                     kktix_account = config_dict["accounts"]["kktix_account"]
-                    kktix_password = config_dict["accounts"]["kktix_password"].strip()
 
                     debug.log(f"[KKTIX] Registration/real-name URL: {url}")
                     if len(kktix_account) > 0:
@@ -2639,7 +2757,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
 
                         script_name = "nodriver_tixcraft"
 
-                        threading.Thread(target=util.launch_maxbot, args=(script_name,"", url, kktix_account, kktix_password,"","false",)).start()
+                        threading.Thread(target=util.launch_maxbot, args=(script_name, "", url, "", "", "", "false",)).start()
                         #driver.quit()
                         #sys.exit()
 
