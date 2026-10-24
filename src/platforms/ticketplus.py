@@ -1932,6 +1932,8 @@ CONST_TICKETPLUS_CARD_KEYWORDS = [
     "金融卡",
     "前六碼",
     "前6碼",
+    "前八碼",
+    "前8碼",
 ]
 
 # Wording that marks a serial or discount box. "專屬代碼" is TicketPlus's own
@@ -2025,7 +2027,7 @@ async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
     """Fill the .exclusive-code inputs: a discount serial, or a card prefix.
 
     Cardholder-exclusive events (a bank's priority window, for instance) put a
-    "first six digits of your card" box in the same .exclusive-code container
+    "card number prefix" box in the same .exclusive-code container
     that ordinary events use for an add-on serial number, so the two have to be
     told apart by their wording before anything is typed.
     """

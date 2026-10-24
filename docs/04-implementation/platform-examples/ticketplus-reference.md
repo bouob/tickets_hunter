@@ -84,7 +84,7 @@
 | Util | `nodriver_ticketplus_accept_realname_card()` | 關閉實名驗證對話方塊 |
 | Util | `nodriver_ticketplus_accept_other_activity()` | 關閉推薦活動對話方塊 |
 | Util | `nodriver_ticketplus_accept_order_fail()` | 處理訂單失敗對話方塊 |
-| Util | `nodriver_ticketplus_order_exclusive_code()` | 優惠序號與信用卡前六碼填入 |
+| Util | `nodriver_ticketplus_order_exclusive_code()` | 優惠序號與信用卡卡號前綴填入 |
 | Util | `nodriver_ticketplus_check_next_button()` | 下一步按鈕狀態檢查 |
 
 **程式碼位置**：`src/platforms/ticketplus.py`
@@ -317,7 +317,7 @@ for header in panel_headers:
 2. 檢查 `layout_style` 輸出
 3. 手動確認頁面結構是否符合預期
 
-### Q3: 優惠序號或卡號前六碼沒有被填入？
+### Q3: 優惠序號或信用卡卡號前綴沒有被填入？
 
 **A**: 兩種欄位讀不同的設定鍵，先確認填的是對的那個。
 
@@ -339,7 +339,7 @@ for header in panel_headers:
 |------|------|
 | placeholder 為「答案選項」 | **不填**（問答題，要的是答案不是代碼）|
 | 序號、加購 | `discount_code`（優先於卡片用字，「信用卡優惠序號」算序號欄）|
-| 信用卡、卡號、卡友、中國信託、簽帳金融卡、前六碼 | `credit_card_prefix` |
+| 信用卡、卡號、卡友、中國信託、簽帳金融卡、前六碼／前八碼 | `credit_card_prefix` |
 | 優惠、折扣、專屬代碼、會員 | `discount_code`（「專屬代碼」是遠大預設標題）|
 | 以上皆無 | 只設了 `discount_code` 時填入；兩者都設或只設卡號前碼時**不填** |
 
