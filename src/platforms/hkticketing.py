@@ -12,6 +12,7 @@ import re
 import time
 
 from zendriver import cdp
+from zendriver.core.keys import SpecialKeys
 
 import util
 from nodriver_common import (
@@ -20,6 +21,7 @@ from nodriver_common import (
     send_discord_notification,
     send_telegram_notification,
     CONST_FROM_TOP_TO_BOTTOM,
+    CONST_MAXBOT_ANSWER_ONLINE_FILE,
 )
 
 __all__ = [
@@ -254,7 +256,7 @@ async def nodriver_hkticketing_login(tab, account, password, config_dict=None):
             debug.log(f"[HKTICKETING LOGIN] Login button click error: {exc}")
             # Fallback: try pressing Enter on password field
             try:
-                await el_pass.send_keys(Keys.ENTER)
+                await el_pass.send_keys(SpecialKeys.ENTER)
                 ret = True
                 debug.log("[HKTICKETING LOGIN] Fallback: pressed Enter key")
             except Exception as exc2:
@@ -263,7 +265,7 @@ async def nodriver_hkticketing_login(tab, account, password, config_dict=None):
         # No login button found, try pressing Enter
         debug.log("[HKTICKETING LOGIN] Login button not found, trying Enter key")
         try:
-            await el_pass.send_keys(Keys.ENTER)
+            await el_pass.send_keys(SpecialKeys.ENTER)
             ret = True
             debug.log("[HKTICKETING LOGIN] Pressed Enter key as fallback")
         except Exception as exc:
@@ -558,22 +560,22 @@ async def nodriver_hkticketing_date_password_input(tab, config_dict, fail_list):
     if el_password:
         is_password_appear = True
 
-        user_guess_string = config_dict["advanced"]["user_guess_string"]
-        if len(user_guess_string) > 0:
-            answer_list = user_guess_string.split(",")
+        # stored as JSON ("a","b") by the settings page, so split(',') keeps the quotes
+        answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
+        if len(answer_list) > 0:
             for answer_item in answer_list:
                 answer_item = answer_item.strip()
                 if answer_item in fail_list:
-                    debug.log("[HKTICKETING PASSWORD] Skip failed password:", answer_item)
+                    debug.log("[HKTICKETING PASSWORD] Skip failed password")
                     continue
 
                 # Try this password
                 try:
                     await el_password.click()
                     await el_password.send_keys(answer_item)
-                    await el_password.send_keys(Keys.ENTER)
+                    await el_password.send_keys(SpecialKeys.ENTER)
 
-                    debug.log("[HKTICKETING PASSWORD] Tried password:", answer_item)
+                    debug.log("[HKTICKETING PASSWORD] Password input completed")
 
                     # Add to fail list (will be removed if successful)
                     if answer_item not in fail_list:

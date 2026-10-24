@@ -28,7 +28,7 @@ except Exception:
 
 # ===== Constants =====
 
-CONST_APP_VERSION = "TicketsHunter (2026.09.24)"
+CONST_APP_VERSION = "TicketsHunter (2026.10.17)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -536,6 +536,34 @@ CONST_URL_SILENT_ERROR_REPORT_INTERVAL = 50
 _url_error_state = {"silent_count": 0, "last_error": "", "last_reported": 0,
                     "js_timeout_count": 0}
 
+# The in-flight location.href read, kept alive across a timeout (issue #435).
+# Cancelling it lets its late CDP reply hit a cancelled Future, which raises
+# InvalidStateError inside zendriver's listener_loop and kills the task that
+# reads the websocket; the next un-timed CDP call then waits forever and the
+# instance shows as offline. One probe per tab also stops reads piling up
+# while the page is frozen.
+_url_probe_state = {"tab": None, "task": None}
+
+
+def _drain_url_probe(task):
+    """Retrieve a finished probe's exception so asyncio does not warn about it."""
+    if not task.cancelled():
+        task.exception()
+
+
+def _get_url_probe(tab):
+    probe = _url_probe_state["task"]
+    # A closed websocket ends zendriver's listener without failing the replies
+    # still pending, so a probe sent before the drop never finishes. A fresh
+    # probe reconnects, or raises into the #374 silent-error count.
+    listener = getattr(tab, "listener", None)
+    listener_dead = listener is not None and not listener.running
+    if probe is None or probe.done() or _url_probe_state["tab"] is not tab or listener_dead:
+        probe = asyncio.ensure_future(tab.js_dumps('window.location.href'))
+        probe.add_done_callback(_drain_url_probe)
+        _url_probe_state.update(tab=tab, task=probe)
+    return probe
+
 
 def classify_url_error(str_exc):
     """Classify a nodriver_current_url exception.
@@ -604,8 +632,9 @@ async def nodriver_current_url(tab, config_dict=None):
     if tab:
         url_dict = {}
         try:
+            # shield: a timeout must not cancel the probe (see _url_probe_state)
             url_dict = await asyncio.wait_for(
-                tab.js_dumps('window.location.href'), timeout=5.0
+                asyncio.shield(_get_url_probe(tab)), timeout=5.0
             )
         except asyncio.TimeoutError:
             # js_dumps blocks when JS execution is suspended (alert dialog,
