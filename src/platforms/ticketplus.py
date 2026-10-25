@@ -2011,7 +2011,7 @@ def _classify_exclusive_code_field(label, placeholder):
 
 def _get_ticketplus_card_prefix_length(label, placeholder):
     """Return the required card-prefix length stated by the field wording."""
-    text = f"{label} {placeholder}".replace(" ", "").replace("　", "")
+    text = "".join(f"{label} {placeholder}".split())
     for keyword, length in CONST_TICKETPLUS_CARD_PREFIX_LENGTHS:
         if keyword in text:
             return length
