@@ -1989,6 +1989,11 @@ CONST_TICKETPLUS_EXCLUSIVE_CODE_SCAN_JS = '''
 '''
 
 
+def _normalize_ticketplus_field_text(label, placeholder):
+    """Combine field text and remove whitespace before matching."""
+    return "".join(f"{label} {placeholder}".split())
+
+
 def _classify_exclusive_code_field(label, placeholder):
     """Decide which configured value belongs in an .exclusive-code input.
 
@@ -1996,9 +2001,10 @@ def _classify_exclusive_code_field(label, placeholder):
     the wording names neither. The container only ever holds the event's one
     serial box, so "" means wording we do not know, not a foreign field.
     """
-    text = f"{label} {placeholder}"
+    text = _normalize_ticketplus_field_text(label, placeholder)
 
-    if CONST_TICKETPLUS_ANSWER_PLACEHOLDER in placeholder:
+    normalized_placeholder = _normalize_ticketplus_field_text("", placeholder)
+    if CONST_TICKETPLUS_ANSWER_PLACEHOLDER in normalized_placeholder:
         return "answer"
     if any(keyword in text for keyword in CONST_TICKETPLUS_DISCOUNT_STRONG_KEYWORDS):
         return "discount"
@@ -2011,7 +2017,7 @@ def _classify_exclusive_code_field(label, placeholder):
 
 def _get_ticketplus_card_prefix_length(label, placeholder):
     """Return the required card-prefix length stated by the field wording."""
-    text = "".join(f"{label} {placeholder}".split())
+    text = _normalize_ticketplus_field_text(label, placeholder)
     for keyword, length in CONST_TICKETPLUS_CARD_PREFIX_LENGTHS:
         if keyword in text:
             return length
