@@ -1932,7 +1932,16 @@ CONST_TICKETPLUS_CARD_KEYWORDS = [
     "金融卡",
     "前六碼",
     "前6碼",
+    "前八碼",
+    "前8碼",
 ]
+
+CONST_TICKETPLUS_CARD_PREFIX_LENGTHS = (
+    ("前六碼", 6),
+    ("前6碼", 6),
+    ("前八碼", 8),
+    ("前8碼", 8),
+)
 
 # Wording that marks a serial or discount box. "專屬代碼" is TicketPlus's own
 # default wording, shown whenever the event sets no description of its own;
@@ -1980,6 +1989,11 @@ CONST_TICKETPLUS_EXCLUSIVE_CODE_SCAN_JS = '''
 '''
 
 
+def _normalize_ticketplus_field_text(label, placeholder):
+    """Combine field text and remove whitespace before matching."""
+    return "".join(f"{label} {placeholder}".split())
+
+
 def _classify_exclusive_code_field(label, placeholder):
     """Decide which configured value belongs in an .exclusive-code input.
 
@@ -1987,9 +2001,10 @@ def _classify_exclusive_code_field(label, placeholder):
     the wording names neither. The container only ever holds the event's one
     serial box, so "" means wording we do not know, not a foreign field.
     """
-    text = f"{label} {placeholder}"
+    text = _normalize_ticketplus_field_text(label, placeholder)
 
-    if CONST_TICKETPLUS_ANSWER_PLACEHOLDER in placeholder:
+    normalized_placeholder = _normalize_ticketplus_field_text("", placeholder)
+    if CONST_TICKETPLUS_ANSWER_PLACEHOLDER in normalized_placeholder:
         return "answer"
     if any(keyword in text for keyword in CONST_TICKETPLUS_DISCOUNT_STRONG_KEYWORDS):
         return "discount"
@@ -1998,6 +2013,15 @@ def _classify_exclusive_code_field(label, placeholder):
     if any(keyword in text for keyword in CONST_TICKETPLUS_DISCOUNT_KEYWORDS):
         return "discount"
     return ""
+
+
+def _get_ticketplus_card_prefix_length(label, placeholder):
+    """Return the required card-prefix length stated by the field wording."""
+    text = _normalize_ticketplus_field_text(label, placeholder)
+    for keyword, length in CONST_TICKETPLUS_CARD_PREFIX_LENGTHS:
+        if keyword in text:
+            return length
+    return 0
 
 
 def _ticketplus_exclusive_code_fill_js(plan):
@@ -2025,7 +2049,7 @@ async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
     """Fill the .exclusive-code inputs: a discount serial, or a card prefix.
 
     Cardholder-exclusive events (a bank's priority window, for instance) put a
-    "first six digits of your card" box in the same .exclusive-code container
+    "card number prefix" box in the same .exclusive-code container
     that ordinary events use for an add-on serial number, so the two have to be
     told apart by their wording before anything is typed.
     """
@@ -2091,6 +2115,15 @@ async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
             if not value:
                 debug.log(f"[EXCLUSIVE CODE] {kind} field found but nothing configured for it")
                 continue
+
+            configured_value = value
+            if kind == "credit_card":
+                required_length = _get_ticketplus_card_prefix_length(label, placeholder)
+                if required_length and len(value) > required_length:
+                    value = value[:required_length]
+                    debug.log(f"[EXCLUSIVE CODE] Card field wording requires {required_length} "
+                              f"digits; using the configured prefix truncated from "
+                              f"{len(configured_value)} digits")
 
             existing = field.get('value', '')
             if existing:
