@@ -31,8 +31,6 @@ _state = {}
 async def nodriver_fami_login(tab, config_dict):
     """
     FamiTicket login
-
-    Reference: chrome_tixcraft.py line 6308 (fami_login)
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -108,8 +106,6 @@ async def nodriver_fami_login(tab, config_dict):
 async def nodriver_fami_activity(tab, config_dict):
     """
     FamiTicket activity page - click buy button
-
-    Reference: chrome_tixcraft.py line 3342 (fami_activity)
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -224,8 +220,6 @@ async def nodriver_fami_verify(tab, config_dict, fail_list=None):
 async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url):
     """
     FamiTicket date auto selection
-
-    Reference: chrome_tixcraft.py line 3386 (fami_date_auto_select)
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -233,7 +227,6 @@ async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url):
     date_keyword = config_dict["date_auto_select"].get("date_keyword", "").strip()
     date_auto_fallback = config_dict.get('date_auto_fallback', False)
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"].get("auto_reload_coming_soon_page", False)
-    auto_reload_page_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
 
     debug.log(f"[FAMI DATE] date_keyword: {date_keyword}")
     debug.log(f"[FAMI DATE] auto_select_mode: {auto_select_mode}")
@@ -358,6 +351,7 @@ async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url):
             if auto_reload_coming_soon_page_enable:
                 debug.log("[FAMI DATE] Date list is empty, triggering auto-reload")
 
+                auto_reload_page_interval = util.get_reload_interval(config_dict)
                 if auto_reload_page_interval > 0:
                     await asyncio.sleep(auto_reload_page_interval)
 
@@ -373,8 +367,6 @@ async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url):
 async def nodriver_fami_area_auto_select(tab, config_dict, area_keyword_item):
     """
     FamiTicket area auto selection
-
-    Reference: chrome_tixcraft.py line 3520 (fami_area_auto_select)
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -494,9 +486,7 @@ async def nodriver_fami_area_auto_select(tab, config_dict, area_keyword_item):
 
 async def nodriver_fami_date_to_area(tab, config_dict, last_activity_url):
     """
-    FamiTicket date/area selection coordinator
-
-    Reference: chrome_tixcraft.py line 3665 (fami_date_to_area)
+    FamiTicket area selection coordinator: tries each area keyword group in turn via nodriver_fami_area_auto_select
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -705,7 +695,7 @@ async def nodriver_fami_home_auto_select(tab, config_dict, last_activity_url):
             is_area_selected = await nodriver_fami_date_to_area(tab, config_dict, last_activity_url)
 
             if not is_area_selected:
-                auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 5)
+                auto_reload_interval = util.get_reload_interval(config_dict, default=5)
                 if auto_reload_interval > 0:
                     debug.log(f"[FAMI HOME] No area selected, waiting {auto_reload_interval}s before retry...")
                     await tab.sleep(auto_reload_interval)

@@ -106,11 +106,11 @@ nodriver_tixcraft  ->  platforms/*  ->  nodriver_common  ->  util / settings
 
 | 模組 | 平台 |
 |------|------|
-| `platforms/tixcraft.py` | 拓元 TixCraft、Ticketmaster SG、添翼 Teamear、獨立音樂 Indievox |
+| `platforms/tixcraft.py` | 拓元 TixCraft、Ticketmaster SG／PH、添翼 Teamear、獨立音樂 Indievox |
 | `platforms/kktix.py` | KKTIX |
 | `platforms/ibon.py` | ibon（購票 / 旅遊 / 會展） |
 | `platforms/ticketplus.py` | 遠大 TicketPlus |
-| `platforms/kham.py` | 寬宏 KHAM、年代售票、UDN 售票網 |
+| `platforms/kham.py` | 寬宏 KHAM、年代售票、UDN 售票網、中職售票（中信兄弟／味全龍／富邦悍將，含籃球中信特攻／富邦勇士，UTK RWD 版） |
 | `platforms/famiticket.py` | 全網 FamiTicket |
 | `platforms/cityline.py` | Cityline 買飛 |
 | `platforms/hkticketing.py` | HKTicketing 快達票、澳門銀河、Ticketek |
@@ -137,6 +137,11 @@ nodriver_tixcraft  ->  platforms/*  ->  nodriver_common  ->  util / settings
   既有呼叫為無害的 pass-through 遺留，正逐步移除，看到不代表可仿效。
 - 傳給瀏覽器的 Promise 主體要包成 IIFE（`(() => { ... })()`）。裸的箭頭函式運算式
   只會回傳函式物件本身，Promise 主體永遠不會執行，等待會靜默失效。
+- 對 CDP 呼叫（`tab.evaluate`、`tab.js_dumps`、`tab.send` 等）加逾時，必須寫
+  `asyncio.wait_for(asyncio.shield(coro_or_task), timeout)`，不要直接 `wait_for(coro)`。
+  逾時會取消 zendriver 的 `Transaction`，晚到的回應讓 `listener_loop` 拋出 `InvalidStateError`
+  而結束，之後等待中的指令全部收不到回應，主迴圈卡住（#407、#431、#435）。
+  範例見 `src/nodriver_common.py` 的 `_get_url_probe`。
 
 ---
 

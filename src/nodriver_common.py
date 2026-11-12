@@ -28,7 +28,7 @@ except Exception:
 
 # ===== Constants =====
 
-CONST_APP_VERSION = "TicketsHunter (2026.10.17)"
+CONST_APP_VERSION = "TicketsHunter (2026.11.11)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -51,8 +51,7 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 # ===== Cloudflare bypass settings =====
 # "auto"   - auto silent mode (recommended for daily use)
 # "debug"  - verbose processing output, for debugging
-# "manual" - detect and prompt only, no auto handling
-# "off"    - completely disable Cloudflare bypass
+# No other value is implemented; anything else behaves like "auto".
 CLOUDFLARE_BYPASS_MODE = "auto"
 CLOUDFLARE_MAX_RETRY = 3         # max retry count
 CLOUDFLARE_WAIT_TIME = 3         # wait time after each attempt (seconds)
@@ -212,6 +211,21 @@ def get_config_dict(args):
                 config_dict["ocr_captcha"]["force_submit"] = True
 
     return config_dict
+
+
+def get_card_prefix(config_dict, required_length):
+    """Return the configured card prefix cut to the length a platform asks for.
+
+    contact.credit_card_prefix is read by ibon and TicketPlus, and the
+    settings page takes 6 to 8 digits, so every reader states the length it
+    needs (0 when the page does not say). Returns "" when the value is not all
+    ASCII digits or is shorter than asked: a wrong prefix spends the
+    submission, an empty one leaves the box for the user.
+    """
+    prefix = config_dict.get("contact", {}).get("credit_card_prefix", "").strip()
+    if not (prefix.isascii() and prefix.isdigit()) or len(prefix) < required_length:
+        return ""
+    return prefix[:required_length] if required_length else prefix
 
 
 # ===== File Utilities =====
@@ -585,9 +599,8 @@ def get_url_js_timeout_count():
     """Times js_dumps timed out, i.e. JS execution was suspended.
 
     A Cloudflare full-page interstitial suspends JS the same way an alert does.
-    The main loop watches this counter to know it should re-run its Cloudflare
-    check even though the URL never changed - otherwise a challenge that renders
-    after the URL settles is never detected at all.
+    The main loop only reports this counter in its [URL DIAG] log line; it does
+    not trigger a new Cloudflare check.
     """
     return _url_error_state["js_timeout_count"]
 
@@ -1413,10 +1426,19 @@ def nodriver_overwrite_prefs(conf):
 
 # ===== Shared captcha image capture =====
 
+# Captcha <img> src markers: kham / ibon serve /pic.aspx?TYPE=, the UTK RWD
+# sites (中職售票) /Home/pic?TYPE=, also under a virtual directory (/DEA/Home/pic).
+CONST_CAPTCHA_IMG_SRC_MARKERS = ('/pic.aspx?TYPE=', '/Home/pic?TYPE=')
+# The UTK RWD login popup's captcha shares the page with the order captcha and
+# comes first in the DOM; it is never the one to solve here.
+CONST_CAPTCHA_IMG_SKIP_IDS = ('master_chk_pic',)
+
+
 async def nodriver_get_captcha_image_from_dom_snapshot(tab, config_dict):
     """
     Use DOMSnapshot to find captcha image inside Shadow DOM and get base64 data.
-    Supports IMG elements with '/pic.aspx?TYPE=' pattern and CANVAS fallback.
+    Supports IMG elements whose src carries a CONST_CAPTCHA_IMG_SRC_MARKERS
+    pattern, and a CANVAS fallback.
     Used by ibon and kham family platforms.
     Returns: img_base64 (bytes) or None
     """
@@ -1454,8 +1476,11 @@ async def nodriver_get_captcha_image_from_dom_snapshot(tab, config_dict):
                                 attr_value = strings[attrs[i + 1]]
                                 attr_dict[attr_name] = attr_value
 
-                        if '/pic.aspx?TYPE=' in attr_dict.get('src', ''):
-                            target_img_url = attr_dict.get('src', '')
+                        src = attr_dict.get('src', '')
+                        if attr_dict.get('id') in CONST_CAPTCHA_IMG_SKIP_IDS:
+                            continue
+                        if any(marker in src for marker in CONST_CAPTCHA_IMG_SRC_MARKERS):
+                            target_img_url = src
                             if hasattr(doc.nodes, 'backend_node_id') and idx < len(doc.nodes.backend_node_id):
                                 img_backend_node_id = doc.nodes.backend_node_id[idx]
 

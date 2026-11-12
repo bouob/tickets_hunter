@@ -11,8 +11,9 @@
 ### 必要條件
 | 項目 | 需求 | 說明 |
 |------|------|------|
-| **Python** | **3.10-3.11**（推薦 3.11.9） | 完整支援所有功能 |
+| **Python** | **3.11**（推薦 3.11.9） | 完整支援所有功能 |
 | Python | 3.12 | 可能支援，部分套件相容性待驗證 |
+| Python | 3.10 以下 | ❌ 不支援（Pillow 13、tornado 6.6 需要 3.11 以上） |
 | Python | 3.13+ | ❌ 不支援（ddddocr 不相容） |
 | **Chrome** | 90+ | 建議使用最新穩定版 |
 | **作業系統** | Windows 10/11 | 主要支援平台 |
@@ -34,13 +35,13 @@
 
 ### 方式二：從原始碼安裝
 
-#### 1. 安裝 Python 3.10-3.11
+#### 1. 安裝 Python 3.11
 ```bash
 # Windows - 從官網下載
 # https://www.python.org/downloads/
 
 # 確認版本
-python --version  # 應顯示 Python 3.10.x 或 3.11.x
+python --version  # 應顯示 Python 3.11.x
 ```
 
 > **注意**：安裝時請勾選「Add Python to PATH」
@@ -224,8 +225,8 @@ TicketPlus 搶票耗時: 1.823 秒
 
 | 設定 | 說明 |
 |------|------|
-| `date_auto_fallback` | 日期關鍵字無比對時自動選擇 |
-| `area_auto_fallback` | 區域關鍵字無比對時自動選擇 |
+| `date_auto_fallback` | 日期關鍵字沒有符合項目時自動選擇 |
+| `area_auto_fallback` | 區域關鍵字沒有符合項目時自動選擇 |
 | `auto_select_mode` | `"random"` / `"from_top"` / `"from_bottom"` |
 
 ### OCR 驗證碼設定
@@ -246,7 +247,7 @@ TicketPlus 搶票耗時: 1.823 秒
 
 **問題**：`ModuleNotFoundError` 或套件安裝失敗
 
-**解決**：確認使用 Python 3.10-3.11
+**解決**：確認使用 Python 3.11
 ```bash
 python --version
 
@@ -307,7 +308,7 @@ rm -f MAXBOT_INT28_IDLE.txt src/MAXBOT_INT28_IDLE.txt
 ```
 
 ### Headless 模式
-無圖形介面執行：
+無圖形界面模式執行：
 ```json
 {
   "advanced": {

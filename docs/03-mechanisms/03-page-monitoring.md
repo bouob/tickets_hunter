@@ -1,7 +1,7 @@
 # 機制 03：頁面監控 (Stage 3)
 
 **文件說明**：說明搶票系統的主迴圈結構、URL 路由分派與各平台頁面監控機制
-**最後更新**：2026-06-10
+**最後更新**：2026-10-30
 
 ---
 
@@ -59,7 +59,7 @@ while True:
 | `tixcraft.com` / `indievox.com` / `ticketmaster.` | `nodriver_tixcraft_main()` |
 | `famiticket.com` | `nodriver_famiticket_main()` |
 | `ibon.com` | `nodriver_ibon_main()` |
-| `kham.com.tw` / `ticket.com.tw` / `tickets.udnfunlife.com` | `nodriver_kham_main()` |
+| `kham.com.tw` / `ticket.com.tw` / `tickets.udnfunlife.com` / 中職售票各站（`is_utk_rwd_url()`） | `nodriver_kham_main()` |
 | `ticketplus.com` | `nodriver_ticketplus_main()` |
 | `urbtix.hk` | (保留，未實作) |
 | `cityline.com` | `nodriver_cityline_main()` |
@@ -69,8 +69,8 @@ while True:
 | `facebook.com/login.php` | `nodriver_facebook_main()` |
 
 **平台家族**：部分平台共用相同的後端邏輯：
-- **TixCraft 家族**：tixcraft.com、indievox.com、ticketmaster.sg/com 共用 `nodriver_tixcraft_main()`
-- **KHAM 家族**：kham.com.tw、ticket.com.tw、tickets.udnfunlife.com 共用 `nodriver_kham_main()`
+- **TixCraft 家族**：tixcraft.com、indievox.com、ticketmaster.sg/ph/com 共用 `nodriver_tixcraft_main()`
+- **KHAM 家族**：kham.com.tw、ticket.com.tw、tickets.udnfunlife.com 共用 `nodriver_kham_main()`；中職售票 tix.ctbcsports.com、tix.wdragons.com、guardians.fami.life，以及同系統籃球隊富邦勇士 tix.fubonbraves.com（中信特攻在 tix.ctbcsports.com/DEA）（UTK RWD 版，尚未真站實測）也併入此家族，`nodriver_kham_main()` 先用 `normalize_utk_rwd_url()` 把網址改寫成寬宏版面再判斷頁型（改寫結果不導航）
 - **Softix 家族**：hkticketing.com、galaxymacau.com、ticketek.com 共用 `nodriver_hkticketing_main()`
 
 ---

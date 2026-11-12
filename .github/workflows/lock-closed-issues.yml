@@ -12,7 +12,8 @@ permissions:
 
 jobs:
   lock-stale-issues:
-    runs-on: ubuntu-latest
+    # Pinned so a runner image change cannot break this job unannounced.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:

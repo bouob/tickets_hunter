@@ -2,12 +2,14 @@
 文件說明：協助使用者完成 Tickets Hunter 執行檔版本的安裝與首次執行
 分類：Getting Started (level: 1)
 目標受眾：初學者
-最後更新：2026-09-16
+最後更新：2026-11-12
 -->
 
 # 安裝與首次執行指南
 
 本指南將協助您完成 Tickets Hunter 執行檔版本的安裝與首次執行。
+
+> macOS 使用者請改看 [macOS 使用指南](macos.md)：下載後要先解除 Gatekeeper 限制，否則會跳出「無法打開」。
 
 ---
 
@@ -338,4 +340,4 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 
 **安裝完成！祝您搶票成功！** 🎉
 
-*最後更新：2026-09-16*
+*最後更新：2026-11-12*

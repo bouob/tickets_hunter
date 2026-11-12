@@ -1,7 +1,7 @@
 # 函式結構分析與平台索引
 
 **文件說明**：提供 Tickets Hunter 專案的模組結構、核心函式索引、平台實作分析與功能完整度評分
-**最後更新**：2026-10-19
+**最後更新**：2026-11-04
 
 ---
 
@@ -71,7 +71,7 @@
 - **platforms/kktix.py** - KKTIX 平台（17 函式）
 - **platforms/tixcraft.py** - TixCraft + Ticketmaster 平台（27 函式）
 - **platforms/ibon.py** - iBon + Tour iBon 平台（25 函式）
-- **platforms/kham.py** - KHAM + ticket.com.tw + UDN 平台（21 函式）
+- **platforms/kham.py** - KHAM + ticket.com.tw + UDN + 中職售票（UTK RWD）平台（21 函式）
 - **platforms/hkticketing.py** - HKTicketing + GalaxyMacau + Ticketek 平台（30 函式）
 
 ### 🌐 支援平台清單
@@ -86,6 +86,7 @@
 - **Kham 寬宏售票** - https://kham.com.tw/
 - **Ticket.com.tw 年代** - https://ticket.com.tw/
 - **UDN售票網** - https://tickets.udnfunlife.com/
+- **中職售票（UTK RWD，尚未真站實測）** - 中信兄弟 https://tix.ctbcsports.com/、味全龍 https://tix.wdragons.com/、富邦悍將 https://guardians.fami.life/；同系統籃球隊：新北中信特攻 https://tix.ctbcsports.com/DEA 、臺北富邦勇士 https://tix.fubonbraves.com
 - **TicketPlus 遠大** - https://ticketplus.com.tw/
 
 #### 海外地區
@@ -94,6 +95,7 @@
 - **HKTicketing 快達票** - https://hotshow.hkticketing.com/
 - **澳門銀河** - https://ticketing.galaxymacau.com/
 - **TicketMaster Singapore** - https://ticketmaster.sg
+- **TicketMaster Philippines** - https://ticketmaster.ph（與新加坡同為拓元引擎；選張數頁未驗證）
 - **Ticketek Australia** - http://premier.ticketek.com.au
 
 ---
@@ -164,7 +166,7 @@ KKTIX 主流程
 
 #### 函式清單 (`platforms/tixcraft.py`)
 ```
-TicketMaster 功能 (整合在 nodriver_tixcraft_main)
+TicketMaster 功能 (整合在 nodriver_tixcraft_main；ticketmaster.sg / ticketmaster.ph 共用)
 ├── nodriver_ticketmaster_promo
 ├── nodriver_ticketmaster_parse_zone_info
 ├── get_ticketmaster_target_area
@@ -243,7 +245,7 @@ iBon 主流程
 
 #### 函式清單
 ```
-KHAM 主流程 (含 UDN 售票網、Ticket.com.tw)，檔案：src/platforms/kham.py
+KHAM 主流程 (含 UDN 售票網、Ticket.com.tw、中職售票 UTK RWD)，檔案：src/platforms/kham.py
 ├── nodriver_kham_main                   # ✅
 ├── nodriver_kham_login                  # ✅
 ├── nodriver_kham_date_auto_select       # ✅ (Feature 003: Early Return + Fallback；#357 群組項目頁共用)
@@ -259,9 +261,19 @@ KHAM 主流程 (含 UDN 售票網、Ticket.com.tw)，檔案：src/platforms/kham
 ├── nodriver_kham_captcha                # ✅
 ├── nodriver_kham_performance            # ✅
 │
-├── 座位選擇模組 (KHAM/UDN/Ticket.com.tw 共用)
+├── 中職售票 UTK RWD 模組 (中信兄弟/味全龍/富邦悍將＋籃球中信特攻/富邦勇士，尚未真站實測)
+├── is_utk_rwd_url                       # ✅ 依 CONST_UTK_RWD_TENANTS 判斷網域，主迴圈路由用
+├── normalize_utk_rwd_url                # ✅ RWD 網址改寫成 kham .aspx 版面，只供頁型判斷，不導航
+├── parse_cookie_string                  # ✅ 解析貼上的整串 Cookie
+├── filter_utk_rwd_cookies               # ✅ 只留名稱開頭屬於目前站台的 Cookie
+├── nodriver_utk_rwd_ensure_login        # ✅ 以 _ul 判斷登入，Cookie → 帳密彈窗（#437）
+├── nodriver_utk_rwd_cookie_login        # ✅ Cookie 登入（#437）
+├── nodriver_utk_rwd_login               # ✅ 登入彈窗 + OCR
+├── nodriver_utk_rwd_assign_ticket_number # ✅ UTK0202 選票種列並設定張數
+│
+├── 座位選擇模組 (KHAM/UDN/Ticket.com.tw/中職售票 共用)
 ├── nodriver_kham_seat_main              # ✅ 座位選擇主流程
-├── nodriver_kham_seat_auto_select       # ✅ 座位自動選擇核心
+├── nodriver_kham_seat_auto_select       # ✅ 座位自動選擇核心（rwd=True：中職空位判斷；舞台上/下依座位圖位置排序）
 ├── nodriver_kham_seat_type_auto_select  # ✅ 票種自動選擇
 │
 ├── UDN 專屬座位選擇模組
@@ -424,6 +436,7 @@ Fansigo 主流程
 ```
 OCR 相關
 ├── nodriver_tixcraft_get_ocr_answer     # platforms/tixcraft.py
+├── nodriver_get_captcha_image_from_dom_snapshot # nodriver_common.py（ibon / 寬宏家族抓驗證碼圖，含中職 /Home/pic?TYPE=）
 └── nodriver_force_check_checkbox        # nodriver_common.py
 
 Cloudflare Turnstile
@@ -456,6 +469,9 @@ Debug 輸出
 ├── DebugLogger                          # class ✅ 統一除錯訊息管理
 ├── create_debug_logger(config_dict)     # factory ✅ 建立 DebugLogger 實例
 └── get_debug_mode                       # ✅ 安全讀取 debug 模式設定
+
+刷新等待
+└── get_reload_interval(config_dict, default=0)  # 取得刷新等待秒數（支援區間刷新，每次呼叫重新取值）
 
 選擇模式與關鍵字處理
 ├── is_text_match_keyword                # ✅ 關鍵字比對核心
@@ -618,6 +634,7 @@ with_pause_check(task_func, config_dict, *args, **kwargs)      # ✅
 | TicketPlus | platforms/ticketplus.py | ✅/✅ |
 | KHAM 寬宏 | platforms/kham.py | ✅/✅ |
 | TicketMaster | platforms/tixcraft.py | ✅/✅ |
+| 中職售票（UTK RWD） | platforms/kham.py | -/⚠️ 尚未真站實測 |
 | Cityline | platforms/cityline.py | ✅/✅ |
 | iBon | platforms/ibon.py | ✅/🥇 |
 | FamiTicket | platforms/famiticket.py | ✅/🏅 |
@@ -836,6 +853,7 @@ with_pause_check(task_func, config_dict, *args, **kwargs)      # ✅
 - `nodriver_kham_seat_type_auto_select()` - 票種選擇
 - `nodriver_kham_seat_auto_select()` - 座位選擇
 - `nodriver_kham_seat_main()` - 座位選擇主流程
+- 中職售票 UTK RWD：`nodriver_utk_rwd_ensure_login()`、`nodriver_utk_rwd_cookie_login()`、`nodriver_utk_rwd_login()`、`nodriver_utk_rwd_assign_ticket_number()`（尚未真站實測）
 
 ## 5. iBon 售票
 

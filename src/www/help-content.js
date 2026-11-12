@@ -310,6 +310,22 @@ const HELP_CONTENT = {
     link: null
   },
 
+  cpbl_cookie: {
+    title: '中職售票 Cookie',
+    short: '填入已登入的中職售票網 Cookie 整串（適用中信兄弟、味全龍、富邦悍將，以及中信特攻、富邦勇士）',
+    detail: `
+      <p>填入後程式以 Cookie 登入，優先於帳號密碼；Cookie 失效時才改用帳號密碼。</p>
+      <p><strong>取得步驟（Chrome）：</strong></p>
+      <ol>
+        <li>在瀏覽器登入要搶票的球團售票網</li>
+        <li>按 <code>F12</code> 開啟開發人員工具，切到「Network」後重新整理頁面</li>
+        <li>點第一筆請求（例如 <code>UTK0101_</code>），在「Request Headers」找到 <code>Cookie</code></li>
+        <li>複製整串值（<code>name=value; name2=value2</code>）貼入此處</li>
+      </ol>
+      <p class="text-muted small mb-0">程式只注入目前站台的 Cookie（中信 <code>CTBC_</code>、味全 <code>WDRAGONS|</code>、富邦悍將 <code>FBGUARDIANS|</code>、富邦勇士 <code>FUBONBRAVES|</code> 開頭），不會跨站使用。</p>`,
+    link: null
+  },
+
   idle_keyword: {
     title: '系統時間 - 暫停關鍵字',
     short: '指定時刻自動暫停搶票（格式 HH:MM:SS，分號分隔多個）',
@@ -369,6 +385,7 @@ const HELP_CONTENT = {
           <tr><td><code>5</code>（建議）</td><td>每 5 秒重新整理，平衡速度與負載</td></tr>
         </tbody>
       </table>
+      <p><strong>區間刷新：</strong>勾選後，此欄位是秒數下限，後方輸入框是上限，每次等待都在區間內重新隨機取值。例如下限 <code>8</code>、上限 <code>12</code>，每次等待 8 到 12 秒。下限必須大於 0，上限必須大於下限，否則無法儲存。平均間隔是（下限 + 上限）÷ 2，上限越大，平均刷新越慢。</p>
       <p class="text-warning-emphasis small mb-0"><strong>注意：</strong>TixCraft 等平台偵測到過於頻繁的刷新可能觸發限制，建議不要低於 3 秒。</p>`,
     link: null
   },
@@ -1189,6 +1206,20 @@ const HELP_CONTENT_EN_META = {
       </ol>
       <p class="text-muted small mb-0">If both account credentials and a cookie are filled in, the bot uses the cookie first.</p>`,
   },
+  cpbl_cookie: {
+    title: 'CPBL ticketing cookie',
+    short: 'Paste the whole cookie string of a logged-in CPBL ticketing site (CTBC Brothers, Wei Chuan Dragons, Fubon Guardians).',
+    detailHtml: `
+      <p>With this cookie, the bot logs in through the cookie before trying the account and password.</p>
+      <p><strong>How to get it in Chrome:</strong></p>
+      <ol>
+        <li>Log in to the team's ticketing site in your browser.</li>
+        <li>Press <code>F12</code>, open "Network", then reload the page.</li>
+        <li>Click the first request (for example <code>UTK0101_</code>) and find <code>Cookie</code> under "Request Headers".</li>
+        <li>Copy the whole value (<code>name=value; name2=value2</code>) and paste it here.</li>
+      </ol>
+      <p class="text-muted small mb-0">Only the current site's cookies are set (names starting with <code>CTBC_</code>, <code>WDRAGONS|</code>, <code>FBGUARDIANS|</code> or <code>FUBONBRAVES|</code>); they are never sent to another site.</p>`,
+  },
   idle_keyword: {
     title: 'System time pause keywords',
     short: 'Pause ticketing automatically at specific times. Format: HH:MM:SS, separated by semicolons.',
@@ -1238,6 +1269,7 @@ const HELP_CONTENT_EN_META = {
           <tr><td><code>5</code> (recommended)</td><td>Reload every 5 seconds for a balance between speed and load</td></tr>
         </tbody>
       </table>
+      <p><strong>Interval range:</strong> When checked, this field is the minimum and the box next to it is the maximum. Each wait draws a new random value from that range. For example, a minimum of <code>8</code> and a maximum of <code>12</code> waits 8 to 12 seconds each time. The minimum must be above 0 and the maximum must be greater than the minimum, or the settings cannot be saved. The average interval is (minimum + maximum) / 2, so a higher maximum means slower reloads on average.</p>
       <p class="text-warning-emphasis small mb-0"><strong>Note:</strong> Platforms such as TixCraft may throttle or restrict overly frequent reloads. Using less than 3 seconds is not recommended.</p>`,
   },
   tixcraft_soft_block_delay: {

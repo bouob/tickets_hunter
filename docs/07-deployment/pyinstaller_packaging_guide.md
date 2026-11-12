@@ -23,7 +23,7 @@
 | 目標 | 使用方法 | 時間 | 說明 |
 |------|---------|------|------|
 | **本地測試打包** | `build_scripts\build_and_test.bat` | 10-20 分鐘 | 開發階段驗證打包結果 |
-| **正式發布版本** | 推送 Git tag (`v2026.03.09`) | 15-25 分鐘 | GitHub Actions 自動打包並行布 |
+| **正式發布版本** | 推送 Git tag (`v2026.03.09`) | 15-25 分鐘 | GitHub Actions 自動打包並發布 |
 | **了解技術細節** | 閱讀本文件 | 30 分鐘 | 深入理解 PyInstaller 配置 |
 
 ### ⚡ 最快方式
@@ -115,7 +115,7 @@ dist/
 **觸發條件**：推送 Git tag（格式：`v*`，例如 `v2025.11.24`）
 
 **執行步驟**：
-1. **環境準備**：設定 Python 3.10.11 環境
+1. **環境準備**：設定 Python 3.11.9 環境
 2. **安裝依賴**：安裝 `requirement.txt` + PyInstaller
 3. **打包 3 個 exe**：
    - `nodriver_tixcraft.exe`（NoDriver 版本，最大）
@@ -151,7 +151,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10.11'  # 固定 Python 版本
+          python-version: '3.11.9'  # 固定 Python 版本
 
       - name: Build executables with PyInstaller
         run: |

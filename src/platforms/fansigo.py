@@ -5,12 +5,13 @@
 import asyncio
 import json
 import re
+import time
 from urllib.parse import quote, unquote
 
 from zendriver import cdp
 
 import util
-from nodriver_common import check_and_handle_pause, play_sound_while_ordering
+from nodriver_common import check_and_handle_pause, play_sound_while_ordering, sleep_with_pause_check
 from nodriver_common import CONST_FROM_TOP_TO_BOTTOM
 
 # =============================================================================
@@ -44,6 +45,7 @@ _state = {}
 # FANSI GO URL patterns
 FANSIGO_URL_PATTERNS = {
     "domain": r"go\.fansi\.me",
+    "home_page": r"go\.fansi\.me/?(?:[?#].*)?$",
     "login_page": r"go\.fansi\.me/login",
     "event_page": r"go\.fansi\.me/events/(\d+)",
     "show_page": r"go\.fansi\.me/tickets/show/(\d+)",
@@ -52,6 +54,132 @@ FANSIGO_URL_PATTERNS = {
 }
 
 FANSIGO_COGNITO_DOMAIN = "fansidev.auth.ap-southeast-1.amazoncognito.com"
+
+# Page texts in Chinese and English. A new profile that opens a show page
+# directly gets English saved in the fansi:lang cookie. Compared in lower case.
+CONST_FANSIGO_SECTION_HEADINGS = ("選擇票券種類", "Select Tickets")
+CONST_FANSIGO_SHOW_LIST_HEADINGS = ("請選擇活動場次進行購買", "Select a session to purchase.")
+CONST_FANSIGO_COUNTDOWN_TEXTS = ("開賣倒數", "after the countdown")
+CONST_FANSIGO_COMING_SOON_TEXTS = ("尚未開賣", "Coming Soon")
+CONST_FANSIGO_SOLD_OUT_TEXTS = ("已售完", "你已太晚", "Sold out", "late to the party")
+CONST_FANSIGO_OTHER_LOGIN_TEXTS = ("其他方式", "another login method")
+CONST_FANSIGO_CHECKOUT_TEXTS = (
+    "checkout", "submit", "buy", "next", "continue", "get ticket",
+    "取得訂單", "結帳", "購買", "下一步",
+)
+CONST_FANSIGO_MIN_REDIRECT_INTERVAL = 3
+
+
+def _fansigo_lower_json(texts) -> str:
+    """Page texts as a lower case JSON array for injected scripts."""
+    return json.dumps([text.lower() for text in texts])
+
+
+def _fansigo_text_check_js(texts) -> str:
+    """Script that returns true when any of the texts is on the page."""
+    return '''
+        (function() {
+            const texts = %s;
+            const page = (document.body ? document.body.innerText : '').toLowerCase();
+            return texts.some(text => page.includes(text));
+        })()
+    ''' % _fansigo_lower_json(texts)
+
+
+def _fansigo_show_page_state_js() -> str:
+    """Script that reads what decides whether a show page can be reloaded."""
+    return '''
+        (function() {
+            const page = (document.body ? document.body.innerText : '').toLowerCase();
+            const hasAny = texts => texts.some(text => page.includes(text));
+            return {
+                hasHeading: hasAny(%s),
+                hasCountdown: hasAny(%s),
+                sectionCount: document.querySelectorAll('li.list-none').length
+            };
+        })()
+    ''' % (_fansigo_lower_json(CONST_FANSIGO_SECTION_HEADINGS),
+           _fansigo_lower_json(CONST_FANSIGO_COUNTDOWN_TEXTS))
+
+
+def _fansigo_sections_js() -> str:
+    """Script that lists the sections on a show page with their status."""
+    return '''
+        (function() {
+            const comingSoonTexts = %s;
+            const soldOutTexts = %s;
+            var elems = document.querySelectorAll('li.list-none');
+            var items = [];
+            for (var i = 0; i < elems.length; i++) {
+                var text = elems[i].textContent.trim();
+                var lowerText = text.toLowerCase();
+                var h3 = elems[i].querySelector('h3');
+                var name = h3 ? h3.textContent.trim() : '';
+                if (!name) {
+                    var p = elems[i].querySelector('p');
+                    name = p ? p.textContent.trim() : '';
+                }
+                var hasButton = elems[i].querySelectorAll('button').length > 0;
+                var status = 'unavailable';
+                if (comingSoonTexts.some(t => lowerText.includes(t))) status = 'coming_soon';
+                else if (soldOutTexts.some(t => lowerText.includes(t))) status = 'sold_out';
+                else if (hasButton) status = 'on_sale';
+                items.push({index: i, name: name, text: text, status: status});
+            }
+            return {items: items, count: items.length};
+        })()
+    ''' % (_fansigo_lower_json(CONST_FANSIGO_COMING_SOON_TEXTS),
+           _fansigo_lower_json(CONST_FANSIGO_SOLD_OUT_TEXTS))
+
+
+def _fansigo_other_login_js() -> str:
+    """Script that clicks the button leading to the account login form."""
+    return '''
+        (function() {
+            const texts = %s;
+            const buttons = document.querySelectorAll('button');
+            for (const btn of buttons) {
+                const text = (btn.textContent || '').toLowerCase();
+                if (texts.some(t => text.includes(t))) {
+                    btn.click();
+                    return 'clicked';
+                }
+            }
+            return 'not_found';
+        })()
+    ''' % _fansigo_lower_json(CONST_FANSIGO_OTHER_LOGIN_TEXTS)
+
+
+def _fansigo_checkout_js() -> str:
+    """Script that clicks the checkout button on a show page."""
+    return '''
+        (function() {
+            var keywords = %s;
+            var buttons = document.querySelectorAll('button');
+            for (var i = 0; i < buttons.length; i++) {
+                var text = (buttons[i].textContent || '').trim().toLowerCase();
+                for (var j = 0; j < keywords.length; j++) {
+                    if (text.indexOf(keywords[j]) >= 0) {
+                        buttons[i].click();
+                        return {clicked: true, text: buttons[i].textContent.trim()};
+                    }
+                }
+            }
+            return {clicked: false};
+        })()
+    ''' % _fansigo_lower_json(CONST_FANSIGO_CHECKOUT_TEXTS)
+
+
+async def _fansigo_wait_for_any_text(tab, texts, timeout=5) -> bool:
+    """True once any of the texts is on the page, False after the timeout."""
+    script = _fansigo_text_check_js(texts)
+    deadline = time.time() + timeout
+    while True:
+        if await tab.evaluate(script) is True:
+            return True
+        if time.time() >= deadline:
+            return False
+        await asyncio.sleep(0.2)
 
 def is_fansigo_url(url: str) -> bool:
     """Check if URL is a FANSI GO URL"""
@@ -63,11 +191,13 @@ def get_fansigo_page_type(url: str) -> str:
     """Get FANSI GO page type from URL
 
     Returns:
-        str: "event", "show", "checkout", "order_result", or "unknown"
+        str: "home", "login", "event", "show", "checkout", "order_result", or "unknown"
     """
     if url is None:
         return "unknown"
 
+    if re.search(FANSIGO_URL_PATTERNS["home_page"], url):
+        return "home"
     if re.search(FANSIGO_URL_PATTERNS["login_page"], url):
         return "login"
     if re.search(FANSIGO_URL_PATTERNS["checkout_page"], url):
@@ -138,7 +268,8 @@ async def nodriver_fansigo_inject_cookie(tab, config_dict):
         config_dict: Configuration dictionary
 
     Returns:
-        bool: True if injection successful or no cookie configured
+        bool: True if injection successful; False if no cookie is configured,
+            the cookie format is invalid, or injection fails
     """
     debug = util.create_debug_logger(config_dict)
     fansigo_cookie = config_dict["accounts"].get("fansigo_cookie", "").strip()
@@ -201,19 +332,7 @@ async def nodriver_fansigo_signin(tab, url, config_dict):
     # On FANSI GO login page: click "other method" to go to Cognito
     if "go.fansi.me/login" in url:
         try:
-            js_result = await tab.evaluate("""
-                (function() {
-                    const buttons = document.querySelectorAll('button');
-                    for (const btn of buttons) {
-                        const text = btn.textContent || '';
-                        if (text.includes('其他方式')) {
-                            btn.click();
-                            return 'clicked';
-                        }
-                    }
-                    return 'not_found';
-                })()
-            """)
+            js_result = await tab.evaluate(_fansigo_other_login_js())
             if js_result == 'clicked':
                 debug.log("[FANSIGO] Clicked 'other login method', redirecting to Cognito")
             else:
@@ -295,9 +414,7 @@ async def nodriver_fansigo_get_shows(tab, config_dict) -> list:
 
     try:
         # Wait for Next.js SPA to render content
-        try:
-            await tab.find("請選擇活動場次進行購買", timeout=5)
-        except Exception:
+        if not await _fansigo_wait_for_any_text(tab, CONST_FANSIGO_SHOW_LIST_HEADINGS):
             debug.log("[FANSIGO] Waiting for event page to render...")
             return shows
 
@@ -518,36 +635,12 @@ async def nodriver_fansigo_get_sections(tab, config_dict) -> list:
 
     try:
         # Wait for Next.js SPA to render ticket sections
-        try:
-            await tab.find("選擇票券種類", timeout=5)
-        except Exception:
+        if not await _fansigo_wait_for_any_text(tab, CONST_FANSIGO_SECTION_HEADINGS):
             debug.log("[FANSIGO] Waiting for show page to render...")
             return sections
 
         # Extract section data via JavaScript
-        # Wrap array in object for util.parse_nodriver_result() compatibility
-        js_raw = await tab.evaluate('''
-            (function() {
-                var elems = document.querySelectorAll('li.list-none');
-                var items = [];
-                for (var i = 0; i < elems.length; i++) {
-                    var text = elems[i].textContent.trim();
-                    var h3 = elems[i].querySelector('h3');
-                    var name = h3 ? h3.textContent.trim() : '';
-                    if (!name) {
-                        var p = elems[i].querySelector('p');
-                        name = p ? p.textContent.trim() : '';
-                    }
-                    var hasButton = elems[i].querySelectorAll('button').length > 0;
-                    var status = 'unavailable';
-                    if (text.indexOf('尚未開賣') >= 0) status = 'coming_soon';
-                    else if (text.indexOf('已售完') >= 0 || text.indexOf('你已太晚') >= 0) status = 'sold_out';
-                    else if (hasButton) status = 'on_sale';
-                    items.push({index: i, name: name, text: text, status: status});
-                }
-                return {items: items, count: items.length};
-            })()
-        ''')
+        js_raw = await tab.evaluate(_fansigo_sections_js())
         js_parsed = util.parse_nodriver_result(js_raw)
         js_result = js_parsed.get('items', []) if isinstance(js_parsed, dict) else []
 
@@ -739,26 +832,7 @@ async def nodriver_fansigo_click_checkout(tab, config_dict) -> bool:
 
     try:
         # Find and click checkout button via JavaScript
-        checkout_keywords_js = '["checkout","submit","buy","next","continue","取得訂單","結帳","購買","下一步"]'
-
-        js_click_checkout = '''
-        (function() {
-            var keywords = %s;
-            var buttons = document.querySelectorAll('button');
-            for (var i = 0; i < buttons.length; i++) {
-                var text = (buttons[i].textContent || '').trim().toLowerCase();
-                for (var j = 0; j < keywords.length; j++) {
-                    if (text.indexOf(keywords[j]) >= 0) {
-                        buttons[i].click();
-                        return {clicked: true, text: buttons[i].textContent.trim()};
-                    }
-                }
-            }
-            return {clicked: false};
-        })()
-        ''' % checkout_keywords_js
-
-        result = await tab.evaluate(js_click_checkout)
+        result = await tab.evaluate(_fansigo_checkout_js())
         result = util.parse_nodriver_result(result)
 
         if isinstance(result, dict) and result.get('clicked'):
@@ -771,6 +845,80 @@ async def nodriver_fansigo_click_checkout(tab, config_dict) -> bool:
     except Exception as e:
         debug.log(f"[FANSIGO] Error clicking checkout: {e}")
         return False
+
+async def _fansigo_can_reload_show_page(tab, debug) -> bool:
+    """True when the show page is rendered and not counting down to a sale.
+
+    The page refetches its sections by itself when a sale opens and warns
+    against reloading during the countdown (shown 15 minutes before), so only
+    a page waiting for returned tickets needs a reload. A missing heading also
+    covers the spinner shown during that refetch.
+    """
+    try:
+        page_state = await tab.evaluate(_fansigo_show_page_state_js())
+    except Exception as exc:
+        debug.log(f"[FANSIGO] Error reading show page state: {exc}")
+        return False
+
+    if not isinstance(page_state, dict):
+        return False
+
+    has_countdown = bool(page_state.get("hasCountdown"))
+    if has_countdown and not _state.get("countdown_logged"):
+        debug.log("[FANSIGO] Sale countdown shown, waiting for the page to update by itself")
+    _state["countdown_logged"] = has_countdown
+
+    return bool(page_state.get("hasHeading")) and page_state.get("sectionCount", 0) > 0 and not has_countdown
+
+
+async def _fansigo_reload_show_page(tab, config_dict, debug):
+    """Stage 3: wait and reload a show page that has no section to select."""
+    if not config_dict.get("tixcraft", {}).get("auto_reload_coming_soon_page", False):
+        return
+
+    interval = util.get_reload_interval(config_dict)
+    if not isinstance(interval, (int, float)) or interval <= 0:
+        return
+
+    if not await _fansigo_can_reload_show_page(tab, debug):
+        return
+
+    debug.log(f"[FANSIGO] No section to select, waiting {interval}s before reload...")
+    if await sleep_with_pause_check(tab, interval, config_dict):
+        return
+
+    try:
+        await tab.reload()
+    except Exception as exc:
+        debug.log(f"[FANSIGO] Error reloading show page: {exc}")
+
+
+async def _fansigo_return_to_configured_page(tab, config_dict, debug):
+    """Stage 3: go back to the configured event or show page from the homepage.
+
+    The event page sends visitors to the homepage until it opens. The throttle
+    reads the interval field directly because it is not a reload wait.
+    """
+    homepage = (config_dict.get("homepage") or "").strip()
+    if get_fansigo_page_type(homepage) not in ("event", "show"):
+        return
+
+    redirect_interval = config_dict.get("advanced", {}).get(
+        "auto_reload_page_interval", CONST_FANSIGO_MIN_REDIRECT_INTERVAL)
+    if not isinstance(redirect_interval, (int, float)) or redirect_interval <= 0:
+        redirect_interval = CONST_FANSIGO_MIN_REDIRECT_INTERVAL
+
+    current_time = time.time()
+    if current_time - _state.get("last_homepage_redirect_time", 0) <= redirect_interval:
+        return
+
+    _state["last_homepage_redirect_time"] = current_time
+    debug.log(f"[FANSIGO] On homepage, returning to: {homepage}")
+    try:
+        await tab.get(homepage)
+    except Exception as exc:
+        debug.log(f"[FANSIGO] Error returning to configured page: {exc}")
+
 
 async def nodriver_fansigo_main(tab, url, config_dict):
     """Main control function for FANSI GO platform
@@ -853,6 +1001,11 @@ async def nodriver_fansigo_main(tab, url, config_dict):
             _state["played_sound_ticket"] = True
         return tab
 
+    # Handle homepage - return to the configured page
+    if page_type == "home":
+        await _fansigo_return_to_configured_page(tab, config_dict, debug)
+        return tab
+
     # Handle event page - select show
     if page_type == "event":
         _state["qty_set_url"] = None
@@ -880,6 +1033,8 @@ async def nodriver_fansigo_main(tab, url, config_dict):
                 # Click checkout
                 await asyncio.sleep(0.3)
                 await nodriver_fansigo_click_checkout(tab, config_dict)
+        else:
+            await _fansigo_reload_show_page(tab, config_dict, debug)
 
         return tab
 

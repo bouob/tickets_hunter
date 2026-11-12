@@ -426,7 +426,7 @@ screenshot = await tab.send(cdp.page.capture_screenshot(format_='png'))
 | 3 | 手動更新 CDP 定義 | 低 | 中 | 用 `generate_cdp.py` 從最新 Chrome 協定重新生成 |
 
 ### 長期
-- 追蹤 nodriver flatten branch 是否合併到 main 並行布
+- 追蹤 nodriver flatten branch 是否合併到 main 並發布
 - 評估 zendriver 的長期穩定性
 - 考慮建立 Chrome 版本鎖定機制（`chrome_downloader.py` 加版本上限）
 

@@ -1,7 +1,7 @@
 # Active Polling Pattern（主動輪詢機制）
 
 **文件說明**：定義冷卻刷新期間的等待與輪詢標準模式
-**最後更新**：2026-06-10
+**最後更新**：2026-11-04
 
 > ⚠️ **文件狀態**：Active Polling 為設計概念，尚未實作。目前所有平台統一使用 **Simple Wait 模式**。
 
@@ -24,7 +24,7 @@
 
 ```python
 # Simple Wait Pattern - 標準模板（所有平台統一）
-interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+interval = util.get_reload_interval(config_dict)  # 區間刷新開啟時，每次呼叫重新取值
 if interval > 0:
     debug.log(f"[STAGE SELECT] Waiting {interval}s before reload...")
     await asyncio.sleep(interval)   # 1. 先等待冷卻
@@ -47,7 +47,7 @@ except Exception:
 # Auto refresh if no date was selected (for strict mode or sold out scenarios)
 if not is_date_clicked:
     # Simple wait mode (consistent with TicketPlus/iBon/FamiTicket)
-    interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+    interval = util.get_reload_interval(config_dict)
     if interval > 0:
         debug.log(f"[DATE SELECT] Waiting {interval}s before reload...")
         await asyncio.sleep(interval)
@@ -67,7 +67,7 @@ if not is_date_clicked:
 ```python
 # Auto refresh if needed (simple wait mode, consistent with TicketPlus/iBon/FamiTicket)
 if is_need_refresh:
-    interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+    interval = util.get_reload_interval(config_dict)
     if interval > 0:
         debug.log(f"[AREA SELECT] Waiting {interval}s before reload...")
         await asyncio.sleep(interval)
@@ -81,7 +81,8 @@ if is_need_refresh:
 
 ### 新平台實作檢查清單
 
-- [ ] 使用 `config_dict["advanced"]["auto_reload_page_interval"]` 取得間隔
+- [ ] 使用 `util.get_reload_interval(config_dict)` 取得等待秒數（支援區間刷新；判斷與等待共用同一個變數，不要呼叫兩次）
+- [ ] 節流或逾時計算（非刷新等待）直接讀 `auto_reload_page_interval`，不要用區間取值
 - [ ] **先** `asyncio.sleep(interval)` **再** `tab.reload()`（Sleep → Reload 順序）
 - [ ] 使用 `debug.log()` 輸出除錯訊息
 - [ ] `tab.reload()` 包在 try/except 中

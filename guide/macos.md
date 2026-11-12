@@ -99,12 +99,13 @@ PyInstaller 無法交叉編譯：打包工具會把執行當下那台機器的 P
 | 項目 | 需求 |
 |------|------|
 | macOS | 13 Ventura 以上 |
-| Python | **3.10 或 3.11**（推薦 3.11.9） |
+| Python | **3.11**（推薦 3.11.9） |
 | 硬碟空間 | 約 2 GB |
 | 時間 | 首次約 10 分鐘，之後重跑不到 1 分鐘 |
 
-**Python 3.12 未經驗證，3.13 以上不能用。** 驗證碼辨識用的 ddddocr 限定 Python 3.12 以下。
-打包腳本會依序尋找 `python3.11`、`python3.10`，不會誤用系統預設的 `python3`。
+**Python 3.10 以下與 3.13 以上都不能用，3.12 未經驗證。** 驗證碼辨識用的 ddddocr 限定 Python 3.12 以下，
+圖片處理的 Pillow 13 與設定頁的 tornado 6.6 需要 3.11 以上。
+打包腳本只會尋找 `python3.11`，不會誤用系統預設的 `python3`。
 
 最低需要 macOS 13，是因為 onnxruntime 與 OpenCV 的 Apple Silicon 安裝套件只支援 13 以上，
 在 macOS 12 上安裝套件這一步就會失敗。
@@ -205,7 +206,7 @@ git pull
 chmod +x tickets_hunter/*.command
 ```
 
-### 打包時顯示找不到 Python 3.10 或 3.11
+### 打包時顯示找不到 Python 3.11
 
 回到自行打包的步驟 1。注意 `python3 --version` 顯示的版本**不代表** `python3.11` 存在——
 macOS 內建的 `python3` 通常是別的版本。
@@ -235,7 +236,7 @@ python build_scripts/build_local.py --keep
 以這次的結果而言並不成立。
 
 若你看到「ddddocr 組件無法使用」，那是安裝問題而不是架構限制——通常是 Python 版本不對，
-回到上面的步驟 1 確認用的是 3.10 或 3.11。
+回到上面的步驟 1 確認用的是 3.11。
 
 **Intel Mac 沒有官方版，也沒有實測過。** 打包流程本身不區分架構，理論上可行，但沒有人跑過。
 官方版不含 Intel 是因為 GitHub 的 x86_64 建置環境將於 2027 年 8 月退場，而 macOS 的建置

@@ -437,7 +437,7 @@ def platform_function(driver, config_dict):
   - [ ] 關鍵字比對 `match_area_by_keyword()`（讀取 `area_keyword`）
   - [ ] 回退策略：根據 `mode` 自動選擇
   - [ ] 點擊區域元素 `click_area_element()`
-  - [ ] 座點陣圖處理（若適用）`handle_seat_map()`
+  - [ ] 座位圖處理（若適用）`handle_seat_map()`
 
 #### 階段 6：票數設定
 - [ ] **票數自動設定** `{platform}_assign_ticket_number(driver, config_dict)`
@@ -521,7 +521,7 @@ def platform_function(driver, config_dict):
 - [ ] **密碼輸入** `{platform}_date_password_input()`（如 HKTicketing）
 - [ ] **iframe 處理** `{platform}_travel_iframe()`（如 HKTicketing）
 - [ ] **問卷調查** `{platform}_auto_survey()`（如 Urbtix）
-- [ ] **座點陣圖選座** `{platform}_seat_auto_select()`（如 年代售票）
+- [ ] **座位圖選座** `{platform}_seat_auto_select()`（如 年代售票）
 - [ ] **最佳座位演算法** `{platform}_find_best_seats()`（如 年代售票）
 
 ### 檢查清單使用方式

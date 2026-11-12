@@ -20,10 +20,10 @@ echo "Tickets Hunter -- macOS build"
 echo "Project: $ROOT"
 echo
 
-# ddddocr declares Requires-Python <3.13, and 3.12 is untested here. Prefer
-# 3.11, then 3.10, rather than whatever python3 points at.
+# ddddocr declares Requires-Python <3.13 and Pillow 13 / tornado 6.6 need
+# >=3.11; 3.12 is untested here. Use 3.11 rather than whatever python3 points at.
 PY=""
-for candidate in python3.11 python3.10; do
+for candidate in python3.11; do
     if command -v "$candidate" >/dev/null 2>&1; then
         PY="$candidate"
         break
@@ -31,7 +31,7 @@ for candidate in python3.11 python3.10; do
 done
 
 if [ -z "$PY" ]; then
-    echo "ERROR: need Python 3.10 or 3.11 (3.11.9 recommended)."
+    echo "ERROR: need Python 3.11 (3.11.9 recommended)."
     echo
     echo "  brew install python@3.11"
     echo

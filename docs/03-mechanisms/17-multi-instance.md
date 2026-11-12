@@ -1,7 +1,7 @@
 # 機制 17：多開實例（Multi-Instance）
 
 **文件說明**：同時執行多個搶票實例的隔離機制——實例識別、狀態目錄、暫停語意、heartbeat 儀表板與平台限制
-**最後更新**：2026-06-13
+**最後更新**：2026-11-02
 
 ---
 
@@ -112,19 +112,41 @@ src/（或 EXE 目錄，= util.get_app_root()）
 
 ### 心跳寫入（bot 側）
 
-主迴圈（`src/nodriver_tixcraft.py`）每約 5 秒 `touch` `heartbeat.txt`（經 `util.get_instance_state_path`，default 寫根目錄）。平台無關，所有實例一致。
+`main()`（`src/nodriver_tixcraft.py`）啟動時另開一個 `heartbeat_writer` task，與主迴圈並行，每 5 秒（`CONST_HEARTBEAT_INTERVAL_SEC`）覆寫 `heartbeat.txt`（經 `util.get_instance_state_path`，default 寫根目錄）。平台無關，所有實例一致。
+
+同一個檔案帶兩個訊號：
+
+| 訊號 | 誰更新 | 代表 |
+|------|--------|------|
+| 檔案 mtime | `heartbeat_writer` task | 程式還在執行 |
+| 檔案內容（epoch 秒） | 主迴圈每圈寫入 `loop_state["last_tick"]`，由 task 寫出 | 主迴圈最後一次前進的時間 |
+
+為什麼要拆開：主迴圈在單一圈內可能停留很久。TicketPlus 排隊監控最長 600 秒（`CONST_TICKETPLUS_QUEUE_MONITOR_MAX`），Cloudflare 處理會重試 3 次，CDP 回應遺失時也會卡住（#431、#435）。心跳若寫在主迴圈裡，這些情況都會被誤判為離線。主迴圈 `await` 一個未完成的 Future 時，event loop 沒有被擋，task 照常執行。
+
+正常結束（停止旗標、瀏覽器斷線）時先 `cancel` 這個 task 再刪檔，避免檔案被重新寫回。
 
 ### 總覽（settings 側）
 
 `InstancesHandler`（`/instances`，`src/settings.py`）回傳每個實例的狀態：
 
 - 來源 = `list_instance_ids()`：所有 profile（含 default）∪ `instances/` 下實際存在的目錄（涵蓋 CLI `--instance` 實例）
-- `get_instance_status(profile)` 回傳 `{id, alive, paused, last_url}`：
-  - `alive` = `heartbeat.txt` 的 mtime 在 **30 秒**內（門檻值寬鬆，因 Cloudflare 處理可能卡主迴圈 >10s，太緊會誤判死亡）
+- `get_instance_status(profile)` 回傳 `{id, alive, busy_sec, paused, last_url}`：
+  - `alive` = `heartbeat.txt` 的 mtime 在 **30 秒**內（`CONST_HEARTBEAT_ALIVE_SEC`）
+  - `busy_sec` = 檔案內容落後現在的秒數，≥ 30 秒（`CONST_HEARTBEAT_BUSY_SEC`）才回傳，否則為 0；`alive` 為 false 或內容無法解析時也是 0（`get_heartbeat_busy_sec`）
   - `paused` = 暫停檔存在
   - `last_url` = 讀 `MAXBOT_LAST_URL.txt`
 
 前端「執行階段」頁籤的「執行中實例」面板每 2 秒輪詢 `/instances`，渲染每列的存活／執行／暫停狀態與執行網址，提供每列暫停／繼續鈕與「全部暫停」（逐一對存活實例打 `/pause?profile=<id>`）。
+
+存活欄三種狀態：
+
+| 狀態 | 條件 | 停止鈕／全部暫停／重複 RUN 警告 |
+|------|------|------|
+| 存活 | `alive` 且 `busy_sec == 0` | 有 |
+| 忙碌 N 秒 | `alive` 且 `busy_sec > 0` | 有（暫停與停止要等主迴圈恢復才生效） |
+| 離線 | `alive` 為 false | 無 |
+
+忙碌仍算存活，所以對同一 profile 再按「搶票」會跳重複 RUN 確認框並改用序號 id，不會與卡住中的實例共用同一個狀態目錄。
 
 ---
 
@@ -163,9 +185,9 @@ src/（或 EXE 目錄，= util.get_app_root()）
 | 檔案 | 函式 |
 |------|------|
 | `src/util.py` | `set_instance_id` / `get_instance_id` / `get_instance_state_path` / `launch_maxbot`（`instance=` 參數） |
-| `src/nodriver_tixcraft.py` | `main()` 實例 id 推導、heartbeat 寫入、`reload_config`（監看實際載入的設定檔） |
+| `src/nodriver_tixcraft.py` | `main()` 實例 id 推導、`heartbeat_writer`（獨立 task 寫 heartbeat）、`reload_config`（監看實際載入的設定檔） |
 | `src/nodriver_common.py` | `check_and_handle_pause` / `write_last_url_to_file` / `write_question_to_file`（走 instance path） |
-| `src/settings.py` | `InstancesHandler` / `list_instance_ids` / `get_instance_status` / `get_instance_state_filepath` / `list_profile_names` / `ProfilesHandler` / `RunHandler` / `launch_maxbot` / `change_maxbot_status_by_keyword` / `clean_tmp_file` |
+| `src/settings.py` | `InstancesHandler` / `list_instance_ids` / `get_instance_status` / `get_heartbeat_busy_sec` / `get_instance_state_filepath` / `list_profile_names` / `ProfilesHandler` / `RunHandler` / `launch_maxbot` / `change_maxbot_status_by_keyword` / `clean_tmp_file` |
 | `src/www/settings.{html,js}` | profile 分頁列、執行中實例面板、重複 RUN 確認框、風險 badge、答題實例選擇器 |
 
 ---
@@ -184,3 +206,4 @@ src/（或 EXE 目錄，= util.get_app_root()）
 | 版本 | 日期 | 變更內容 |
 |------|------|---------|
 | v1.0 | 2026-06-13 | 初版：多開實例機制（Phase 1–3：CLI 隔離、profile UI、heartbeat 儀表板、重複 RUN、per-instance idle_keyword、風險警示） |
+| v1.1 | 2026-11-02 | heartbeat 改由獨立 task 寫入，檔案內容記錄主迴圈最後一圈時間；儀表板新增「忙碌 N 秒」狀態（#431） |

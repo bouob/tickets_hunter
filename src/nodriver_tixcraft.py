@@ -155,6 +155,10 @@ async def nodriver_goto_homepage(driver, config_dict):
         if 'ticketmaster.sg' in homepage:
             cookie_domain = "ticketmaster.sg"
             cookie_name = "TIXPUISID"
+        elif 'ticketmaster.ph' in homepage:
+            # Same TixCraft engine and session cookie as SG (Issue #337)
+            cookie_domain = "ticketmaster.ph"
+            cookie_name = "TIXPUISID"
         elif 'ticketmaster.com' in homepage:
             cookie_domain = ".ticketmaster.com"
             cookie_name = "TIXUISID"
@@ -190,6 +194,11 @@ async def nodriver_goto_homepage(driver, config_dict):
                         await tab.send(cdp.network.delete_cookies(
                             name=cookie_name,
                             domain=".ticketmaster.sg"
+                        ))
+                    if 'ticketmaster.ph' in homepage:
+                        await tab.send(cdp.network.delete_cookies(
+                            name=cookie_name,
+                            domain=".ticketmaster.ph"
                         ))
                     debug.log(f"[TIXCRAFT] Deleted existing SID and {cookie_name} cookies for domain: {cookie_domain}")
                 except Exception as del_e:
@@ -425,6 +434,7 @@ async def nodrver_block_urls(tab, config_dict):
         # Ticketmaster ad scripts
         '*ticketmaster.sg/js/adblock*',
         '*ticketmaster.sg/js/ads.js*',
+        '*ticketmaster.ph/js/ads.js*',
         #'*ticketmaster.sg/epsf/asset/eps.js*',
         #'*ticketmaster.sg/epsf/asset/eps-gec.js',
         #'*ticketmaster.sg/epsf/asset/eps-mgr',
@@ -497,6 +507,7 @@ async def nodrver_block_urls(tab, config_dict):
         NETWORK_BLOCKED_URLS.append('*ticketimg2.azureedge.net/image/ActivityImage/*')
         NETWORK_BLOCKED_URLS.append('*static.tixcraft.com/images/activity/*')
         NETWORK_BLOCKED_URLS.append('*static.ticketmaster.sg/images/activity/*')
+        NETWORK_BLOCKED_URLS.append('*static.ticketmaster.ph/images/activity/*')
         NETWORK_BLOCKED_URLS.append('*static.ticketmaster.com/images/activity/*')
         NETWORK_BLOCKED_URLS.append('*ticketimg2.azureedge.net/image/ActivityImage/ActivityImage_*')
         NETWORK_BLOCKED_URLS.append('*.azureedge.net/QWARE_TICKET//images/*')
@@ -643,6 +654,23 @@ async def check_refresh_datetime_gate(tab, config_dict, state):
 
     return True
 
+CONST_HEARTBEAT_INTERVAL_SEC = 5
+
+
+async def heartbeat_writer(filepath, loop_state):
+    # Runs as its own task beside the main loop, so a main loop stuck on a
+    # CDP call no longer looks like a dead process (#431). The file carries
+    # two signals: mtime = process alive, content = last main-loop tick.
+    # settings.get_instance_status reads both.
+    while True:
+        try:
+            with open(filepath, "w") as heartbeat_file:
+                heartbeat_file.write(str(int(loop_state["last_tick"])))
+        except Exception:
+            pass
+        await asyncio.sleep(CONST_HEARTBEAT_INTERVAL_SEC)
+
+
 async def reload_config(config_dict, last_mtime, config_filepath):
     # Watch the config file this instance was actually launched with
     # (passing --input must not be overridden by edits to settings.json).
@@ -671,7 +699,8 @@ async def reload_config(config_dict, last_mtime, config_filepath):
                         config_dict["advanced"] = {}
                     adv_fields = [
                         "play_sound", "disable_adjacent_seat", "hide_some_image",
-                        "auto_guess_options", "user_guess_string", "auto_reload_page_interval", "verbose",
+                        "auto_guess_options", "user_guess_string", "auto_reload_page_interval",
+                        "auto_reload_page_interval_range", "auto_reload_page_interval_max", "verbose",
                         "tixcraft_soft_block_delay",
                         "idle_keyword", "resume_keyword", "idle_keyword_second", "resume_keyword_second",
                         "discord_webhook_url", "telegram_bot_token", "telegram_chat_id",
@@ -798,13 +827,13 @@ async def main(args):
         debug.log(f"[OCR INIT] Failed to initialize OCR: {exc}")
 
     maxbot_last_reset_time = time.time()
-    # Phase 3: liveness heartbeat. Touch instances/<id>/heartbeat.txt every few
-    # seconds (default instance writes to the app root) so the settings
-    # dashboard can detect which instances are alive. Throttled because the
-    # main loop spins every 50ms.
-    heartbeat_interval_sec = 5
-    heartbeat_filename = "heartbeat.txt"
-    last_heartbeat_time = 0.0
+    # Phase 3: liveness heartbeat in instances/<id>/heartbeat.txt (default
+    # instance writes to the app root). The main loop only stamps its tick;
+    # heartbeat_writer does the file I/O on its own schedule.
+    heartbeat_filename = settings.CONST_HEARTBEAT_FILE
+    loop_state = {"last_tick": time.time()}
+    heartbeat_task = asyncio.create_task(heartbeat_writer(
+        util.get_instance_state_path(heartbeat_filename), loop_state))
     last_empty_url_log = 0.0  # [URL DIAG] Step 0: throttle empty-url diagnostics
     is_quit_bot = False
     refresh_datetime_state = {
@@ -828,15 +857,8 @@ async def main(args):
 
         config_dict, config_mtime = await reload_config(config_dict, config_mtime, config_filepath)
 
-        # Phase 3: refresh the liveness heartbeat (throttled to heartbeat_interval_sec).
-        heartbeat_now = time.time()
-        if heartbeat_now - last_heartbeat_time >= heartbeat_interval_sec:
-            last_heartbeat_time = heartbeat_now
-            try:
-                with open(util.get_instance_state_path(heartbeat_filename), "w") as heartbeat_file:
-                    heartbeat_file.write(str(int(heartbeat_now)))
-            except Exception:
-                pass
+        # Phase 3: mark main-loop progress for the dashboard's busy check.
+        loop_state["last_tick"] = time.time()
 
         # pass if driver not loaded.
         if driver is None:
@@ -854,6 +876,8 @@ async def main(args):
             #print("url:", url)
 
         if is_quit_bot:
+            # Stop the writer first, or it recreates the heartbeat file removed below.
+            heartbeat_task.cancel()
             try:
                 await driver.stop()
                 driver = None
@@ -982,6 +1006,10 @@ async def main(args):
             kham_family = True
 
         if 'tickets.udnfunlife.com' in url:
+            kham_family = True
+
+        # 中職售票 (中信兄弟 / 味全龍 / 富邦悍將, plus 中信特攻 / 富邦勇士 basketball): the RWD build of the same UTK system
+        if is_utk_rwd_url(url):
             kham_family = True
 
         if kham_family:

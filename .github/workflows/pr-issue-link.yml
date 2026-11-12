@@ -12,7 +12,8 @@ permissions:
 
 jobs:
   check-issue-link:
-    runs-on: ubuntu-latest
+    # Pinned so a runner image change cannot break this job unannounced.
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     # 跳過維護者的 private -> public 同步 PR（public-sync-*）與發布分支；
     # 另外掛上 skip-issue-check 標籤可手動豁免。

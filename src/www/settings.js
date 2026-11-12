@@ -32,6 +32,10 @@ const auto_press_next_step_button = document.querySelector('#auto_press_next_ste
 const max_dwell_time = document.querySelector('#max_dwell_time');
 
 const auto_reload_page_interval = document.querySelector('#auto_reload_page_interval');
+const auto_reload_page_interval_range = document.querySelector('#auto_reload_page_interval_range');
+const auto_reload_page_interval_max = document.querySelector('#auto_reload_page_interval_max');
+const auto_reload_page_interval_max_group = document.querySelector('#auto_reload_page_interval_max_group');
+const auto_reload_page_interval_range_error = document.querySelector('#auto_reload_page_interval_range_error');
 const tixcraft_soft_block_delay = document.querySelector('#tixcraft_soft_block_delay');
 const tixcraft_allow_less_tickets = document.querySelector('#tixcraft_allow_less_tickets');
 const reset_browser_interval = document.querySelector('#reset_browser_interval');
@@ -69,6 +73,7 @@ const tixcraft_sid = document.querySelector('#tixcraft_sid');
 const ibonqware = document.querySelector('#ibonqware');
 const funone_session_cookie = document.querySelector('#funone_session_cookie');
 const fansigo_cookie = document.querySelector('#fansigo_cookie');
+const cpbl_cookie = document.querySelector('#cpbl_cookie');
 const fansigo_account = document.querySelector('#fansigo_account');
 const fansigo_password = document.querySelector('#fansigo_password');
 const facebook_account = document.querySelector('#facebook_account');
@@ -77,6 +82,7 @@ const fami_account = document.querySelector('#fami_account');
 const kham_account = document.querySelector('#kham_account');
 const ticket_account = document.querySelector('#ticket_account');
 const udn_account = document.querySelector('#udn_account');
+const cpbl_account = document.querySelector('#cpbl_account');
 const ticketplus_account = document.querySelector('#ticketplus_account');
 const cityline_account = document.querySelector('#cityline_account');
 const urbtix_account = document.querySelector('#urbtix_account');
@@ -88,6 +94,7 @@ const fami_password = document.querySelector('#fami_password');
 const kham_password = document.querySelector('#kham_password');
 const ticket_password = document.querySelector('#ticket_password');
 const udn_password = document.querySelector('#udn_password');
+const cpbl_password = document.querySelector('#cpbl_password');
 const ticketplus_password = document.querySelector('#ticketplus_password');
 const discount_code = document.querySelector('#discount_code');
 const urbtix_password = document.querySelector('#urbtix_password');
@@ -323,7 +330,7 @@ function applyOrRestore(selector, property, englishValue) {
 function renderReadmePane() {
     const englishHtml = `
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>Version</strong>: Tickets Hunter (2026.10.17) | <strong>Technical support</strong>: Claude Code AI-assisted development</p>
+  <p class="mb-0"><strong>Version</strong>: Tickets Hunter (2026.11.11) | <strong>Technical support</strong>: Claude Code AI-assisted development</p>
 </div>
 
 <div class="accordion mb-3" id="devStatusAccordion">
@@ -434,6 +441,11 @@ function renderBasicTabTranslations() {
   <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://kham.com.tw')">Kham</button>
   <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://ticket.com.tw')">Ticket.com.tw</button>
   <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tickets.udnfunlife.com')">UDN</button>
+  <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tix.ctbcsports.com/BROTHERS')">CTBC Brothers</button>
+  <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tix.wdragons.com')">Wei Chuan Dragons</button>
+  <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://guardians.fami.life')">Fubon Guardians</button>
+  <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tix.ctbcsports.com/DEA')">CTBC DEA</button>
+  <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tix.fubonbraves.com')">Fubon Braves</button>
   <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://ticketplus.com.tw')">TicketPlus</button>
   <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tickets.funone.io')">FunOne Tickets</button>
   <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://go.fansi.me')">FANSI GO</button>
@@ -446,6 +458,7 @@ function renderBasicTabTranslations() {
   <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://hotshow.hkticketing.com/')">HKTicketing</button>
   <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.galaxymacau.com')">Galaxy Macau</button>
   <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.ticketmaster.sg')">Ticketmaster Singapore</button>
+  <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.ticketmaster.ph')">Ticketmaster Philippines</button>
   <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.ticketek.com.au')">Ticketek Australia</button>
 </div>`);
     applyOrRestore('#refresh_datetime', 'placeholder', 'YYYY/MM/DD HH:MM:SS');
@@ -526,6 +539,10 @@ function renderAdvancedTabTranslations() {
     setRowLabelForField('telegram_chat_id', fieldLabel('Telegram chat ID', 'telegram_chat_id'));
     setRowLabelForField('notification_message', 'Notification message');
     setRowLabelForField('auto_reload_page_interval', fieldLabel('Auto reload interval (sec)', 'auto_reload_page_interval'));
+    setSwitchLabelForInput('auto_reload_page_interval_range', 'Interval range');
+    applyOrRestore('#auto_reload_page_interval_max', 'placeholder', 'Max seconds');
+    applyOrRestore('#auto_reload_page_interval_max', 'aria-label', 'Interval range maximum in seconds');
+    updateReloadRangeUi();
     setRowLabelForField('tixcraft_soft_block_delay', fieldLabel('TixCraft soft-block delay (sec)', 'tixcraft_soft_block_delay'));
     setRowLabelForField('tixcraft_allow_less_tickets', fieldLabel('Buy fewer TixCraft tickets if needed', 'tixcraft_allow_less_tickets'));
     setRowLabelForField('reset_browser_interval', fieldLabel('Browser restart interval (sec)', 'reset_browser_interval'));
@@ -547,6 +564,7 @@ function renderAdvancedTabTranslations() {
 
     applyOrRestore('#btn_test_discord_webhook', 'textContent', 'Test');
     applyOrRestore('#btn_test_telegram', 'textContent', 'Test');
+    updateTelegramTokenToggle();
     applyOrRestore('#notification_message', 'placeholder', 'Leave empty to use the default English notification');
     applyOrRestore('#discord_webhook_url', 'placeholder', 'https://discord.com/api/webhooks/...');
     applyOrRestore('#telegram_bot_token', 'placeholder', '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11');
@@ -617,6 +635,8 @@ function renderAutofillTabTranslations() {
     setRowLabelForField('ibonqware', fieldLabel('iBon cookie ibonqware', 'ibonqware'));
     setRowLabelForField('funone_session_cookie', fieldLabel('FunOne cookie (ticket_session)', 'funone_session_cookie'));
     setRowLabelForField('fansigo_cookie', fieldLabel('FANSI GO cookie (FansiAuthInfo)', 'fansigo_cookie'));
+    setRowLabelForField('cpbl_cookie', fieldLabel('CPBL ticketing cookie', 'cpbl_cookie'));
+    setNearestFormText('cpbl_cookie', 'For CTBC Brothers, Wei Chuan Dragons and Fubon Guardians, plus CTBC DEA and Fubon Braves (basketball) on the same system. Takes priority over the account and password; only cookies for the current site are set.');
     setRowLabelForField('discount_code', fieldLabel('Discount / member code', 'discount_code'));
 
     setInputGroupTexts('fansigo_account', ['Email', 'Password']);
@@ -626,6 +646,7 @@ function renderAutofillTabTranslations() {
     setInputGroupTexts('kham_account', ['Account', 'Password']);
     setInputGroupTexts('ticket_account', ['Account', 'Password']);
     setInputGroupTexts('udn_account', ['Account', 'Password']);
+    setInputGroupTexts('cpbl_account', ['Account (ID or passport no.)', 'Password']);
     setInputGroupTexts('ticketplus_account', ['Account', 'Password']);
     setInputGroupTexts('cityline_account', ['Email']);
     setInputGroupTexts('urbtix_account', ['Account', 'Password']);
@@ -639,6 +660,8 @@ function renderAutofillTabTranslations() {
     setRowLabelForField('kham_account', 'Kham');
     setRowLabelForField('ticket_account', 'Ticket.com.tw');
     setRowLabelForField('udn_account', 'UDN');
+    setRowLabelForField('cpbl_account', 'CPBL ticketing');
+    setNearestFormText('cpbl_account', 'For CTBC Brothers, Wei Chuan Dragons and Fubon Guardians, plus CTBC DEA and Fubon Braves (basketball) on the same system');
     setRowLabelForField('ticketplus_account', 'TicketPlus');
     setRowLabelForField('cityline_account', 'Cityline');
     setRowLabelForField('urbtix_account', 'URBTIX');
@@ -739,7 +762,7 @@ function renderRuntimeTabTranslations() {
     // Instances dashboard (Phase 3) static labels.
     applyOrRestore('#instances_panel > label', 'textContent', 'Running instances');
     applyOrRestore('#pause_all_btn', 'textContent', 'Pause all');
-    applyOrRestore('#instances_panel .text-muted.small', 'textContent', 'Refreshes every 2s; offline = no heartbeat for 30s');
+    applyOrRestore('#instances_panel .text-muted.small', 'textContent', 'Refreshes every 2s; offline = no heartbeat for 30s; busy = main loop stuck for 30s+ (queue, Cloudflare or connection issue)');
     applyOrRestore('#instances_panel thead th:nth-child(1)', 'textContent', 'Instance');
     applyOrRestore('#instances_panel thead th:nth-child(2)', 'textContent', 'Liveness');
     applyOrRestore('#instances_panel thead th:nth-child(3)', 'textContent', 'State');
@@ -798,6 +821,9 @@ function uiText(key, extra = '') {
         'saved': { 'zh-TW': '已存檔', en: 'Saved' },
         'missing_ticket_number': { 'zh-TW': '提示: 請指定張數', en: 'Please select the number of tickets.' },
         'invalid_tixcraft_soft_block_delay': { 'zh-TW': '提示: 暫時鎖定等待秒數請填 1 到 600 的整數，或留空使用預設值。', en: 'Enter an integer from 1 to 600 for the TixCraft soft-block delay, or leave it empty to use the default.' },
+        'invalid_credit_card_prefix': { 'zh-TW': '提示: 信用卡卡號前綴請填 6 到 8 位數字，或留空。', en: 'Enter 6 to 8 digits for the card number prefix, or leave it empty.' },
+        'invalid_reload_range_lower': { 'zh-TW': '提示: 勾選區間刷新時，自動刷新頁面間隔（區間下限）必須大於 0。', en: 'With interval range on, the auto reload interval (the minimum) must be above 0.' },
+        'invalid_reload_range_upper': { 'zh-TW': '提示: 區間刷新的上限秒數必須大於自動刷新頁面間隔（區間下限）。', en: 'The interval range maximum must be greater than the auto reload interval (the minimum).' },
         'status_paused': { 'zh-TW': '已暫停', en: 'Paused' },
         'status_running': { 'zh-TW': '已啟動', en: 'Running' },
         'discord_empty': { 'zh-TW': '請先輸入 Discord Webhook URL。', en: 'Please enter the Discord webhook URL first.' },
@@ -808,6 +834,7 @@ function uiText(key, extra = '') {
         'dup_run_confirm': { 'zh-TW': '此設定檔已有執行中的實例。同帳號同活動多開可能被平台踢掉登入狀態 (session)。仍要再開一個實例嗎？', en: 'This profile already has a running instance. Opening another with the same account on the same event may get your session kicked by the platform. Open another instance anyway?' },
         'instance_alive': { 'zh-TW': '存活', en: 'Alive' },
         'instance_offline': { 'zh-TW': '離線', en: 'Offline' },
+        'instance_busy': { 'zh-TW': `忙碌 ${extra} 秒`, en: `Busy ${extra}s` },
         'instance_paused': { 'zh-TW': '暫停', en: 'Paused' },
         'instance_running': { 'zh-TW': '運行中', en: 'Running' },
         'btn_pause': { 'zh-TW': '暫停', en: 'Pause' },
@@ -836,6 +863,11 @@ const PROFILE_PLATFORMS = [
     { slug: 'kham',         label: 'Kham 寬宏',        homepage: 'https://kham.com.tw' },
     { slug: 'ticket',       label: '年代售票',          homepage: 'https://ticket.com.tw' },
     { slug: 'udn',          label: 'UDN 售票網',        homepage: 'https://tickets.udnfunlife.com' },
+    { slug: 'ctbc',         label: '中信兄弟',          homepage: 'https://tix.ctbcsports.com/BROTHERS' },
+    { slug: 'wdragons',     label: '味全龍',            homepage: 'https://tix.wdragons.com' },
+    { slug: 'guardians',    label: '富邦悍將',          homepage: 'https://guardians.fami.life' },
+    { slug: 'ctbc-dea',     label: '中信特攻',          homepage: 'https://tix.ctbcsports.com/DEA' },
+    { slug: 'fubonbraves',  label: '富邦勇士',          homepage: 'https://tix.fubonbraves.com' },
     { slug: 'ticketplus',   label: 'TicketPlus 遠大',  homepage: 'https://ticketplus.com.tw' },
     { slug: 'funone',       label: 'FunOne',           homepage: 'https://tickets.funone.io' },
     { slug: 'fansigo',      label: 'FANSI GO',         homepage: 'https://go.fansi.me' },
@@ -843,6 +875,7 @@ const PROFILE_PLATFORMS = [
     { slug: 'urbtix',       label: 'Urbtix',           homepage: 'https://ticket.urbtix.hk' },
     { slug: 'hkticketing',  label: 'HKTicketing',      homepage: 'https://hotshow.hkticketing.com/' },
     { slug: 'ticketmaster', label: 'TicketMaster SG',  homepage: 'https://www.ticketmaster.sg' },
+    { slug: 'ticketmaster-ph', label: 'TicketMaster PH', homepage: 'https://www.ticketmaster.ph' },
 ];
 
 const PROFILE_STORAGE_KEY = 'maxbot_current_profile';
@@ -1074,6 +1107,7 @@ const PLATFORM_MAP = [
     { key: 'kham',        domains: ['kham.com.tw'] },
     { key: 'ticket',      domains: ['ticket.com.tw'] },
     { key: 'udn',         domains: ['udnfunlife.com'] },
+    { key: 'cpbl',        domains: ['tix.ctbcsports.com', 'tix.wdragons.com', 'guardians.fami.life', 'tix.fubonbraves.com'] },
     { key: 'ticketplus',  domains: ['ticketplus.com'] },
     { key: 'cityline',    domains: ['cityline.com'] },
     { key: 'hkticketing', domains: ['hkticketing.com', 'galaxymacau.com', 'ticketek.com'] },
@@ -1182,6 +1216,29 @@ function updateTixcraftRefreshWarning() {
     }
 }
 
+// Returns which bound of the auto reload interval range is invalid: 'lower', 'upper' or ''.
+// 0 means reload disabled, so a range needs a lower bound above 0.
+function getReloadRangeError() {
+    if (!auto_reload_page_interval_range.checked) return '';
+
+    const lower = Number(auto_reload_page_interval.value);
+    if (!Number.isFinite(lower) || lower <= 0) return 'lower';
+
+    const upperText = auto_reload_page_interval_max.value.trim();
+    const upper = Number(upperText);
+    if (upperText === '' || !Number.isFinite(upper) || upper <= lower) return 'upper';
+
+    return '';
+}
+
+function updateReloadRangeUi() {
+    auto_reload_page_interval_max_group.classList.toggle('d-none', !auto_reload_page_interval_range.checked);
+    // Shown as text because settings.html removes the is-invalid red border on purpose.
+    const error = getReloadRangeError();
+    auto_reload_page_interval_range_error.textContent = error ? uiText(`invalid_reload_range_${error}`) : '';
+    auto_reload_page_interval_range_error.classList.toggle('d-none', !error);
+}
+
 function load_settins_to_form(settings)
 {
     if (settings)
@@ -1221,6 +1278,9 @@ function load_settins_to_form(settings)
         max_dwell_time.value = settings.kktix.max_dwell_time;
 
         auto_reload_page_interval.value = settings.advanced.auto_reload_page_interval;
+        auto_reload_page_interval_range.checked = settings.advanced.auto_reload_page_interval_range || false;
+        auto_reload_page_interval_max.value = settings.advanced.auto_reload_page_interval_max || '';
+        updateReloadRangeUi();
         tixcraft_soft_block_delay.value = settings.advanced.tixcraft_soft_block_delay || '';
         tixcraft_allow_less_tickets.checked = settings.tixcraft?.allow_less_tickets || false;
         reset_browser_interval.value = settings.advanced.reset_browser_interval;
@@ -1280,6 +1340,7 @@ function load_settins_to_form(settings)
         ibonqware.value = settings.accounts.ibonqware;
         funone_session_cookie.value = settings.accounts.funone_session_cookie || '';
         fansigo_cookie.value = settings.accounts.fansigo_cookie || '';
+        cpbl_cookie.value = settings.accounts.cpbl_cookie || '';
         fansigo_account.value = settings.accounts.fansigo_account || '';
         fansigo_password.value = settings.accounts.fansigo_password || '';
         facebook_account.value = settings.accounts.facebook_account;
@@ -1288,6 +1349,7 @@ function load_settins_to_form(settings)
         kham_account.value = settings.accounts.kham_account;
         ticket_account.value = settings.accounts.ticket_account;
         udn_account.value = settings.accounts.udn_account;
+        cpbl_account.value = settings.accounts.cpbl_account || '';
         ticketplus_account.value = settings.accounts.ticketplus_account;
         cityline_account.value = settings.accounts.cityline_account;
         urbtix_account.value = settings.accounts.urbtix_account;
@@ -1299,6 +1361,7 @@ function load_settins_to_form(settings)
         kham_password.value = settings.accounts.kham_password;
         ticket_password.value = settings.accounts.ticket_password;
         udn_password.value = settings.accounts.udn_password;
+        cpbl_password.value = settings.accounts.cpbl_password || '';
         ticketplus_password.value = settings.accounts.ticketplus_password;
         discount_code.value = settings.advanced.discount_code || '';
         urbtix_password.value = settings.accounts.urbtix_password;
@@ -1503,6 +1566,22 @@ function save_changes_to_dict(silent_flag)
             }
         }
 
+        // Read by ibon and TicketPlus; each platform cuts it to the length it needs.
+        credit_card_prefix.classList.remove('is-invalid');
+        const credit_card_prefix_value = credit_card_prefix.value.trim();
+        if (credit_card_prefix_value && !/^\d{6,8}$/.test(credit_card_prefix_value)) {
+            credit_card_prefix.classList.add('is-invalid');
+            message(uiText('invalid_credit_card_prefix'));
+            return false;
+        }
+
+        updateReloadRangeUi();
+        const reload_range_error = getReloadRangeError();
+        if (reload_range_error) {
+            message(uiText(`invalid_reload_range_${reload_range_error}`));
+            return false;
+        }
+
         if(settings) {
 
             // preference
@@ -1535,6 +1614,8 @@ function save_changes_to_dict(silent_flag)
             if (!settings.tixcraft) settings.tixcraft = {};
 
             settings.advanced.auto_reload_page_interval = Number(auto_reload_page_interval.value);
+            settings.advanced.auto_reload_page_interval_range = auto_reload_page_interval_range.checked;
+            settings.advanced.auto_reload_page_interval_max = Number(auto_reload_page_interval_max.value) || 0;
             settings.advanced.tixcraft_soft_block_delay = tixcraft_soft_block_delay_value;
             settings.tixcraft.allow_less_tickets = tixcraft_allow_less_tickets.checked;
             settings.advanced.reset_browser_interval = parseInt(reset_browser_interval.value);
@@ -1580,13 +1661,14 @@ function save_changes_to_dict(silent_flag)
             if (!settings.contact) settings.contact = {};
             settings.contact.real_name = real_name.value;
             settings.contact.phone = phone.value;
-            settings.contact.credit_card_prefix = credit_card_prefix.value;
+            settings.contact.credit_card_prefix = credit_card_prefix_value;
 
             // auto fill (accounts section)
             settings.accounts.tixcraft_sid = tixcraft_sid.value;
             settings.accounts.ibonqware = ibonqware.value;
             settings.accounts.funone_session_cookie = funone_session_cookie.value;
             settings.accounts.fansigo_cookie = fansigo_cookie.value;
+            settings.accounts.cpbl_cookie = cpbl_cookie.value;
             settings.accounts.fansigo_account = fansigo_account.value;
             settings.accounts.fansigo_password = fansigo_password.value;
             settings.accounts.facebook_account = facebook_account.value;
@@ -1595,6 +1677,7 @@ function save_changes_to_dict(silent_flag)
             settings.accounts.kham_account = kham_account.value;
             settings.accounts.ticket_account = ticket_account.value;
             settings.accounts.udn_account = udn_account.value;
+            settings.accounts.cpbl_account = cpbl_account.value;
             settings.accounts.ticketplus_account = ticketplus_account.value;
             settings.accounts.cityline_account = cityline_account.value;
             settings.accounts.urbtix_account = urbtix_account.value;
@@ -1606,6 +1689,7 @@ function save_changes_to_dict(silent_flag)
             settings.accounts.kham_password = kham_password.value;
             settings.accounts.ticket_password = ticket_password.value;
             settings.accounts.udn_password = udn_password.value;
+            settings.accounts.cpbl_password = cpbl_password.value;
             settings.accounts.ticketplus_password = ticketplus_password.value;
             settings.advanced.discount_code = discount_code.value;
             settings.accounts.urbtix_password = urbtix_password.value;
@@ -1721,6 +1805,7 @@ function check_unsaved_fields()
             "ibonqware",
             "funone_session_cookie",
             "fansigo_cookie",
+            "cpbl_cookie",
             "fansigo_account",
             "fansigo_password",
             "facebook_account",
@@ -1732,6 +1817,7 @@ function check_unsaved_fields()
             "kham_account",
             "ticket_account",
             "udn_account",
+            "cpbl_account",
             "ticketplus_account",
             "facebook_password",
             "kktix_password",
@@ -1741,6 +1827,7 @@ function check_unsaved_fields()
             "kham_password",
             "ticket_password",
             "udn_password",
+            "cpbl_password",
             "ticketplus_password"
         ];
         field_list_accounts.forEach(f => {
@@ -1771,6 +1858,7 @@ function check_unsaved_fields()
             "user_guess_string",
             "remote_url",
             "auto_reload_page_interval",
+            "auto_reload_page_interval_max",
             "tixcraft_soft_block_delay",
             "reset_browser_interval",
             "proxy_server_port",
@@ -1901,9 +1989,15 @@ function render_instances(rows) {
     rows.forEach(function(it) {
         const tr = $('<tr></tr>');
         tr.append($('<td></td>').text(it.id));
-        const live_badge = it.alive
-            ? $('<span class="badge text-bg-success"></span>').text(uiText('instance_alive'))
-            : $('<span class="badge text-bg-secondary"></span>').text(uiText('instance_offline'));
+        // busy_sec > 0: process alive but its main loop has not ticked (queue, Cloudflare, stalled CDP).
+        let live_badge;
+        if (!it.alive) {
+            live_badge = $('<span class="badge text-bg-secondary"></span>').text(uiText('instance_offline'));
+        } else if (it.busy_sec > 0) {
+            live_badge = $('<span class="badge text-bg-warning"></span>').text(uiText('instance_busy', it.busy_sec));
+        } else {
+            live_badge = $('<span class="badge text-bg-success"></span>').text(uiText('instance_alive'));
+        }
         tr.append($('<td></td>').append(live_badge));
         const state_badge = it.paused
             ? $('<span class="badge text-bg-danger"></span>').text(uiText('instance_paused'))
@@ -2030,6 +2124,26 @@ document.querySelector('#btn_test_discord_webhook').addEventListener('click', fu
             btn.className = 'btn btn-outline-secondary';
         }, 3000);
     });
+});
+
+// Bot token stays masked by default; the eye button only reveals it on screen.
+function updateTelegramTokenToggle() {
+    const btn = document.querySelector('#btn_toggle_telegram_token');
+    if (!btn) return;
+    const shown = telegram_bot_token.type === 'text';
+    btn.querySelector('.bi-eye').classList.toggle('d-none', shown);
+    btn.querySelector('.bi-eye-slash').classList.toggle('d-none', !shown);
+    btn.setAttribute('aria-pressed', shown ? 'true' : 'false');
+    const label = currentLanguage === 'en'
+        ? (shown ? 'Hide token' : 'Show token')
+        : (shown ? '隱藏 Token' : '顯示 Token');
+    btn.title = label;
+    btn.setAttribute('aria-label', label);
+}
+
+document.querySelector('#btn_toggle_telegram_token').addEventListener('click', function() {
+    telegram_bot_token.type = telegram_bot_token.type === 'password' ? 'text' : 'password';
+    updateTelegramTokenToggle();
 });
 
 document.querySelector('#btn_test_telegram').addEventListener('click', function() {
@@ -2275,6 +2389,9 @@ if (homepage) {
 if (auto_reload_page_interval) {
     auto_reload_page_interval.addEventListener('input', updateTixcraftRefreshWarning);
     auto_reload_page_interval.addEventListener('change', updateTixcraftRefreshWarning);
+    auto_reload_page_interval.addEventListener('input', updateReloadRangeUi);
+    auto_reload_page_interval_range.addEventListener('change', updateReloadRangeUi);
+    auto_reload_page_interval_max.addEventListener('input', updateReloadRangeUi);
 }
 
 // Also check when verification tab is clicked

@@ -21,6 +21,7 @@ from nodriver_common import (
     asyncio_sleep_with_pause_check,
     check_and_handle_pause,
     create_universal_ocr,
+    get_card_prefix,
     nodriver_check_checkbox,
     nodriver_current_url,
     nodriver_get_captcha_image_from_dom_snapshot,
@@ -36,6 +37,11 @@ from nodriver_common import (
     CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS,
     CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER,
 )
+
+# The /Vaildate/ cardholder page states the length in its label, set per event
+# ("請輸入中國信託信用卡號前 6 碼", issue #318). Six is the fallback.
+CONST_IBON_CARD_PREFIX_LENGTH = 6
+CONST_IBON_CARD_PREFIX_LENGTH_RE = re.compile(r"前(\d{1,2})[碼位]")
 
 # Backward-compatible alias (function moved to nodriver_common)
 nodriver_ibon_get_captcha_image_from_shadow_dom = nodriver_get_captcha_image_from_dom_snapshot
@@ -191,7 +197,7 @@ async def dismiss_pending_ibon_dialog(tab, config_dict):
 
 async def nodriver_ibon_login(tab, config_dict, driver):
     """
-    專門的 ibon 登入函數，整合 cookie 處理、頁面重新載入和登入狀態驗證
+    專門的 ibon 登入函數，整合 cookie 處理和登入狀態驗證（不重新載入頁面）
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -250,10 +256,10 @@ async def nodriver_ibon_login(tab, config_dict, driver):
 
 async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
     """
-    NoDriver ibon 日期自動選擇實作 - 使用 CDP pierce=True 參數
-    直接穿透 Shadow DOM，比 DOMSnapshot 更簡潔高效
+    NoDriver ibon 日期自動選擇實作 - 使用 CDP DOM.perform_search
+    (include_user_agent_shadow_dom=True) 穿透 Shadow DOM，比 DOMSnapshot 更簡潔高效
 
-    使用 CDP DOM.query_selector_all(pierce=True) 直接查詢 Shadow DOM 中的按鈕
+    get_document 以 pierce=False 取得根節點，再用 DOM.perform_search 查詢 Shadow DOM 中的按鈕
     參考：https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html
     """
     from zendriver import cdp
@@ -316,7 +322,7 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
         elapsed = time.time() - start_time
         debug.log(f"[IBON DATE PIERCE] No buttons found after {elapsed:.1f}s, proceeding with search anyway...")
 
-    # Step 4: Get document with pierce=True to enable Shadow DOM traversal
+    # Step 4: Get document root with pierce=False (Shadow DOM is reached via perform_search below)
     # Use shallow depth to avoid CBOR stack overflow on complex pages
     try:
         doc_result = await tab.send(cdp.dom.get_document(depth=0, pierce=False))
@@ -364,7 +370,7 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
         debug.log(f"[IBON DATE PIERCE] perform_search failed: {e}")
         return False
 
-    # Step 5: Extract button data and date context
+    # Step 6: Extract button data and date context
     purchase_buttons = []
 
     for node_id in button_node_ids:
@@ -1232,7 +1238,8 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
     if area_keyword_item and len(area_keyword_item) > 0:
         try:
             # NOTE: area_keyword_item is already a SINGLE keyword string from upper layer
-            # Upper layer (line 11225) splits by comma using JSON parsing:
+            # Upper layer (nodriver_ibon_main) splits the keyword string by wrapping it in
+            # brackets and parsing with json.loads (not a plain comma split):
             #   Input: "\"5600\",\"5,600\""
             #   After JSON: ["5600", "5,600"]
             #   This function is called once per keyword: "5600" or "5,600"
@@ -1403,7 +1410,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
     ibon seat area auto-selection (NoDriver version)
 
     Handles seat area selection on UTK0201_000.aspx page after date selection.
-    Uses JavaScript for data extraction and CDP for clicking.
+    Uses CDP DOMSnapshot.capture_snapshot for data extraction and CDP for clicking.
 
     Args:
         tab: NoDriver tab object
@@ -1577,7 +1584,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
     # Phase 1: Extract all area data using DOMSnapshot (to pierce closed Shadow DOM)
     try:
-        # cdp already imported at function start (Line 10535)
+        # cdp is already imported at module level
 
         debug.log("[DOMSNAPSHOT] Capturing page structure for area extraction...")
 
@@ -1824,7 +1831,8 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
     if area_keyword_item and len(area_keyword_item) > 0:
         try:
             # NOTE: area_keyword_item is already a SINGLE keyword string from upper layer
-            # Upper layer (line 10908) splits by comma using JSON parsing:
+            # Upper layer (nodriver_ibon_main) splits the keyword string by wrapping it in
+            # brackets and parsing with json.loads (not a plain comma split):
             #   Input: "\"5600\",\"5,600\""
             #   After JSON: ["5600", "5,600"]
             #   This function is called once per keyword: "5600" or "5,600"
@@ -1909,7 +1917,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
     # Phase 5: Click target area using CDP real-time coordinates
     try:
-        # cdp already imported at file start (Line 29)
+        # cdp is already imported at module level
 
         # Get backend_node_id from target area
         backend_node_id = target_area.get('backend_node_id')
@@ -2168,6 +2176,17 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
                     keyword_item = keyword_item.strip()
                     if not keyword_item:
                         continue
+
+                    # Exact name first: "預售票" must not lose to "預售票＋福利券"
+                    # just because the bundle row comes first.
+                    exact_kw = util.format_keyword_string(keyword_item)
+                    for ticket in filtered_tickets:
+                        if util.format_keyword_string(ticket.get('name', '')) == exact_kw:
+                            matched_ticket = ticket
+                            debug.log(f"[TICKET] Exact name matched: '{keyword_item}' -> {ticket.get('name', '')}")
+                            break
+                    if matched_ticket:
+                        break
 
                     for ticket in filtered_tickets:
                         ticket_name = ticket.get('name', '')
@@ -2606,7 +2625,7 @@ async def nodriver_ibon_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
     ''')
 
     if not ticket_ok:
-        # Retry with exponential backoff: 0.5s → 1.0s → 2.0s
+        # Retry with exponential backoff: 0.2s -> 0.4s (3 attempts, 2 waits)
         max_retries = 3
         is_ticket_number_assigned = False
         debug = util.create_debug_logger(config_dict)
@@ -2775,7 +2794,8 @@ async def nodriver_ibon_captcha(tab, config_dict, ocr):
             if not is_need_redo_ocr:
                 break
 
-            # Track failures and refresh captcha after 3 consecutive failures
+            # Track failures; after 3 consecutive failures dismiss any alert and wait
+            # (the captcha is not refreshed manually here)
             if is_need_redo_ocr:
                 fail_count += 1
                 total_fail_count += 1
@@ -2802,7 +2822,7 @@ async def nodriver_ibon_captcha(tab, config_dict, ocr):
                     # Manual refresh causes timing conflicts with auto-refresh
                     # await nodriver_ibon_refresh_captcha(tab, config_dict)  # REMOVED
                     await asyncio.sleep(random.uniform(0.8, 1.2))  # Wait for iBon's auto-refresh to complete
-                    fail_count = 0  # Reset consecutive counter after refresh
+                    fail_count = 0  # Reset consecutive counter after the alert dismiss and wait
 
             # Check if URL changed
             new_url, _ = await nodriver_current_url(tab)
@@ -3081,7 +3101,7 @@ async def nodriver_ibon_navigate_on_sold_out(tab, config_dict):
     - New format: ticket.ibon.com.tw/EventBuy/{eventId}/{sessionId}/{areaId}
       -> Navigate to: ticket.ibon.com.tw/Event/{eventId}/{sessionId}
     - Old format: orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_PRICE_AREA_ID=xxx
-      -> Navigate to: orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=xxx
+      -> Calls tab.back() to return to the previous page (the URL is not rebuilt)
 
     Args:
         tab: NoDriver tab object
@@ -3310,6 +3330,12 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
 
     return is_answer_sent, fail_list
 
+def _get_ibon_card_prefix_length(label_text):
+    """Return the prefix length the /Vaildate/ label asks for, or the fallback."""
+    match = CONST_IBON_CARD_PREFIX_LENGTH_RE.search("".join((label_text or "").split()))
+    return int(match.group(1)) if match else CONST_IBON_CARD_PREFIX_LENGTH
+
+
 async def nodriver_ibon_card_vaildate(tab, config_dict):
     """
     Handle ibon cardholder-priority validation page (/Vaildate/...).
@@ -3325,29 +3351,46 @@ async def nodriver_ibon_card_vaildate(tab, config_dict):
         debug.log("[IBON VAILDATE] Already submitted for this URL, skipping")
         return False
 
-    prefix = config_dict.get("contact", {}).get("credit_card_prefix", "").strip()
-    if not prefix:
-        guess = config_dict.get("advanced", {}).get("user_guess_string", "").strip()
-        if guess:
-            prefix = guess.split(",")[0].strip().strip('"')
+    has_card_prefix = bool(config_dict.get("contact", {}).get("credit_card_prefix", "").strip())
+    guess = ""
+    if not has_card_prefix:
+        guess_string = config_dict.get("advanced", {}).get("user_guess_string", "").strip()
+        if guess_string:
+            guess = guess_string.split(",")[0].strip().strip('"')
 
-    if not prefix:
+    if not has_card_prefix and not guess:
         debug.log("[IBON VAILDATE] No credit_card_prefix configured, waiting for manual input")
         return False
 
     INPUT_CSS = "#content input[type='text']"
     SUBMIT_BTN_CSS = "#content a.btn"
-    prefix_js = json.dumps(prefix)
 
     try:
-        has_input = await tab.evaluate(f'''
+        # The label shares the input's .form-group and states the length;
+        # null means the input has not rendered yet.
+        label_text = await tab.evaluate(f'''
             (function() {{
-                return document.querySelector("{INPUT_CSS}") !== null;
+                const input = document.querySelector("{INPUT_CSS}");
+                if (!input) return null;
+                const group = input.closest(".form-group");
+                const label = group ? group.querySelector("label") : null;
+                return label ? (label.textContent || "") : "";
             }})()
         ''')
-        if not has_input:
+        if label_text is None:
             debug.log("[IBON VAILDATE] Input field not found yet")
             return False
+
+        if has_card_prefix:
+            required_length = _get_ibon_card_prefix_length(label_text)
+            prefix = get_card_prefix(config_dict, required_length)
+            if not prefix:
+                debug.log(f"[IBON VAILDATE] Page asks for {required_length} digits; the configured "
+                          f"prefix is shorter or not all digits, waiting for manual input")
+                return False
+        else:
+            prefix = guess
+        prefix_js = json.dumps(prefix)
 
         # Skip if already filled (page may have re-rendered)
         current_val = await tab.evaluate(f'''
@@ -4030,7 +4073,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         debug = util.create_debug_logger(config_dict)
                         debug.log("[IBON DATE] Date selection failed, reloading page...")
 
-                        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                        auto_reload_interval = util.get_reload_interval(config_dict)
                         if auto_reload_interval > 0:
                             await asyncio.sleep(auto_reload_interval)
 
@@ -4217,7 +4260,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                     debug = util.create_debug_logger(config_dict)
                     debug.log("[IBON ORDERS] No available areas found, page reload required")
 
-                    auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                    auto_reload_interval = util.get_reload_interval(config_dict)
                     if auto_reload_interval > 0:
                         await asyncio.sleep(auto_reload_interval)
 
@@ -4261,7 +4304,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         await nodriver_ibon_navigate_on_sold_out(tab, config_dict)
 
                         # Wait before next check (FR-061: auto_reload_page_interval)
-                        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                        auto_reload_interval = util.get_reload_interval(config_dict)
                         if auto_reload_interval > 0:
                             debug.log(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
                             await asyncio.sleep(auto_reload_interval)
@@ -4329,7 +4372,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             await nodriver_ibon_navigate_on_sold_out(tab, config_dict)
 
                             # Wait before next check (FR-061: auto_reload_page_interval)
-                            auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                            auto_reload_interval = util.get_reload_interval(config_dict)
                             if auto_reload_interval > 0:
                                 debug.log(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
                                 await asyncio.sleep(auto_reload_interval)
@@ -4378,7 +4421,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         await nodriver_ibon_navigate_on_sold_out(tab, config_dict)
 
                         # Wait before next check (FR-061: auto_reload_page_interval)
-                        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                        auto_reload_interval = util.get_reload_interval(config_dict)
                         if auto_reload_interval > 0:
                             debug.log(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
                             await asyncio.sleep(auto_reload_interval)
@@ -4444,7 +4487,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             await nodriver_ibon_navigate_on_sold_out(tab, config_dict)
 
                             # Wait before next check (FR-061: auto_reload_page_interval)
-                            auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                            auto_reload_interval = util.get_reload_interval(config_dict)
                             if auto_reload_interval > 0:
                                 debug.log(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
                                 await asyncio.sleep(auto_reload_interval)
@@ -4527,7 +4570,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                     debug.log("[NEW EVENT] No available ticket areas found, page reload required")
 
                     # Use auto_reload_page_interval setting
-                    auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                    auto_reload_interval = util.get_reload_interval(config_dict)
                     if auto_reload_interval > 0:
                         await asyncio.sleep(auto_reload_interval)
 
@@ -4692,7 +4735,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         debug.log("[IBON AREA] No available ticket areas found, page reload required")
 
                         # Use auto_reload_page_interval setting
-                        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                        auto_reload_interval = util.get_reload_interval(config_dict)
                         if auto_reload_interval > 0:
                             await asyncio.sleep(auto_reload_interval)
 

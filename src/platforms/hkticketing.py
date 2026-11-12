@@ -136,7 +136,6 @@ HKTICKETING_DATE_SOLDOUT_KEYWORDS_ZH = [
 async def nodriver_hkticketing_login(tab, account, password, config_dict=None):
     """
     HKTicketing auto login
-    Reference: chrome_tixcraft.py hkticketing_login (line 5661-5733)
     """
     ret = False
     debug = util.create_debug_logger(config_dict)
@@ -277,7 +276,6 @@ async def nodriver_hkticketing_login(tab, account, password, config_dict=None):
 async def nodriver_hkticketing_accept_cookie(tab):
     """
     Close cookie consent popup
-    Reference: chrome_tixcraft.py hkticketing_accept_cookie (line 7460-7497)
     """
     try:
         el_close = await tab.query_selector('#closepolicy_new')
@@ -289,7 +287,6 @@ async def nodriver_hkticketing_accept_cookie(tab):
 async def nodriver_hkticketing_date_buy_button_press(tab, config_dict=None):
     """
     Click buy button on date selection page and wait for URL change
-    Reference: chrome_tixcraft.py hkticketing_date_buy_button_press (line 7498-7533)
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -362,7 +359,6 @@ async def nodriver_hkticketing_date_buy_button_press(tab, config_dict=None):
 async def nodriver_hkticketing_date_assign(tab, config_dict):
     """
     Date assignment core logic
-    Reference: chrome_tixcraft.py hkticketing_date_assign (line 7534-7679)
 
     Returns:
         Tuple[bool, bool, List]:
@@ -540,7 +536,6 @@ async def nodriver_hkticketing_date_assign(tab, config_dict):
 async def nodriver_hkticketing_date_password_input(tab, config_dict, fail_list):
     """
     Handle password protected date selection page
-    Reference: chrome_tixcraft.py hkticketing_date_password_input (line 7681-7736)
 
     Returns:
         Tuple[bool, List[str]]:
@@ -589,7 +584,6 @@ async def nodriver_hkticketing_date_password_input(tab, config_dict, fail_list):
 async def nodriver_hkticketing_date_auto_select(tab, config_dict, fail_list):
     """
     Date auto select integration function
-    Reference: chrome_tixcraft.py hkticketing_date_auto_select (line 7738-7821)
 
     Returns:
         Tuple[bool, List[str]]:
@@ -617,8 +611,9 @@ async def nodriver_hkticketing_date_auto_select(tab, config_dict, fail_list):
         if auto_reload_coming_soon_page:
             debug.log("[HKTICKETING DATE] Page not ready, reloading...")
 
-            if config_dict["advanced"]["auto_reload_page_interval"] > 0:
-                await asyncio.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+            reload_interval = util.get_reload_interval(config_dict)
+            if reload_interval > 0:
+                await asyncio.sleep(reload_interval)
 
             try:
                 await tab.reload()
@@ -630,7 +625,6 @@ async def nodriver_hkticketing_date_auto_select(tab, config_dict, fail_list):
 async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_item):
     """
     Area auto select
-    Reference: chrome_tixcraft.py hkticketing_area_auto_select (line 7822-7961)
 
     Returns:
         Tuple[bool, bool]:
@@ -702,7 +696,7 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
         return is_need_refresh, is_price_assign_by_bot
 
     # Filter available areas - get all info in one JS call
-    formated_area_list = []  # List of (element, text) tuples for NoDriver
+    formated_area_list = []  # List of (element, row_text, idx) tuples
     import json
     try:
         # Get all area info in single JavaScript call
@@ -753,7 +747,7 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
                     continue
 
                 if idx < len(area_list):
-                    # Store tuple of (element, text, index) for NoDriver keyword matching
+                    # Store tuple of (element, text, index) for keyword matching
                     formated_area_list.append((area_list[idx], row_text, idx))
                     debug.log(f"[HKTICKETING AREA] Added to list: idx={idx}, text={row_text[:40]}")
         else:
@@ -767,7 +761,7 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
         is_need_refresh = True
         return is_need_refresh, is_price_assign_by_bot
 
-    # Match by keyword - same logic as Chrome version (line 7893-7934)
+    # Match by keyword
     matched_blocks = []
     matched_index = -1
 
@@ -785,7 +779,7 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
         if len(matched_blocks) == 0:
             matched_blocks = [item[0] for item in formated_area_list]
     else:
-        # Parse keyword - use json.loads to properly handle quoted strings (same as util.py:1390)
+        # Parse keyword - use json.loads to properly handle quoted strings (same as util.parse_keyword_string_to_array)
         # Input format: "AAA","BBB CC","VIP 2" -> ['AAA', 'BBB CC', 'VIP 2']
         keyword_sets = util.parse_keyword_string_to_array(area_keyword_item)
         if not keyword_sets:
@@ -808,7 +802,6 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
                 normalized_text = util.format_keyword_string(row_text)
 
                 # AND logic within keyword set (space-separated keywords)
-                # Same as Chrome version line 7920-7925
                 keyword_parts = keyword_set.split(' ')
                 is_match = True
                 for kw in keyword_parts:
@@ -867,7 +860,6 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
 async def nodriver_hkticketing_ticket_number_auto_select(tab, config_dict):
     """
     Auto select ticket number
-    Reference: chrome_tixcraft.py hkticketing_ticket_number_auto_select (line 7962-7966)
     """
     debug = util.create_debug_logger(config_dict)
     ticket_number = config_dict["ticket_number"]
@@ -915,7 +907,6 @@ async def nodriver_hkticketing_ticket_number_auto_select(tab, config_dict):
 async def nodriver_hkticketing_ticket_delivery_option(tab, config_dict=None):
     """
     Select ticket delivery option
-    Reference: chrome_tixcraft.py hkticketing_ticket_delivery_option (line 8024-8063)
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -955,7 +946,6 @@ async def nodriver_hkticketing_ticket_delivery_option(tab, config_dict=None):
 async def nodriver_hkticketing_next_button_press(tab, config_dict=None):
     """
     Click next button and wait for URL change
-    Reference: chrome_tixcraft.py hkticketing_next_button_press (line 7979-8001)
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -1019,7 +1009,6 @@ async def nodriver_hkticketing_next_button_press(tab, config_dict=None):
 async def nodriver_hkticketing_go_to_payment(tab, config_dict=None):
     """
     Click go to payment button and wait for URL change
-    Reference: chrome_tixcraft.py hkticketing_go_to_payment (line 8002-8023)
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -1066,7 +1055,6 @@ async def nodriver_hkticketing_go_to_payment(tab, config_dict=None):
 async def nodriver_hkticketing_hide_tickets_blocks(tab):
     """
     Hide unnecessary page blocks
-    Reference: chrome_tixcraft.py hkticketing_hide_tickets_blocks (line 8064-8098)
     """
     try:
         await tab.evaluate('''
@@ -1224,7 +1212,7 @@ async def nodriver_hkticketing_type02_login(tab, config_dict):
     """
     debug = util.create_debug_logger(config_dict)
 
-    # Get account credentials (password already decrypted in settings.py)
+    # Get account credentials (password is read as stored in the settings)
     hkticketing_account = config_dict["accounts"]["hkticketing_account"].strip()
     hkticketing_password = config_dict["accounts"]["hkticketing_password"].strip()
 
@@ -1605,7 +1593,6 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
                     debug.log(f"[HKTICKETING TYPE02 DATE] Selected date does not match keyword, will select target date")
             elif selected_date_text and len(date_keyword) == 0:
                 # No keyword = any date is acceptable. Keep current selection unconditionally.
-                # Matches Type01 area "already selected" pattern (line 21279-21298).
                 is_date_assigned = True
                 debug.log(f"[HKTICKETING TYPE02 DATE] No keyword, keeping current selection: {selected_date_text}")
 
@@ -2278,7 +2265,6 @@ async def nodriver_hkticketing_type02_confirm_order(tab, config_dict):
 async def nodriver_hkticketing_performance(tab, config_dict, domain_name):
     """
     Ticket selection page integration flow
-    Reference: chrome_tixcraft.py hkticketing_performance (line 8099-8172)
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -2312,7 +2298,6 @@ async def nodriver_hkticketing_performance(tab, config_dict, domain_name):
 async def nodriver_hkticketing_escape_robot_detection(tab, url):
     """
     Check for robot detection iframe
-    Reference: chrome_tixcraft.py hkticketing_escape_robot_detection (line 8173-8200)
     """
     robot_detection = False
 
@@ -2329,7 +2314,6 @@ async def nodriver_hkticketing_escape_robot_detection(tab, url):
 async def nodriver_hkticketing_url_redirect(tab, url, config_dict):
     """
     Handle URL redirect for queue and error pages
-    Reference: chrome_tixcraft.py hkticketing_url_redirect (line 8201-8262)
     """
     debug = util.create_debug_logger(config_dict)
     is_redirected = False
@@ -2355,8 +2339,9 @@ async def nodriver_hkticketing_url_redirect(tab, url, config_dict):
             except Exception as exc:
                 pass
 
-            if config_dict["advanced"]["auto_reload_page_interval"] > 0:
-                await asyncio.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+            reload_interval = util.get_reload_interval(config_dict)
+            if reload_interval > 0:
+                await asyncio.sleep(reload_interval)
 
             if is_redirected:
                 break
@@ -2390,7 +2375,6 @@ async def nodriver_hkticketing_url_redirect(tab, url, config_dict):
 async def nodriver_hkticketing_content_refresh(tab, url, config_dict):
     """
     Handle content error and refresh page
-    Reference: chrome_tixcraft.py hkticketing_content_refresh (line 8264-8343)
     """
     debug = util.create_debug_logger(config_dict)
     is_redirected = False
@@ -2431,15 +2415,15 @@ async def nodriver_hkticketing_content_refresh(tab, url, config_dict):
             except Exception as exc:
                 pass
 
-            if config_dict["advanced"]["auto_reload_page_interval"] > 0:
-                await asyncio.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+            reload_interval = util.get_reload_interval(config_dict)
+            if reload_interval > 0:
+                await asyncio.sleep(reload_interval)
 
     return is_redirected
 
 async def nodriver_hkticketing_travel_iframe(tab, config_dict):
     """
     Traverse iframes for error detection
-    Reference: chrome_tixcraft.py hkticketing_travel_iframe (line 8345-8400)
     """
     debug = util.create_debug_logger(config_dict)
     is_redirected = False
@@ -2491,7 +2475,6 @@ async def nodriver_hkticketing_travel_iframe(tab, config_dict):
 async def nodriver_hkticketing_main(tab, url, config_dict):
     """
     HKTicketing platform main flow control function
-    Reference: chrome_tixcraft.py hkticketing_main logic (line 8400-8461)
     """
     if not _state:
         _state.update({
@@ -2541,7 +2524,7 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
             await asyncio.sleep(1.0)
             return tab
 
-    # Type 02 Login Page - set session via localStorage
+    # Type 02 Login Page - fill login form, then wait for user to solve captcha
     is_type02_login_page = False
     if is_type02_site and '#/login' in url:
         is_type02_login_page = True

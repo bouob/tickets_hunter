@@ -63,7 +63,7 @@ async def nodriver_cityline_auto_retry_access(tab, url, config_dict):
         debug.log(f"[CITYLINE] goEvent() failed: {exc}")
         pass
 
-    auto_reload_page_interval = config_dict["advanced"]["auto_reload_page_interval"]
+    auto_reload_page_interval = util.get_reload_interval(config_dict)
     if auto_reload_page_interval > 0:
         await asyncio.sleep(auto_reload_page_interval)
 
@@ -224,7 +224,7 @@ async def nodriver_cityline_date_auto_select(tab, config_dict):
                 # Auto reload if no dates available
                 debug.log("[DATE FALLBACK] Auto-reloading page...")
                 try:
-                    await asyncio.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+                    await asyncio.sleep(util.get_reload_interval(config_dict))
                     await tab.reload()
                 except:
                     pass
