@@ -1,7 +1,7 @@
 # 機制 11：排隊與付款 (Stage 11)
 
 **文件說明**：說明搶票系統的排隊機制（Queue-IT、平台內建排隊）與付款頁面偵測策略
-**最後更新**：2026-06-10
+**最後更新**：2026-11-02
 
 ---
 
@@ -101,6 +101,15 @@ HKTICKETING_REDIRECT_URL_LIST = [
 - SQL Server 錯誤、HTTP 500/502/503/504
 - `"Hi fans, you're in the queue to"`（英文排隊頁面）
 - `"please stay on this page and do not refresh"`
+
+**實測結論（2026-11-02）**：`queue.hkticketing.com/hotshow.html` 是靜態倒數頁，不是有排隊位置的虛擬等候室。
+
+- 回應為 `Server: AmazonS3`、`X-Cache: Hit from cloudfront`、`Cache-Control: max-age=30`，沒有 `Set-Cookie`，所有人拿到同一份檔案。
+- 頁面 JS 以 `setTimeout(reload, busyFor)` 倒數後跳到 `hkt.hkticketing.com/`；文案「do not refresh」只是提示，重新整理不會失去任何位置。
+- bot 的 `url_redirect()` 導向 `entry-hotshow.hkticketing.com/`，該網址現已 301 到 `hkt.hkticketing.com/`，等於跳過倒數、終點相同。
+- 上方的錯誤頁面關鍵字只在 `content_refresh()` 檢查 Type01 網址時才會比對；Type01 入口（`premier`、`entry-hotshow`）都已 301 到 Type02，這段實際上是死碼。
+- 未驗證：開賣尖峰時，如果 HKT 把太忙的連線持續退回 `hotshow.html`，bot 會在「排隊頁 → entry → hkt」之間循環；「自動刷新頁面間隔」設成 0 時，中間沒有任何等待。
+- Type02 新等候室（#350）是另一套機制，程式目前沒有偵測。
 
 ### 4. 等待頁面 — FunOne
 

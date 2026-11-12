@@ -911,7 +911,7 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
             # sale to open -- exactly what trips Ticketmaster's EPS block
             # (issue #378). sleep_with_pause_check keeps the pause button
             # responsive during the wait.
-            reload_interval = config_dict.get("advanced", {}).get("auto_reload_page_interval", 0)
+            reload_interval = util.get_reload_interval(config_dict)
             if reload_interval > 0:
                 await sleep_with_pause_check(tab, reload_interval, config_dict)
             await tab.reload()
@@ -1010,8 +1010,9 @@ async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
             # Keyword specified but no match → might need to wait for availability
             debug.log("[TICKETMASTER AREA] No areas matched keyword, reloading page...")
             try:
-                if config_dict.get("advanced", {}).get("auto_reload_page_interval", 0) > 0:
-                    await tab.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+                reload_interval = util.get_reload_interval(config_dict)
+                if reload_interval > 0:
+                    await tab.sleep(reload_interval)
                 await tab.reload()
             except:
                 pass
@@ -1971,7 +1972,7 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
     # Auto refresh if no date was selected (for strict mode or sold out scenarios)
     if not is_date_clicked and _is_page_reload_enabled(config_dict, debug, "DATE SELECT"):
         # Simple wait mode (consistent with TicketPlus/iBon/FamiTicket)
-        interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+        interval = util.get_reload_interval(config_dict)
         if interval > 0:
             debug.log(f"[DATE SELECT] Waiting {interval}s before reload...")
             await asyncio.sleep(interval)
@@ -2124,7 +2125,7 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
 
     # Auto refresh if needed (simple wait mode, consistent with TicketPlus/iBon/FamiTicket)
     if is_need_refresh and _is_page_reload_enabled(config_dict, debug, "AREA SELECT"):
-        interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+        interval = util.get_reload_interval(config_dict)
         if interval > 0:
             debug.log(f"[AREA SELECT] Waiting {interval}s before reload...")
             await asyncio.sleep(interval)
@@ -2707,7 +2708,7 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
         debug.log("[TICKET SELECT] Ticket count unavailable, reloading page to retry...")
         try:
             # Wait based on auto_reload_page_interval setting
-            interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+            interval = util.get_reload_interval(config_dict)
             if interval > 0:
                 await asyncio.sleep(interval)
             await tab.reload()
@@ -3245,7 +3246,8 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
             if not is_need_redo_ocr:
                 break
 
-            # Track failures and refresh captcha after 3 consecutive failures
+            # Track failures; after 3 consecutive failures dismiss any alert and wait
+            # (the captcha is not reloaded here)
             if is_need_redo_ocr:
                 fail_count += 1
                 total_fail_count += 1
@@ -3373,7 +3375,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
 
     # Global alert handler - auto-dismiss all alerts (sold out, errors, etc.)
     # Handles alerts that appear after page navigation (e.g., area selection redirects)
-    # Reference: KHAM platform implementation (Line 10681-10697)
+    # Reference: KHAM platform implementation (platforms/kham.py)
     async def handle_global_alert(event):
         # Skip alert handling when bot is paused (let user handle manually)
         if os.path.exists(util.get_instance_state_path(CONST_MAXBOT_INT28_FILE)):
@@ -3435,7 +3437,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
 
         # Issue #188: Set cooldown timestamp instead of async sleep (event handler doesn't block main loop)
         if is_sold_out_alert and dismiss_success:
-            interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+            interval = util.get_reload_interval(config_dict)
             if interval > 0:
                 cooldown_until = time.time() + interval
                 _state["sold_out_cooldown_until"] = cooldown_until
@@ -3607,7 +3609,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
                             _state["ticketmaster_phase"] = "area_select"
                             _state["area_retry_count"] = 0
                             try:
-                                reload_interval = config_dict.get("advanced", {}).get("auto_reload_page_interval", 0)
+                                reload_interval = util.get_reload_interval(config_dict)
                                 if reload_interval > 0:
                                     await sleep_with_pause_check(tab, reload_interval, config_dict)
                                 await tab.reload()

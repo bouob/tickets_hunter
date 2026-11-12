@@ -61,7 +61,7 @@ def run(cmd, **kwargs):
 
 def preflight():
     print("\n[1/5] Preflight")
-    step("python >= 3.10", sys.version_info >= (3, 10),
+    step("python >= 3.11", sys.version_info >= (3, 11),
          f"running {sys.version.split()[0]}")
 
     proc = run([sys.executable, "-m", "PyInstaller", "--version"],

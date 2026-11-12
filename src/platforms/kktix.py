@@ -73,6 +73,53 @@ _state = {}
 # immediately - this window is the whole reason the guard cannot latch.
 CONST_KKTIX_NEXT_BUTTON_COOLDOWN = 1.5
 
+# Event question: an answer is only ruled out once the page marks it wrong
+# (div.custom-captcha gets class "error"). Pressing next is no verdict - the
+# press can land while KKTIX is still querying seats - so an unjudged answer is
+# sent again after this many seconds.
+CONST_KKTIX_CAPTCHA_RESUBMIT_COOLDOWN = 2.0
+# Unjudged sends before moving on to the next candidate. A lone candidate is
+# never dropped this way: retrying it beats stalling with nothing to send.
+CONST_KKTIX_CAPTCHA_MAX_UNJUDGED_SENDS = 3
+
+
+def kktix_pick_captcha_answer(answer_list, fail_list, pending, has_error, now, is_processing=False):
+    """Decide which question answer to send this round.
+
+    pending is {"answer", "sent_at", "sends"} for the last answer sent, or None.
+    Appends to fail_list when the page judged the pending answer wrong, or when
+    it went unjudged too often while another candidate is left.
+    is_processing means KKTIX is still querying seats for the last press.
+
+    Returns (answer, is_waiting, pending): answer "" means nothing to send;
+    is_waiting means the pending answer is still inside its cooldown.
+    """
+    if pending and is_processing:
+        # No verdict yet: an error mark seen now is left from an earlier answer.
+        # Restart the cooldown so the mark is read only after the query ends.
+        pending = dict(pending, sent_at=now)
+        return pending["answer"], True, pending
+    if pending:
+        sent = pending["answer"]
+        # Wait out the cooldown before reading the error mark: until KKTIX
+        # answers this send, a mark left over from an earlier wrong answer would
+        # rule out the new one unjudged.
+        if now - pending["sent_at"] < CONST_KKTIX_CAPTCHA_RESUBMIT_COOLDOWN:
+            return sent, True, pending
+        others = [a for a in answer_list if a not in fail_list and a != sent]
+        if has_error:
+            if sent not in fail_list:
+                fail_list.append(sent)
+            pending = None
+        elif pending["sends"] >= CONST_KKTIX_CAPTCHA_MAX_UNJUDGED_SENDS and others:
+            fail_list.append(sent)
+            pending = None
+
+    for answer in answer_list:
+        if answer not in fail_list:
+            return answer, False, pending
+    return "", False, pending
+
 
 def is_kktix_login_page(url):
     """True for the KKTIX member sign-in page, on either domain.
@@ -642,7 +689,9 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
     try:
         ticket_price_list = await tab.evaluate('''
             (function() {
-                let rows = Array.from(document.querySelectorAll('div.display-table-row'));
+                // The column header is a display-table-row too; it is not a ticket.
+                let rows = Array.from(document.querySelectorAll('div.display-table-row'))
+                    .filter(r => !r.closest('.ticket-list-header'));
                 if (rows.length === 0) {
                     rows = Array.from(document.querySelectorAll('div.ticket-item'));
                 }
@@ -1006,7 +1055,13 @@ async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsN
                 hasQuestion: !!document.querySelector('div.custom-captcha-inner p'),
                 hasInput: !!document.querySelector('div.custom-captcha-inner > div > div > input'),
                 hasButtons: document.querySelectorAll('div.register-new-next-button-area > button').length,
-                questionText: document.querySelector('div.custom-captcha-inner p')?.innerText || ''
+                questionText: document.querySelector('div.custom-captcha-inner p')?.innerText || '',
+                hasError: !!document.querySelector('div.custom-captcha.error'),
+                isProcessing: (() => {
+                    const b = document.querySelector('div.register-new-next-button-area > button:last-of-type');
+                    const t = b ? (b.innerText || '') : '';
+                    return ['查詢空位中', '處理中', '請稍候', '請勿重新整理'].some(k => t.includes(k));
+                })()
             };
         })();
     ''')
@@ -1025,19 +1080,27 @@ async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsN
                 if config_dict["advanced"]["auto_guess_options"]:
                     answer_list = util.get_answer_list_from_question_string(None, question_text, config_dict)
 
-            inferred_answer_string = ""
-            for answer_item in answer_list:
-                if not answer_item in fail_list:
-                    inferred_answer_string = answer_item
-                    break
-
             if len(answer_list) > 0:
                 answer_list = list(dict.fromkeys(answer_list))
+
+            inferred_answer_string, is_waiting, pending = kktix_pick_captcha_answer(
+                answer_list, fail_list, _state.get("captcha_pending"),
+                bool(elements_check.get('hasError')), time.time(),
+                bool(elements_check.get('isProcessing')))
+            _state["captcha_pending"] = pending
 
             debug.log("inferred_answer_string:", inferred_answer_string)
             debug.log("question_text:", question_text)
             debug.log("answer_list:", answer_list)
             debug.log("fail_list:", fail_list)
+
+            if elements_check.get('isProcessing'):
+                # KKTIX is still querying seats for the last press; leave it be.
+                debug.log("[KKTIX CAPTCHA] Seat query in progress, not sending")
+                inferred_answer_string = ""
+            elif is_waiting:
+                debug.log(f"[KKTIX CAPTCHA] '{inferred_answer_string}' sent, not judged yet, waiting")
+                inferred_answer_string = ""
 
             # 增強版答案填寫流程，包含重試機制
             if len(inferred_answer_string) > 0 and elements_check.get('hasInput'):
@@ -1105,7 +1168,15 @@ async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsN
                                 final_delay = random.uniform(0.75, 1.5)
                                 await tab.sleep(final_delay)
 
-                                fail_list.append(inferred_answer_string)
+                                # Not a verdict: the next round rules it out
+                                # only if the page marks it wrong.
+                                prev = _state.get("captcha_pending")
+                                sends = prev["sends"] + 1 if prev and prev["answer"] == inferred_answer_string else 1
+                                _state["captcha_pending"] = {
+                                    "answer": inferred_answer_string,
+                                    "sent_at": time.time(),
+                                    "sends": sends,
+                                }
                                 break
                             else:
                                 debug.log("Button click failed, retrying...")
@@ -1563,7 +1634,7 @@ async def nodriver_kktix_dismiss_failure_modal(tab, config_dict):
     DOM modals (not native JS alerts) and are not caught by the CDP alert handler.
 
     Returns:
-        True  -- failure modal detected and dismissed
+        True  -- failure modal detected (dismissed, or no dismiss button found; either way signals reload)
         False -- no failure modal found (or evaluate failed)
     """
     debug = util.create_debug_logger(config_dict)
@@ -2350,7 +2421,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                         debug.log(f"[KKTIX AREA SELECT] No area selected, will reload page and retry")
                         # Don't return - let reload logic execute below
                         # is_ticket_number_assigned remains False (no selection made)
-                        # Continue to line 2261 where is_need_refresh check happens
+                        # Continue to the is_need_refresh check further down in this function
                 else:
                     # T024: is_need_refresh_final=False but no ticket assigned (all options sold out or excluded)
                     debug.log(f"[KKTIX AREA FALLBACK] No available options after exclusion")
@@ -2425,8 +2496,9 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
 
                     debug.log("[KKTIX] no match any price, start to refresh page...")
 
-                    if config_dict["advanced"]["auto_reload_page_interval"] > 0:
-                        await asyncio.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+                    reload_interval = util.get_reload_interval(config_dict)
+                    if reload_interval > 0:
+                        await asyncio.sleep(reload_interval)
 
                     try:
                         await tab.reload()
@@ -2472,6 +2544,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
     if not _state:
         _state.update({
             "fail_list": [],
+            "captcha_pending": None,
             "start_time": None,
             "done_time": None,
             "elapsed_time": None,
@@ -2632,6 +2705,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
 
             if not is_dom_ready:
                 _state["fail_list"] = []
+                _state["captcha_pending"] = None
                 _state["played_sound_ticket"] = False
                 # Waiting room keeps the registrations/new URL; it refreshes
                 # itself, so only emit a throttled status log here
@@ -2708,6 +2782,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
 
             # reset answer fail list.
             _state["fail_list"] = []
+            _state["captcha_pending"] = None
             _state["played_sound_ticket"] = False
 
     # 檢查是否已經偵測過成功頁面，避免重複偵測
@@ -2888,7 +2963,7 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
     - 會員序號欄位在選擇票券數量後動態展開
     - 使用 AngularJS 框架（需要特殊事件觸發處理）
 
-    呼叫位置：nodriver_kktix_handle_qualification_and_next()，在資格 radio
+    呼叫位置：nodriver_kktix_satisfy_qualification()，在資格 radio
     點選之後——序號欄位屬於某個資格選項，先選資格才填碼。
 
     Args:

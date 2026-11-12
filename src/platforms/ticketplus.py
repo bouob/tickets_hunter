@@ -5,6 +5,7 @@
 import asyncio
 import json
 import random
+import re
 import time
 import traceback
 
@@ -14,6 +15,7 @@ import util
 from nodriver_common import (
     check_and_handle_pause,
     evaluate_with_pause_check,
+    get_card_prefix,
     play_sound_while_ordering,
     send_discord_notification,
     send_telegram_notification,
@@ -814,7 +816,7 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
 
         if auto_reload_coming_soon_page_enable and is_vue_ready and (not formated_area_list or len(formated_area_list) == 0):
             try:
-                reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                reload_interval = util.get_reload_interval(config_dict)
                 if reload_interval > 0:
                     debug.log(f"[TicketPlus DATE] Waiting {reload_interval}s before auto-reload...")
                     await asyncio.sleep(reload_interval)
@@ -1800,7 +1802,7 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser):
     else:
         debug.log("Ticket selection failed, cannot continue")
 
-        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+        auto_reload_interval = util.get_reload_interval(config_dict)
         if auto_reload_interval >= 0:
             if auto_reload_interval > 0:
                 debug.log(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before reload...")
@@ -1936,12 +1938,9 @@ CONST_TICKETPLUS_CARD_KEYWORDS = [
     "前8碼",
 ]
 
-CONST_TICKETPLUS_CARD_PREFIX_LENGTHS = (
-    ("前六碼", 6),
-    ("前6碼", 6),
-    ("前八碼", 8),
-    ("前8碼", 8),
-)
+# "前六碼", "前8碼", "前６位": the digit may be Arabic, full-width or Chinese.
+CONST_TICKETPLUS_CARD_PREFIX_LENGTH_RE = re.compile(r"前([6６六8８八])[碼位]")
+CONST_TICKETPLUS_CARD_PREFIX_DIGITS = {"6": 6, "６": 6, "六": 6, "8": 8, "８": 8, "八": 8}
 
 # Wording that marks a serial or discount box. "專屬代碼" is TicketPlus's own
 # default wording, shown whenever the event sets no description of its own;
@@ -1990,8 +1989,12 @@ CONST_TICKETPLUS_EXCLUSIVE_CODE_SCAN_JS = '''
 
 
 def _normalize_ticketplus_field_text(label, placeholder):
-    """Combine field text and remove whitespace before matching."""
-    return "".join(f"{label} {placeholder}".split())
+    """Drop whitespace inside each text, keeping one space between the two.
+
+    Joining straight across the gap would let label and placeholder spell a
+    keyword that neither holds ("會員卡" + "號碼" reads as "卡號").
+    """
+    return f"{''.join(label.split())} {''.join(placeholder.split())}"
 
 
 def _classify_exclusive_code_field(label, placeholder):
@@ -2003,8 +2006,7 @@ def _classify_exclusive_code_field(label, placeholder):
     """
     text = _normalize_ticketplus_field_text(label, placeholder)
 
-    normalized_placeholder = _normalize_ticketplus_field_text("", placeholder)
-    if CONST_TICKETPLUS_ANSWER_PLACEHOLDER in normalized_placeholder:
+    if CONST_TICKETPLUS_ANSWER_PLACEHOLDER in "".join(placeholder.split()):
         return "answer"
     if any(keyword in text for keyword in CONST_TICKETPLUS_DISCOUNT_STRONG_KEYWORDS):
         return "discount"
@@ -2018,10 +2020,8 @@ def _classify_exclusive_code_field(label, placeholder):
 def _get_ticketplus_card_prefix_length(label, placeholder):
     """Return the required card-prefix length stated by the field wording."""
     text = _normalize_ticketplus_field_text(label, placeholder)
-    for keyword, length in CONST_TICKETPLUS_CARD_PREFIX_LENGTHS:
-        if keyword in text:
-            return length
-    return 0
+    match = CONST_TICKETPLUS_CARD_PREFIX_LENGTH_RE.search(text)
+    return CONST_TICKETPLUS_CARD_PREFIX_DIGITS[match.group(1)] if match else 0
 
 
 def _ticketplus_exclusive_code_fill_js(plan):
@@ -2116,14 +2116,16 @@ async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
                 debug.log(f"[EXCLUSIVE CODE] {kind} field found but nothing configured for it")
                 continue
 
-            configured_value = value
             if kind == "credit_card":
                 required_length = _get_ticketplus_card_prefix_length(label, placeholder)
-                if required_length and len(value) > required_length:
-                    value = value[:required_length]
-                    debug.log(f"[EXCLUSIVE CODE] Card field wording requires {required_length} "
-                              f"digits; using the configured prefix truncated from "
-                              f"{len(configured_value)} digits")
+                value = get_card_prefix(config_dict, required_length)
+                if not value:
+                    debug.log(f"[EXCLUSIVE CODE] Card field asks for {required_length or 'some'} digits; "
+                              f"the configured prefix is shorter or not all digits, leaving it alone")
+                    continue
+                if len(value) < len(credit_card_prefix):
+                    debug.log(f"[EXCLUSIVE CODE] Card field asks for {required_length} digits; "
+                              f"using the first {required_length} of the configured prefix")
 
             existing = field.get('value', '')
             if existing:

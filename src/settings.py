@@ -47,7 +47,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2026.10.17)"
+CONST_APP_VERSION = "TicketsHunter (2026.11.11)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -56,12 +56,15 @@ CONST_MAXBOT_INT28_QUIT_FILE = "MAXBOT_INT28_QUIT.txt"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 
-# Phase 3 multi-instance dashboard: bot processes touch this file every few
-# seconds; an instance counts as alive when its mtime is within the threshold.
-# The threshold is generous because Cloudflare handling can stall the main
-# loop for >10s, and a tight value would misreport a busy instance as dead.
+# Phase 3 multi-instance dashboard: a bot task beside the main loop rewrites
+# this file every few seconds. Two signals:
+# - mtime within CONST_HEARTBEAT_ALIVE_SEC -> the process is alive
+# - content = the main loop's last tick (epoch seconds); lagging by
+#   CONST_HEARTBEAT_BUSY_SEC or more -> busy (TicketPlus queue monitor runs up
+#   to 600s inside one loop pass; Cloudflare handling and CDP stalls also block it)
 CONST_HEARTBEAT_FILE = "heartbeat.txt"
 CONST_HEARTBEAT_ALIVE_SEC = 30
+CONST_HEARTBEAT_BUSY_SEC = 30
 
 CONST_SERVER_PORT = 16888
 
@@ -123,6 +126,7 @@ CONST_WEBDRIVER_TYPE_NODRIVER = "nodriver"
 CONST_SUPPORTED_SITES = ["https://kktix.com"
     ,"https://tixcraft.com (拓元)"
     ,"https://ticketmaster.sg"
+    ,"https://ticketmaster.ph"
     #,"https://ticketmaster.com"
     ,"https://teamear.tixcraft.com/ (添翼)"
     ,"https://www.indievox.com/ (獨立音樂)"
@@ -131,6 +135,11 @@ CONST_SUPPORTED_SITES = ["https://kktix.com"
     ,"https://kham.com.tw/ (寬宏)"
     ,"https://ticket.com.tw/ (年代)"
     ,"https://tickets.udnfunlife.com/ (udn售票網)"
+    ,"https://tix.ctbcsports.com/BROTHERS (中信兄弟)"
+    ,"https://tix.wdragons.com/ (味全龍)"
+    ,"https://guardians.fami.life/ (富邦悍將)"
+    ,"https://tix.ctbcsports.com/DEA (中信特攻)"
+    ,"https://tix.fubonbraves.com/ (富邦勇士)"
     ,"https://ticketplus.com.tw/ (遠大)"
     ,"===[香港或南半球的系統]==="
     ,"http://www.urbtix.hk/ (城市)"
@@ -202,6 +211,8 @@ def get_default_config():
     config_dict["accounts"]["ibonqware"] = ""
     config_dict["accounts"]["funone_session_cookie"] = ""
     config_dict["accounts"]["fansigo_cookie"] = ""
+    # 中職售票 Cookie: "name=value; ..." as copied from the browser (issue #437)
+    config_dict["accounts"]["cpbl_cookie"] = ""
     config_dict["accounts"]["fansigo_account"] = ""
     config_dict["accounts"]["fansigo_password"] = ""
     config_dict["accounts"]["facebook_account"] = ""
@@ -213,6 +224,7 @@ def get_default_config():
     config_dict["accounts"]["kham_account"] = ""
     config_dict["accounts"]["ticket_account"] = ""
     config_dict["accounts"]["udn_account"] = ""
+    config_dict["accounts"]["cpbl_account"] = ""
     config_dict["accounts"]["ticketplus_account"] = ""
 
     config_dict["accounts"]["facebook_password"] = ""
@@ -224,6 +236,7 @@ def get_default_config():
     config_dict["accounts"]["kham_password"] = ""
     config_dict["accounts"]["ticket_password"] = ""
     config_dict["accounts"]["udn_password"] = ""
+    config_dict["accounts"]["cpbl_password"] = ""
     config_dict["accounts"]["ticketplus_password"] = ""
 
     # Advanced settings (non-credential settings only)
@@ -251,6 +264,8 @@ def get_default_config():
     config_dict["advanced"]["remote_url"] = ""
 
     config_dict["advanced"]["auto_reload_page_interval"] = 5
+    config_dict["advanced"]["auto_reload_page_interval_range"] = False
+    config_dict["advanced"]["auto_reload_page_interval_max"] = 0
     config_dict["advanced"]["tixcraft_soft_block_delay"] = ""
     config_dict["advanced"]["reset_browser_interval"] = 0
     config_dict["advanced"]["proxy_server_port"] = ""
@@ -296,20 +311,40 @@ def list_instance_ids():
                 ids.append(item)
     return ids
 
+def get_heartbeat_busy_sec(content, now):
+    """Seconds the main loop has not ticked, or 0 when it is not busy.
+
+    content is the heartbeat file text (last main-loop tick, epoch seconds).
+    Unreadable content counts as not busy, so a damaged file never raises a
+    false alarm.
+    """
+    try:
+        last_tick = int(content.strip())
+    except (ValueError, AttributeError):
+        return 0
+    lag = int(now) - last_tick
+    return lag if lag >= CONST_HEARTBEAT_BUSY_SEC else 0
+
 def get_instance_status(profile_name):
     """Liveness/pause/last-url snapshot for one instance, mirroring the bot's
     own state-file resolution (default -> root, named -> instances/<id>/)."""
     heartbeat_filepath = get_instance_state_filepath(profile_name, CONST_HEARTBEAT_FILE)
     alive = False
+    busy_sec = 0
     if os.path.exists(heartbeat_filepath):
         try:
-            alive = (time.time() - os.path.getmtime(heartbeat_filepath)) < CONST_HEARTBEAT_ALIVE_SEC
+            now = time.time()
+            alive = (now - os.path.getmtime(heartbeat_filepath)) < CONST_HEARTBEAT_ALIVE_SEC
+            if alive:
+                with open(heartbeat_filepath, "r") as heartbeat_file:
+                    busy_sec = get_heartbeat_busy_sec(heartbeat_file.read(), now)
         except Exception:
-            alive = False
+            pass
     paused = os.path.exists(get_instance_state_filepath(profile_name, CONST_MAXBOT_INT28_FILE))
     return {
         "id": profile_name,
         "alive": alive,
+        "busy_sec": busy_sec,
         "paused": paused,
         "last_url": read_last_url_from_file(profile_name),
     }

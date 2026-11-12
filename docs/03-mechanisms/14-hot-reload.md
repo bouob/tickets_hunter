@@ -1,7 +1,7 @@
 # 機制 14：設定檔 Hot Reload (Stage 0)
 
 **文件說明**：搶票執行中即時修改設定，無需重新啟動程式
-**最後更新**：2026-10-19
+**最後更新**：2026-11-11
 
 ---
 
@@ -23,6 +23,11 @@ Hot Reload 機制允許使用者在搶票過程中修改設定，程式會自動
 
 > **多開實例**：每個實例只監看自己載入的設定檔，互不干擾——編輯 `profiles/<name>.json` 只熱載對應實例，編輯 `settings.json` 不會污染其他實例（此為 Phase 1 修正的 hot-reload bug：舊版固定監看 `settings.json`，會靜默覆寫 `--input` 實例的白名單欄位）。詳見 [17-multi-instance.md](./17-multi-instance.md)。
 
+**白名單**（以 `src/nodriver_tixcraft.py` 的 `reload_config` 為準，本文件的表格由此整理）：
+- 頂層：`ticket_number`、`date_auto_select`、`area_auto_select`、`keyword_exclude`、`ocr_captcha`、`tixcraft`、`kktix`、`cityline`、`refresh_datetime`、`contact`、`date_auto_fallback`、`area_auto_fallback`
+- `advanced`：`play_sound`、`disable_adjacent_seat`、`hide_some_image`、`auto_guess_options`、`user_guess_string`、`auto_reload_page_interval`、`auto_reload_page_interval_range`、`auto_reload_page_interval_max`、`verbose`、`tixcraft_soft_block_delay`、`idle_keyword`、`resume_keyword`、`idle_keyword_second`、`resume_keyword_second`、`discord_webhook_url`、`telegram_bot_token`、`telegram_chat_id`、`discount_code`
+- `cityline` 區塊目前沒有欄位，列在白名單但沒有可調的值。
+
 ---
 
 ## 支援即時修改的設定
@@ -40,13 +45,16 @@ Hot Reload 機制允許使用者在搶票過程中修改設定，程式會自動
 | 日期自動遞補 | 關鍵字未比對時自動選擇 |
 | 區域自動遞補 | 關鍵字未比對時自動選擇 |
 | 刷新在指定時間 | 自動開始搶票的時間 |
-| 聯絡人資訊 | 姓名、電話、信用卡前碼 |
+| 聯絡人資訊 | 姓名、電話、信用卡卡號前綴 |
 
 ### 進階設定
 
 | 設定名稱（UI） | 說明 |
 |---------------|------|
-| 自動刷新頁面間隔(秒) | 頁面重新載入間隔 |
+| 自動刷新頁面間隔(秒) | 頁面重新載入間隔（勾選區間刷新時為下限） |
+| 區間刷新 | 每次等待在下限與上限之間隨機取值 |
+| 區間刷新上限 | 區間刷新的秒數上限 |
+| 暫時鎖定等待秒數 | 拓元暫時鎖定後的等待秒數 |
 | 輸出除錯訊息 | 顯示詳細執行記錄 |
 | 有票時播放音效 | 偵測到票時播放提示音 |
 | 訂購時播放音效 | 訂單成功時播放提示音 |
@@ -57,6 +65,8 @@ Hot Reload 機制允許使用者在搶票過程中修改設定，程式會自動
 | 使用者自定字典 | 預設答案清單 |
 | 優惠代碼 | 折扣碼/會員碼 |
 | Discord Webhook URL | Discord 通知網址 |
+| Telegram Bot Token | Telegram 通知 |
+| Telegram Chat ID | Telegram 通知 |
 | 系統時間 - 暫停關鍵字 | 觸發暫停的時間 |
 | 系統時間 - 繼續關鍵字 | 觸發繼續的時間 |
 | 秒數 - 暫停關鍵字 | 觸發暫停的秒數 |
@@ -77,9 +87,16 @@ Hot Reload 機制允許使用者在搶票過程中修改設定，程式會自動
 |---------------|------|------|
 | 跳過已售完日期 | 拓元 | 自動略過售完場次 |
 | 自動刷新即將開賣頁面 | 拓元 | 開賣前自動刷新 |
+| 不足張數仍購買 | 拓元、添翼、Indievox、Ticketmaster | 設定張數不可選時改買最大可用張數 |
 | KKTIX點選下一步按鈕 | KKTIX | 自動點擊下一步 |
 | 自動填入張數 | KKTIX | 自動選擇票數 |
 | KKTIX購票最長停留(秒) | KKTIX | 最大等待時間 |
+
+其他平台（ibon、寬宏與中職、遠大、FamiTicket、FunOne、Cityline、HKTicketing、FANSI GO）沒有平台專用的可熱改欄位，它們使用上面的共用設定（張數、關鍵字、遞補、刷新間隔、驗證碼、聯絡人等），所以修改共用設定一樣即時生效。
+
+### 熱改的已知限制
+
+- **KKTIX 驗證問題**：答案清單每一輪都重新讀取「使用者自定字典」，搶票中新增的答案會立即被採用。被頁面判定答錯的答案會記住不再送出，要等頁面重新載入或回到活動頁才清除；所以修正錯誤答案時，加上新答案即可，不必刪除舊的。
 
 ---
 
@@ -100,6 +117,7 @@ Hot Reload 機制允許使用者在搶票過程中修改設定，程式會自動
 | 設定介面 Port | 需要重啟 Web Server |
 | Proxy IP:PORT | 需要重新初始化網路連線 |
 | 重新啟動瀏覽器間隔(秒) | 影響瀏覽器生命週期 |
+| 顯示時間戳記 | 啟動時決定 log 前綴 |
 
 ### 帳號登入資訊
 
@@ -107,6 +125,7 @@ Hot Reload 機制允許使用者在搶票過程中修改設定，程式會自動
 |---------------|------|
 | 拓元家族 cookie TIXUISID | 需要重新設定 Cookie |
 | ibon cookie ibonqware | 需要重新設定 Cookie |
+| 中職售票 Cookie | 需要重新設定 Cookie |
 | 所有平台帳號/密碼 | 需要重新執行登入流程 |
 
 ---
@@ -135,7 +154,7 @@ Hot Reload 機制允許使用者在搶票過程中修改設定，程式會自動
 
 ### 搶票中調整關鍵字
 
-如果發現目標區網域稱與預設關鍵字不符：
+如果發現目標區域名稱與預設關鍵字不符：
 1. 在設定介面修改「區域關鍵字」
 2. 點選儲存
 3. 程式立即使用新關鍵字比對
@@ -158,7 +177,7 @@ Hot Reload 機制允許使用者在搶票過程中修改設定，程式會自動
 
 ## 技術限制
 
-1. **偵測間隔**：約 50ms 偵測一次檔案變更，實際套用時間約 150ms
+1. **偵測間隔**：約 50ms 偵測一次檔案變更，實際套用時間約 150ms；主迴圈某一輪停留較久時（例如排隊監控、等待網頁回應），要等該輪結束才套用
 2. **原子更新**：整個設定物件一次替換，不會出現半更新狀態
 3. **錯誤容錯**：如果 JSON 格式錯誤，程式會沿用上一次的有效設定
 4. **物件替換**：巢狀設定（如日期關鍵字）會整個替換，不是部分合併
@@ -179,3 +198,4 @@ Hot Reload 機制允許使用者在搶票過程中修改設定，程式會自動
 |------|------|---------|
 | v1.0 | 2026-02-03 | 初版：Hot Reload 機制文件 (PR #231 by @Yurains) |
 | v1.1 | 2026-06-13 | 多開支援：改為監看實際載入的設定檔（非固定 `settings.json`），各實例獨立熱載 |
+| v1.2 | 2026-11-11 | 對照白名單補齊：區間刷新、暫時鎖定等待秒數、Telegram、不足張數仍購買；補顯示時間戳記與中職 Cookie 需重啟；註明其他平台使用共用設定與 KKTIX 驗證問題的限制 |

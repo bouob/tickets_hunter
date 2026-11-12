@@ -9,7 +9,7 @@
   <link href="dist/bootstrap/bootstrap.min.css" rel="stylesheet" />
   <script src="dist/bootstrap/bootstrap.min.js"></script>
   <script src="dist/jquery.min.js"></script>
-  <link rel="stylesheet" type="text/css" href="css/settings.css?v=2026101712" />
+  <link rel="stylesheet" type="text/css" href="css/settings.css?v=2026111111" />
   <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">
   <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png">
   <link rel="icon" href="/favicon.ico">
@@ -164,7 +164,7 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2026.10.17) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2026.11.11) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <!-- 開發狀態提示（可展開） -->
@@ -270,6 +270,11 @@
                       <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://kham.com.tw')">Kham 寬宏售票</button>
                       <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://ticket.com.tw')">Ticket.com.tw 年代</button>
                       <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tickets.udnfunlife.com')">UDN售票網</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tix.ctbcsports.com/BROTHERS')">中信兄弟</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tix.wdragons.com')">味全龍</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://guardians.fami.life')">富邦悍將</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tix.ctbcsports.com/DEA')">中信特攻</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tix.fubonbraves.com')">富邦勇士</button>
                       <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://ticketplus.com.tw')">TicketPlus 遠大</button>
                       <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tickets.funone.io')">FunOne Tickets</button>
                       <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://go.fansi.me')">FANSI GO</button>
@@ -282,6 +287,7 @@
                       <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://hotshow.hkticketing.com/')">HKTicketing 快達票</button>
                       <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.galaxymacau.com')">澳門銀河</button>
                       <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.ticketmaster.sg')">TicketMaster Singapore</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.ticketmaster.ph')">TicketMaster Philippines</button>
                       <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.ticketek.com.au')">Ticketek Australia</button>
                     </div>
                   </div>
@@ -531,7 +537,13 @@
           <label for="telegram_bot_token" class="col-sm-2 col-form-label">Telegram Bot Token<span class="help-icon" data-help="telegram_bot_token" title="Telegram Bot Token 說明" tabindex="0" role="button" aria-label="Telegram Bot Token 說明"></span>
           </label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-control" id="telegram_bot_token" type="password" autocomplete="off" value="" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" />
+            <div class="input-group">
+              <input class="form-control" id="telegram_bot_token" type="password" autocomplete="off" value="" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" />
+              <button class="btn btn-outline-secondary" type="button" id="btn_toggle_telegram_token" title="顯示 Token" aria-label="顯示 Token" aria-pressed="false">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16" aria-hidden="true"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-slash d-none" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7 7 0 0 0-2.79.588l.77.771A6 6 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755q-.247.248-.517.486z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829"/><path d="M3.35 5.47q-.27.24-.518.487A13 13 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7 7 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12z"/></svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -557,7 +569,18 @@
         <div class="row mb-3">
           <label for="auto_reload_page_interval" class="col-sm-2 col-form-label">自動刷新頁面間隔(秒)<span class="help-icon" data-help="auto_reload_page_interval" title="自動刷新頁面間隔說明" tabindex="0" role="button" aria-label="自動刷新頁面間隔 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-control" id="auto_reload_page_interval" value="" />
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <input class="form-control" id="auto_reload_page_interval" value="" style="flex: 1 1 6rem; width: auto; min-width: 6rem;" />
+              <div class="form-check mb-0">
+                <input class="form-check-input" type="checkbox" id="auto_reload_page_interval_range">
+                <label class="form-check-label" for="auto_reload_page_interval_range">區間刷新</label>
+              </div>
+              <div class="d-flex d-none align-items-center gap-2" id="auto_reload_page_interval_max_group" style="flex: 1 1 8rem;">
+                <span aria-hidden="true">～</span>
+                <input class="form-control" type="number" min="0" step="any" id="auto_reload_page_interval_max" value="" placeholder="上限秒數" aria-label="區間刷新上限秒數" style="min-width: 6rem;" />
+              </div>
+            </div>
+            <div class="small text-danger mt-1 d-none" id="auto_reload_page_interval_range_error" role="alert"></div>
             <div class="alert alert-warning alert-dismissible fade mt-2" id="tixcraft-refresh-warning" role="alert" style="display: none;">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle-fill me-2" viewBox="0 0 16 16">
                 <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
@@ -621,7 +644,7 @@
           </div>
         </div>
 
-        <div class="row mb-3" data-under="tixcraft kham ticket udn">
+        <div class="row mb-3" data-under="tixcraft kham ticket udn cpbl">
           <label class="col-sm-2 col-form-label">允許不連續座位<span class="help-icon" data-help="disable_adjacent_seat" title="停用相鄰座位說明" tabindex="0" role="button" aria-label="停用相鄰座位 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="form-check form-switch">
@@ -675,7 +698,7 @@
             </div>
           </div>
         </div>
-        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn famiticket funone ticketplus">
+        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn cpbl famiticket funone ticketplus">
           <label class="col-sm-2 col-form-label">OCR<span class="help-icon" data-help="ocr_captcha_enable" title="OCR 驗證碼辨識說明" tabindex="0" role="button" aria-label="OCR 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="form-check form-switch">
@@ -685,7 +708,7 @@
           </div>
         </div>
 
-        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn famiticket funone ticketplus">
+        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn cpbl famiticket funone ticketplus">
           <label for="ocr_captcha_image_source" class="col-sm-2 col-form-label">OCR圖片取得方式<span class="help-icon" data-help="ocr_captcha_image_source" title="OCR 圖片取得方式說明" tabindex="0" role="button" aria-label="OCR 圖片取得方式 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <select id="ocr_captcha_image_source" class="form-select" aria-label="Default select">
@@ -694,7 +717,7 @@
             </select>
           </div>
         </div>
-        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn famiticket funone ticketplus">
+        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn cpbl famiticket funone ticketplus">
           <label class="col-sm-2 col-form-label">自動送出<span class="help-icon" data-help="ocr_captcha_force_submit" title="OCR 自動送出說明" tabindex="0" role="button" aria-label="自動送出 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="form-check form-switch">
@@ -703,7 +726,7 @@
             </div>
           </div>
         </div>
-        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn famiticket funone ticketplus">
+        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn cpbl famiticket funone ticketplus">
           <label class="col-sm-2 col-form-label">自訓練模型<span class="help-icon" data-help="ocr_captcha_use_universal" title="使用通用 OCR 模型說明" tabindex="0" role="button" aria-label="使用通用 OCR 模型 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="form-check form-switch">
@@ -715,13 +738,13 @@
             </div>
           </div>
         </div>
-        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn famiticket funone ticketplus">
+        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn cpbl famiticket funone ticketplus">
           <label for="remote_url" class="col-sm-2 col-form-label">OCR Server URL<span class="help-icon" data-help="remote_url" title="設定介面網址說明" tabindex="0" role="button" aria-label="設定介面網址 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="remote_url" value="" />
           </div>
         </div>
-        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn famiticket funone ticketplus">
+        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn cpbl famiticket funone ticketplus">
           <label for="ocr_model_path" class="col-sm-2 col-form-label">自訂 OCR 模型<span class="help-icon" data-help="ocr_model_path" title="自訂 OCR 模型說明" tabindex="0" role="button" aria-label="自訂 OCR 模型 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="ocr_model_path" value="" placeholder="例如：assets/ocr_model 或 C:\models\my_ocr" />
@@ -873,7 +896,7 @@
             <div class="row mb-3">
               <label for="credit_card_prefix" class="col-sm-2 col-form-label">信用卡卡號前綴(數字)</label>
               <div class="col-sm-10 col-lg-8 col-xl-6">
-                <input class="form-control" id="credit_card_prefix" value="" placeholder="例如：412345 或 41234567" />
+                <input class="form-control" id="credit_card_prefix" value="" placeholder="例如：412345 或 41234567" maxlength="8" inputmode="numeric" />
                 <div class="form-text">部分平台可能需要驗證信用卡卡號前綴，請依活動要求輸入前幾碼</div>
               </div>
             </div>
@@ -985,6 +1008,29 @@
               <input type="password" id="kham_password" value="" class="form-control" autocomplete="current-password">
             </div>
             </form>
+          </div>
+        </div>
+
+        <div class="row mb-3" data-under="cpbl">
+          <label for="cpbl_account" class="col-sm-2 col-form-label">中職售票</label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <form autocomplete="off">
+            <div class="input-group">
+              <span class="input-group-text">帳號（身分證或護照號碼）</span>
+              <input type="text" id="cpbl_account" value="" class="form-control" autocomplete="username">
+              <span class="input-group-text">密碼</span>
+              <input type="password" id="cpbl_password" value="" class="form-control" autocomplete="current-password">
+            </div>
+            </form>
+            <div class="form-text">適用中信兄弟、味全龍、富邦悍將，以及同系統的中信特攻、富邦勇士（籃球）</div>
+          </div>
+        </div>
+
+        <div class="row mb-3" data-under="cpbl">
+          <label for="cpbl_cookie" class="col-sm-2 col-form-label">中職售票 Cookie<span class="help-icon" data-help="cpbl_cookie" title="中職售票 Cookie 說明" tabindex="0" role="button" aria-label="中職售票 Cookie 說明"></span></label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input class="form-control" id="cpbl_cookie" value="" />
+            <div class="form-text">適用中信兄弟、味全龍、富邦悍將，以及同系統的中信特攻、富邦勇士（籃球）。有填時優先於帳號密碼；只會注入目前站台的 Cookie。</div>
           </div>
         </div>
 
@@ -1105,7 +1151,7 @@
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="d-flex align-items-center mb-2">
               <button type="button" class="btn btn-sm btn-outline-warning" id="pause_all_btn" onclick="pause_all_instances()">全部暫停</button>
-              <span class="text-muted small ms-2">每 2 秒更新；離線 = 逾 30 秒無心跳</span>
+              <span class="text-muted small ms-2">每 2 秒更新；離線 = 逾 30 秒無心跳；忙碌 = 主迴圈逾 30 秒沒有進展（排隊、Cloudflare 或連線異常）</span>
             </div>
             <div class="table-responsive">
               <table class="table table-sm align-middle mb-0">
@@ -1290,7 +1336,7 @@
   </div>
 </div>
 
-  <script src="help-content.js?v=2026101712"></script>
-  <script src="settings.js?v=2026101712"></script>
+  <script src="help-content.js?v=2026111116"></script>
+  <script src="settings.js?v=2026111116"></script>
 </body>
 </html>

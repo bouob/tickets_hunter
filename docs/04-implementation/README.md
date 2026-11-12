@@ -1,7 +1,7 @@
 # 平台實作參考 (Implementation Reference)
 
 **文件說明**：各售票平台的實作參考指南，包含 TixCraft、KKTIX、iBon、TicketPlus、FamiTicket、Cityline、KHAM、HKTicketing、FunOne、FANSI GO 等平台的具體實作方法、特性分析與完成度評估。
-**最後更新**：2026-03-05
+**最後更新**：2026-10-29
 
 ---
 
@@ -100,9 +100,10 @@
 
 **核心特性**：
 - ASP.NET 傳統架構，頁面結構穩定
-- 完整的座點陣圖選擇支援
+- 完整的座位圖選擇支援
 - OCR 驗證碼辨識
 - 支援 UDN 聯合報系統
+- 中職售票（中信兄弟／味全龍／富邦悍將，以及同系統的籃球隊中信特攻／富邦勇士）的 UTK RWD 版併入同一流程，含 Cookie 與登入彈窗（尚未真站實測）
 
 **實作難度**：⭐⭐⭐ (高)
 

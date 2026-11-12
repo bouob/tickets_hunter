@@ -36,6 +36,8 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 | 🇹🇼 台灣 | 拓元 TixCraft、添翼 Teamear、獨立音樂 Indievox、KKTIX、遠大 TicketPlus、ibon、寬宏 KHAM、年代售票、UDN 售票網、全網 FamiTicket、FANSI GO、FunOne |
 | 🌏 海外 | Ticketmaster SG、Cityline 買飛、HKTicketing 快達票、澳門銀河、Ticketek |
 
+🧪 **已支援、尚未真站實測**：中職售票（中信兄弟、味全龍、富邦悍將，以及同系統的籃球隊中信特攻、富邦勇士；寬宏系統的新版網站，開發時正值季後、沒有賽事）、Ticketmaster PH（選張數頁未驗證）
+
 ---
 
 ## ⚖️ 法律聲明
@@ -105,6 +107,7 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 | 使用方式 | 適用對象 | 教學連結 |
 |----------|----------|----------|
 | **🟢 執行檔版本** | 一般使用者（推薦） | [安裝與首次執行](guide/installation.md) |
+| **🍎 macOS 版** | Apple Silicon Mac | [macOS 使用指南](guide/macos.md)（首次需解除 Gatekeeper 限制） |
 | **🔴 Python 原始碼** | 開發者、進階使用者 | [快速入門指南](guide/quick-start.md) |
 
 ### 最簡步驟
@@ -138,12 +141,12 @@ tickets_hunter/
 │   │   ├── nodriver_tixcraft.py    # 主迴圈與 URL 路由（zendriver）
 │   │   ├── nodriver_common.py      # 共用瀏覽器基礎設施（DOM 工具、Cloudflare）
 │   │   ├── platforms/              # 各平台獨立模組
-│   │   │   ├── tixcraft.py         # 拓元 / Ticketmaster SG / 添翼 / 獨立音樂
+│   │   │   ├── tixcraft.py         # 拓元 / Ticketmaster SG、PH / 添翼 / 獨立音樂
 │   │   │   ├── kktix.py            # KKTIX
 │   │   │   ├── ibon.py             # ibon（購票 / 旅遊 / 會展）
 │   │   │   ├── ticketplus.py       # 遠大 TicketPlus
 │   │   │   ├── famiticket.py       # 全網 FamiTicket
-│   │   │   ├── kham.py             # 寬宏 / 年代售票 / UDN 售票網
+│   │   │   ├── kham.py             # 寬宏 / 年代售票 / UDN 售票網 / 中職售票
 │   │   │   ├── fansigo.py          # FANSI GO
 │   │   │   ├── cityline.py         # Cityline 買飛
 │   │   │   ├── hkticketing.py      # 快達票 / 澳門銀河 / Ticketek

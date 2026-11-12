@@ -14,6 +14,7 @@ import random
 import re
 import time
 import traceback
+import urllib.parse
 import webbrowser
 
 from zendriver import cdp
@@ -65,6 +66,7 @@ __all__ = [
     "nodriver_ticket_close_dialog_with_retry",
     "nodriver_ticket_allow_not_adjacent_seat",
     "nodriver_ticket_switch_to_auto_seat",
+    "is_utk_rwd_url",
 ]
 
 # Seconds to let a reloaded page settle before reading its DOM: tab.reload()
@@ -111,13 +113,411 @@ _state = {}
 
 
 # ====================================================================================
+# UTK RWD sites: 中職售票 (中信兄弟 / 味全龍 / 富邦悍將) and the basketball teams on the
+# same system (中信特攻 under tix.ctbcsports.com/DEA, 臺北富邦勇士)
+# The ASP.NET Core rewrite of the kham UTK system. Pages keep the kham ids
+# (#CHK, setType, table#TBL, addShoppingCart, #dialog-message) but drop the
+# /application/utkNN/ prefix and .aspx (/UTK0201_?PRODUCT_ID=), may sit under a
+# virtual directory (/BROTHERS/UTK0201_), and log in through a popup that every
+# page carries (#MASTER_ACCOUNT, #MASTER_PASSWORD, #MASTER_CHK, doMasterLogin()).
+# ====================================================================================
+
+# Per-site differences, keyed by host. cookie_prefix picks the cookies taken from
+# accounts.cpbl_cookie for that host, so one pasted string never hands one
+# team's session cookies to another team's site.
+CONST_UTK_RWD_TENANTS = {
+    "tix.ctbcsports.com": {"cookie_prefix": "CTBC_"},       # 中信兄弟 (+ /DEA 中信特攻)
+    "tix.wdragons.com": {"cookie_prefix": "WDRAGONS|"},     # 味全龍
+    "guardians.fami.life": {"cookie_prefix": "FBGUARDIANS|"},  # 富邦悍將
+    "tix.fubonbraves.com": {"cookie_prefix": "FUBONBRAVES|"},  # 臺北富邦勇士 (PLG)
+}
+CONST_UTK_RWD_PAGE_PATTERN = re.compile(r"UTK(\d{2})(\d{2})_(\w*)", re.IGNORECASE)
+CONST_UTK_RWD_HOME_PAGE = "utk0101_"
+# 味全龍's cart is /UTK0206_02, the other two /UTK0206_: both are the checkout.
+CONST_UTK_RWD_CART_PAGE = "utk0206_"
+# Pages that add to cart; a guest there only gets "【帳號】不為空值！" back.
+CONST_UTK_RWD_ORDER_PAGES = ("/utk0205_.aspx", "/utk0202_.aspx", "/utk0201_001.aspx")
+# The popup copy lists every performance; the inline table stops at four.
+CONST_UTK_RWD_DATE_ROW_SELECTORS = (
+    "#PerformanceListTable_popup table.ss tr",
+    "#PerformanceListTable table.ss tr",
+)
+CONST_UTK_RWD_AREA_ROW_SELECTOR = "table.f1 > tbody > tr.saleTr"
+# A free RWD seat has no class: it is a #TBL cell drawn with seat-empty_N.png
+# (N = facing) and titled with the seat name; taken seats get no title.
+CONST_UTK_RWD_EMPTY_SEAT_IMG = "seat-empty_"
+# Wrong OCR reads are expected, but a wrong password must not lock the account.
+CONST_UTK_RWD_LOGIN_MAX_TRIES = 5
+CONST_UTK_RWD_LOGIN_RETRY_SEC = 3.0
+
+
+def get_utk_rwd_tenant(url_or_host):
+    """The CONST_UTK_RWD_TENANTS entry for a URL or a bare host, else None."""
+    text = (url_or_host or "").strip().lower()
+    host = urllib.parse.urlsplit(text).hostname if "//" in text else text.split(":")[0]
+    return CONST_UTK_RWD_TENANTS.get(host or "")
+
+
+def is_utk_rwd_url(url_or_host):
+    """True for a page (or host) of one of the 中職 UTK RWD ticketing sites."""
+    return get_utk_rwd_tenant(url_or_host) is not None
+
+
+def normalize_utk_rwd_url(url):
+    """Rewrite an RWD URL into the kham .aspx layout, for page-type checks only.
+
+    https://tix.ctbcsports.com/BROTHERS/UTK0201_?PRODUCT_ID=X
+      -> https://tix.ctbcsports.com/application/utk02/utk0201_.aspx?PRODUCT_ID=X
+    so the kham checks ('utk0201_.aspx?product_id=', len(url.split('/')) == 6,
+    url.split('/')[5]) read RWD pages as they are. Never navigate to the
+    result: the RWD sites serve no such path. Other URLs come back untouched.
+    """
+    if not is_utk_rwd_url(url):
+        return url
+    parts = urllib.parse.urlsplit(url)
+    segments = [s for s in parts.path.split("/") if s]
+    page = segments[-1] if segments else ""
+    match = CONST_UTK_RWD_PAGE_PATTERN.fullmatch(page)
+    if match:
+        group = match.group(1)
+        name = f"utk{group}{match.group(2)}_"
+        if name != CONST_UTK_RWD_CART_PAGE:
+            name += match.group(3).lower()
+    elif not segments or (len(segments) == 1 and page.isalpha()):
+        # Site root or a bare virtual directory (/BROTHERS): both serve the home page.
+        group, name = "01", CONST_UTK_RWD_HOME_PAGE
+    else:
+        return url  # /PerformanceListControl, /Home/pic, legacy .aspx paths
+    # A '/' in the query (STARTDATE=2026/10/17) would shift the split('/') indexes.
+    query = parts.query.replace("/", "%2F")
+    normalized = f"{parts.scheme}://{parts.netloc}/application/utk{group}/{name}.aspx"
+    return normalized + (f"?{query}" if query else "")
+
+
+def parse_cookie_string(raw):
+    """Split a pasted cookie string ("a=1; b=2") into (name, value) pairs.
+
+    Takes a leading "Cookie:" and newlines between pairs; a value keeps any '='
+    it contains; a repeated name keeps its last value.
+    """
+    text = (raw or "").strip()
+    if text.lower().startswith("cookie:"):
+        text = text[len("cookie:"):]
+    pairs = {}
+    for chunk in re.split(r"[;\r\n]+", text):
+        name, sep, value = chunk.partition("=")
+        name = name.strip()
+        if sep and name:
+            pairs[name] = value.strip()
+    return list(pairs.items())
+
+
+def filter_utk_rwd_cookies(pairs, url):
+    """Keep the pairs named with the current site's cookie prefix only."""
+    tenant = get_utk_rwd_tenant(url)
+    if tenant is None:
+        return []
+    prefix = tenant["cookie_prefix"]
+    return [(name, value) for name, value in pairs if name.startswith(prefix)]
+
+
+def _pick_utk_rwd_amount_row(rows, config_dict, match_area_keyword=True):
+    """The UTK0202 ticket row to buy, or None when none fits.
+
+    rows: [{"key", "area", "type", "left"}] for the rows still on sale. Rows hit
+    by keyword_exclude, or with fewer seats left than ticket_number, drop out.
+    With match_area_keyword the area keywords are tried in order (space = AND)
+    and a miss falls back to area_auto_select.mode only if area_auto_fallback.
+    """
+    ticket_number = int(config_dict.get("ticket_number", 1))
+    candidates = []
+    for row in rows or []:
+        text = f"{row.get('area', '')} {row.get('type', '')}".strip()
+        if not row.get("key") or util.reset_row_text_if_match_keyword_exclude(config_dict, text):
+            continue
+        left = str(row.get("left", "")).strip()
+        if left.isdigit() and int(left) < ticket_number:
+            continue
+        candidates.append((row, util.format_keyword_string(text)))
+    if not candidates:
+        return None
+    area_select = config_dict.get("area_auto_select", {})
+    keyword = area_select.get("area_keyword", "").strip() if match_area_keyword else ""
+    if keyword:
+        for item in util.parse_keyword_string_to_array(keyword):
+            words = [util.format_keyword_string(w) for w in item.split(" ") if w]
+            for row, text in candidates:
+                if words and all(w in text for w in words):
+                    return row
+        if not config_dict.get("area_auto_fallback", False):
+            return None
+    mode = area_select.get("mode", CONST_FROM_TOP_TO_BOTTOM)
+    return util.get_target_item_from_matched_list([row for row, _ in candidates], mode)
+
+
+CONST_UTK_RWD_LOGIN_STATE_JS = '''
+    (() => (typeof _ul === 'undefined') ? null : String(_ul))()
+'''
+
+CONST_UTK_RWD_CLOSE_DIALOG_JS = '''
+    (() => {
+        const wraps = Array.from(document.querySelectorAll('div.ui-dialog'));
+        const open = wraps.find((w) => window.getComputedStyle(w).display !== 'none');
+        const btn = open ? open.querySelector('div.ui-dialog-buttonset > button.ui-button') : null;
+        if (btn) btn.click();
+        return !!btn;
+    })()
+'''
+
+CONST_UTK_RWD_LOGIN_OPEN_JS = '''
+    (() => {
+        const btn = document.querySelector('#userbutton');
+        if (!btn || !document.querySelector('#MASTER_ACCOUNT')) return false;
+        // The site's own "please log in" path: opens #popupuser and loads #master_chk_pic.
+        btn.click();
+        const img = document.querySelector('#master_chk_pic');
+        const refresh = document.querySelector('#master_chang_pic');
+        if (img && !img.getAttribute('src') && refresh) refresh.click();
+        return true;
+    })()
+'''
+
+CONST_UTK_RWD_LOGIN_REFRESH_CAPTCHA_JS = '''
+    (() => {
+        const refresh = document.querySelector('#master_chang_pic');
+        if (refresh) refresh.click();
+        return !!refresh;
+    })()
+'''
+
+CONST_UTK_RWD_LOGIN_CAPTCHA_JS = '''
+    (() => {
+        const img = document.querySelector('#master_chk_pic');
+        if (!img || !img.getAttribute('src') || !img.complete || !img.naturalWidth) return null;
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        return canvas.toDataURL();
+    })()
+'''
+
+CONST_UTK_RWD_AMOUNT_ROWS_JS = '''
+    (() => Array.from(document.querySelectorAll('input.numbox[type="number"][id="AMOUNT"]')).map((input) => {
+        const key = input.getAttribute('key') || '';
+        const read = (suffix) => {
+            const el = document.getElementById(key + suffix);
+            return el ? el.value : '';
+        };
+        return { key: key, area: read('_PRICE_AREA_NAME'), type: read('_NAME'), left: read('_LAST_AMOUNT') };
+    }))()
+'''
+
+
+async def _utk_rwd_login_state(tab):
+    """'in' or 'out' from the page's _ul flag ('0' is a guest: the test the
+    site's own scripts use); None while the page has not defined it."""
+    try:
+        flag = await tab.evaluate(CONST_UTK_RWD_LOGIN_STATE_JS)
+    except Exception:
+        return None
+    if flag is None or not isinstance(flag, (str, int)):
+        return None
+    return "out" if str(flag) == "0" else "in"
+
+
+async def _utk_rwd_wait_for(tab, script, timeout):
+    """Poll a page condition; the RWD lists and maps arrive by XHR after load."""
+    for _ in range(max(1, int(timeout / 0.2))):
+        try:
+            if await tab.evaluate(script):
+                return True
+        except Exception:
+            pass
+        await tab.sleep(0.2)
+    return False
+
+
+def _utk_rwd_note_once(debug, key, message):
+    """Log a waiting-state message once instead of on every main-loop pass."""
+    notes = _state.setdefault("utk_rwd_notes", set())
+    if key not in notes:
+        notes.add(key)
+        debug.log(message)
+
+
+async def nodriver_utk_rwd_cookie_login(tab, config_dict, url):
+    """Issue #437: log in with accounts.cpbl_cookie on the current RWD site.
+
+    Only cookies named with this site's prefix are set, host-only on this host,
+    after deleting same-name cookies; the page reloads once and _ul tells whether
+    the session took. Logs carry cookie counts, never cookie values.
+    """
+    debug = util.create_debug_logger(config_dict)
+    raw = config_dict.get("accounts", {}).get("cpbl_cookie", "")
+    pairs = filter_utk_rwd_cookies(parse_cookie_string(raw), url)
+    host = urllib.parse.urlsplit(url).hostname
+    if not pairs:
+        debug.log(f"[CPBL COOKIE] 中職售票 Cookie has no cookie for {host}")
+        return False
+    site_url = f"https://{host}/"
+    try:
+        for name, value in pairs:
+            await tab.send(cdp.network.delete_cookies(name=name, url=site_url))
+            await tab.send(cdp.network.set_cookie(
+                name=name, value=value, url=site_url, path="/", secure=True,
+                http_only=True, same_site=cdp.network.CookieSameSite.LAX))
+        debug.log(f"[CPBL COOKIE] Set {len(pairs)} cookie(s) on {host}, reloading")
+        await tab.reload()
+    except Exception as exc:
+        debug.log(f"[CPBL COOKIE] Cookie injection failed: {type(exc).__name__}")
+        return False
+    # A read right after reload() can still see the old document.
+    await tab.sleep(1.0)
+    await _utk_rwd_wait_for(tab, CONST_UTK_RWD_LOGIN_STATE_JS, 4.0)
+    is_logged_in = await _utk_rwd_login_state(tab) == "in"
+    debug.log(f"[CPBL COOKIE] Logged in after cookie: {is_logged_in}")
+    return is_logged_in
+
+
+async def _utk_rwd_read_login_captcha(tab):
+    """The popup captcha as PNG bytes, once #master_chk_pic has loaded."""
+    for _ in range(10):
+        data_url = await tab.evaluate(CONST_UTK_RWD_LOGIN_CAPTCHA_JS)
+        if isinstance(data_url, str) and "," in data_url:
+            return base64.b64decode(data_url.split(",", 1)[1])
+        await tab.sleep(0.2)
+    return None
+
+
+async def nodriver_utk_rwd_login(tab, config_dict, ocr, account, password):
+    """Log in through the RWD popup: open it, OCR #master_chk_pic, then call
+    doMasterLogin(). Without OCR the popup is left filled for the user.
+    Returns True once the login was submitted."""
+    debug = util.create_debug_logger(config_dict)
+    await tab.evaluate(CONST_UTK_RWD_CLOSE_DIALOG_JS)  # a previous wrong-captcha reply
+    if not await tab.evaluate(CONST_UTK_RWD_LOGIN_OPEN_JS):
+        debug.log("[CPBL LOGIN] Login popup not found on this page")
+        return False
+    answer = ""
+    if ocr:
+        img_bytes = await _utk_rwd_read_login_captcha(tab)
+        try:
+            answer = (ocr.classification(img_bytes) or "").strip() if img_bytes else ""
+        except Exception as exc:
+            debug.log(f"[CPBL LOGIN] OCR failed: {exc}")
+        if len(answer) != 4:
+            debug.log(f"[CPBL LOGIN] Unusable captcha read '{answer}', retrying with a new image")
+            # LOGIN_OPEN_JS only loads an image while the popup has none, so ask
+            # for the next one here or the retry reads this same image again.
+            await tab.evaluate(CONST_UTK_RWD_LOGIN_REFRESH_CAPTCHA_JS)
+            return False
+    values = {"MASTER_ACCOUNT": account, "MASTER_PASSWORD": password}
+    if answer:
+        values["MASTER_CHK"] = answer
+    submitted = await tab.evaluate(f'''
+        (() => {{
+            const values = {json.dumps(values)};
+            for (const id of Object.keys(values)) {{
+                const el = document.getElementById(id);
+                if (!el) return false;
+                el.value = values[id];
+                el.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            }}
+            if (!{json.dumps(bool(answer))} || typeof doMasterLogin !== 'function') return false;
+            doMasterLogin();
+            return true;
+        }})()
+    ''')
+    # The account is a national ID or passport number: never log any part of it.
+    debug.log("[CPBL LOGIN] " + (
+        "submitted" if submitted is True else "filled; enter the captcha and log in by hand"))
+    return submitted is True
+
+
+async def nodriver_utk_rwd_ensure_login(tab, url, config_dict, ocr):
+    """Keep the RWD session logged in. True means: skip this page this pass.
+
+    Order (issue #437): accounts.cpbl_cookie once per site, then the popup with
+    accounts.cpbl_account, at most CONST_UTK_RWD_LOGIN_MAX_TRIES submissions
+    CONST_UTK_RWD_LOGIN_RETRY_SEC apart. A guest with nothing left to try may
+    still browse, but order pages wait for a manual login.
+    """
+    if await _utk_rwd_login_state(tab) != "out":
+        return False
+    debug = util.create_debug_logger(config_dict)
+    host = urllib.parse.urlsplit(url).hostname
+    accounts = config_dict.get("accounts", {})
+    cookie_hosts = _state.setdefault("utk_rwd_cookie_hosts", set())
+    if accounts.get("cpbl_cookie", "").strip() and host not in cookie_hosts:
+        cookie_hosts.add(host)
+        await nodriver_utk_rwd_cookie_login(tab, config_dict, url)
+        return True
+    account = accounts.get("cpbl_account", "").strip()
+    tries = _state.setdefault("utk_rwd_login_tries", {})
+    count, last = tries.get(host, (0, 0.0))
+    if account and count < CONST_UTK_RWD_LOGIN_MAX_TRIES:
+        if time.time() - last >= CONST_UTK_RWD_LOGIN_RETRY_SEC:
+            submitted = await nodriver_utk_rwd_login(
+                tab, config_dict, ocr, account, accounts.get("cpbl_password", "").strip())
+            # Without OCR the popup is the user's now: no refills over their typing.
+            count = count + 1 if submitted else (count if ocr else CONST_UTK_RWD_LOGIN_MAX_TRIES)
+            tries[host] = (count, time.time())
+        return True
+    if account:
+        _utk_rwd_note_once(debug, f"gave_up:{host}", "[CPBL LOGIN] Automatic login stopped; please log in by hand")
+    if any(page in url.lower() for page in CONST_UTK_RWD_ORDER_PAGES):
+        _utk_rwd_note_once(debug, f"guest:{host}", "[CPBL LOGIN] Order page needs a logged-in member; waiting for login")
+        return True
+    return False
+
+
+async def nodriver_utk_rwd_assign_ticket_number(tab, url, config_dict):
+    """RWD UTK0202: pick the ticket row and raise its count to ticket_number.
+
+    中信's date list links straight to a UTK0202 that lists every area of the
+    performance, each with its own #AMOUNT, so the area keyword is matched here
+    (area name + ticket type). A UTK0202 reached from an area click has its area
+    fixed already: there only keyword_exclude applies. Sold-out areas render no
+    #AMOUNT input, so they never become candidates.
+    """
+    debug = util.create_debug_logger(config_dict)
+    rows = await tab.evaluate(CONST_UTK_RWD_AMOUNT_ROWS_JS)
+    rows = rows if isinstance(rows, list) else []
+    match_area = "performance_price_area_id=" not in url.lower()
+    row = _pick_utk_rwd_amount_row(rows, config_dict, match_area)
+    if row is None:
+        debug.log(f"[CPBL AMOUNT] No ticket row fits ({len(rows)} on sale)")
+        return False
+    value = await tab.evaluate(f'''
+        (() => {{
+            const key = {json.dumps(row["key"])};
+            const target = {int(config_dict["ticket_number"])};
+            const input = Array.from(document.querySelectorAll('input.numbox[id="AMOUNT"]'))
+                .find((el) => el.getAttribute('key') === key);
+            if (!input) return null;
+            for (let n = parseInt(input.value) || 0; n < target; n++) {{
+                if (typeof opera1 === 'function') {{
+                    opera1(key, true);
+                }} else {{
+                    input.value = String(n + 1);
+                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                }}
+            }}
+            return input.value;
+        }})()
+    ''')
+    debug.log(f"[CPBL AMOUNT] {row.get('area', '')} {row.get('type', '')} -> {value}")
+    return str(value or "0").isdigit() and int(value or 0) > 0
+
+
+# ====================================================================================
 # Kham Platform (kham.com.tw / ticket.com.tw / udnfunlife.com)
 # ====================================================================================
 
 async def nodriver_kham_login(tab, account, password, ocr=None, config_dict=None):
     """
     Kham platform login with OCR captcha support
-    Reference: chrome_tixcraft.py kham_login (line 5492-5540)
     """
     ret = False
     debug = util.create_debug_logger(config_dict)
@@ -252,7 +652,6 @@ async def nodriver_kham_login(tab, account, password, ocr=None, config_dict=None
 async def nodriver_kham_go_buy_redirect(tab, domain_name):
     """
     Click the "Go Buy" button on product page
-    Reference: chrome_tixcraft.py kham_go_buy_redirect (line 8449-8461)
     """
     is_button_clicked = False
 
@@ -307,7 +706,6 @@ async def nodriver_kham_go_buy_redirect(tab, domain_name):
 async def nodriver_kham_check_realname_dialog(tab, config_dict):
     """
     Check and handle realname notification dialog
-    Reference: chrome_tixcraft.py kham_check_realname_dialog (line 9592-9621)
     """
     debug = util.create_debug_logger(config_dict)
     is_realname_dialog_found = False
@@ -369,7 +767,6 @@ async def nodriver_kham_check_realname_dialog(tab, config_dict):
 async def nodriver_kham_allow_not_adjacent_seat(tab, config_dict):
     """
     Check the "allow not adjacent seat" checkbox
-    Reference: chrome_tixcraft.py kham_allow_not_adjacent_seat (line 9623-9642)
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -386,7 +783,6 @@ async def nodriver_kham_allow_not_adjacent_seat(tab, config_dict):
 async def nodriver_kham_switch_to_auto_seat(tab):
     """
     Switch to auto seat selection mode
-    Reference: chrome_tixcraft.py kham_switch_to_auto_seat (line 9230-9266)
     """
     is_switch_to_auto_seat = False
 
@@ -476,7 +872,6 @@ async def _handle_post_submit_dialog(tab, config_dict):
 async def nodriver_kham_check_captcha_text_error(tab, config_dict):
     """
     Check captcha error message dialog
-    Reference: chrome_tixcraft.py kham_check_captcha_text_error (line 9565-9590)
     """
     debug = util.create_debug_logger(config_dict)
     is_reset_password_text = False
@@ -509,7 +904,6 @@ async def nodriver_kham_check_captcha_text_error(tab, config_dict):
 async def nodriver_kham_product(tab, domain_name, config_dict):
     """
     Product page processing - call date auto select
-    Reference: chrome_tixcraft.py kham_product (line 8646-8660)
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -529,7 +923,6 @@ async def nodriver_kham_product(tab, domain_name, config_dict):
 async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
     """
     Date auto selection with keyword matching and mode fallback
-    Reference: chrome_tixcraft.py hkam_date_auto_select (line 8463-8644)
     Supports: kham.com.tw, ticket.com.tw, udnfunlife.com
     """
     debug = util.create_debug_logger(config_dict)
@@ -553,10 +946,15 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
         selector = "div.description > table.table.table-striped.itable > tbody > tr"
     elif 'udnfunlife.com' in domain_name:
         selector = "div.yd_session-block"
+    is_rwd = is_utk_rwd_url(domain_name)
+    selectors = CONST_UTK_RWD_DATE_ROW_SELECTORS if is_rwd else (selector,)
 
     area_list = None
     try:
-        area_list = await tab.query_selector_all(selector)
+        for each_selector in selectors:
+            area_list = await tab.query_selector_all(each_selector)
+            if area_list:
+                break
     except Exception as exc:
         debug.log(f"query_selector_all error: {exc}")
 
@@ -583,6 +981,14 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                 if '尚未開賣' not in row_html:
                     continue
 
+            # RWD rows: 購買 opens the area page via location.href; the other
+            # button kind, VipSellCheck(), is a member pre-sale (out of scope).
+            if is_rwd:
+                if 'location.href' in row_html:
+                    formated_area_list.append(row)
+                    formated_area_list_text.append(row_text)
+                continue
+
             # Filter: check if button exists (for kham/ticket)
             if 'udnfunlife' not in domain_name:
                 if '<button' in row_html:
@@ -599,7 +1005,6 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                     continue
 
             # Filter: check price availability (for kham/ticket)
-            # Reference: chrome_tixcraft.py line 8558-8568
             if 'udnfunlife' not in domain_name:
                 if '<td' in row_html:
                     disabled_marker = '<del>' if 'ticket.com' in domain_name else '"lightblue"'
@@ -757,7 +1162,13 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                     button_selector = 'div.goNext'
 
                 btn = await target_row.query_selector(button_selector)
-                if btn:
+                if btn and is_rwd:
+                    # The full RWD list sits in a hidden popup, where
+                    # Element.click() finds no position; the onclick runs anyway.
+                    await btn.apply('(el) => el.click()')
+                    is_date_assign_by_bot = True
+                    debug.log("Date buy button clicked successfully")
+                elif btn:
                     await btn.click()
                     is_date_assign_by_bot = True
                     debug.log("Date buy button clicked successfully")
@@ -775,7 +1186,7 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                         debug.log("Date list empty, will auto reload after delay...")
 
                 # Wait before reload (use config interval)
-                reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0.0)
+                reload_interval = util.get_reload_interval(config_dict)
                 if reload_interval > 0:
                     await tab.sleep(reload_interval)
                 else:
@@ -793,7 +1204,6 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
 async def nodriver_kham_keyin_captcha_code(tab, answer="", auto_submit=False):
     """
     Input captcha code manually or auto-submit
-    Reference: chrome_tixcraft.py kham_keyin_captcha_code (line 9359-9424)
     """
     is_verifyCode_editing = False
 
@@ -906,7 +1316,6 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                                          allow_fallback=True):
     """
     Area/ticket type auto selection with table and dropdown support
-    Reference: chrome_tixcraft.py kham_area_auto_select (line 8662-8925)
 
     allow_fallback=False keeps a missed keyword from falling back to any row,
     so a caller trying several keywords can defer the fallback to the last one.
@@ -924,9 +1333,9 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
     # moves on to the next keyword, with no reload.
     fallback_deferred = config_dict.get('area_auto_fallback', False) and not allow_fallback
 
-    # NOTE: area_keyword_item is already a SINGLE keyword string from upper layer JSON parsing (line 13180)
-    # Upper layer at line 13180: area_keyword_array = json.loads("[" + area_keyword + "]")
-    # Then loops through and passes each keyword individually to this function (line 13185-13187)
+    # NOTE: area_keyword_item is already a SINGLE keyword string: the caller
+    # nodriver_kham_performance splits area_keyword with util.parse_keyword_string_to_array
+    # and passes each keyword individually to this function.
     # Therefore, we should NOT split by comma again here - just clean the quotes
     if area_keyword_item and len(area_keyword_item) > 0:
         try:
@@ -1146,7 +1555,6 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
 
     else:
         # Handle table mode - use DOM element operations (similar to date_auto_select)
-        # Reference: chrome_tixcraft.py kham_area_auto_select (line 8781-8925)
 
         # Determine selector
         selector = "table#salesTable > tbody > tr[class='status_tr']"
@@ -1156,6 +1564,9 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
             # UDN UTK0204: table.status > tr.status_tr (verified via MCP)
             # Soldout items have class="status_tr Soldout"
             selector = "table.status > tbody > tr.status_tr"
+        elif is_utk_rwd_url(domain_name):
+            # Columns by data-title (票區/票價/空位); a sold-out row reads 售完
+            selector = CONST_UTK_RWD_AREA_ROW_SELECTOR
 
         # Get all area rows using query_selector_all
         area_list = None
@@ -1294,7 +1705,7 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                 debug.log(f"No target area row selected from {len(matched_blocks) if matched_blocks else 0} matched blocks")
 
         if target_row:
-            # Click target row directly (like Chrome version line 8891)
+            # Click target row directly
             # For Kham, the entire row is clickable
             try:
                 debug.log(f"Clicking target area row...")
@@ -1341,7 +1752,6 @@ async def nodriver_kham_refresh_captcha(tab, config_dict):
 async def nodriver_kham_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enable, previous_answer, model_name):
     """
     Auto OCR captcha recognition
-    Reference: chrome_tixcraft.py kham_auto_ocr (line 9426-9530)
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -1403,7 +1813,6 @@ async def nodriver_kham_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
 async def nodriver_kham_captcha(tab, config_dict, ocr, model_name):
     """
     Captcha main control with retry logic
-    Reference: chrome_tixcraft.py kham_captcha (line 9532-9563)
     """
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
@@ -1447,7 +1856,6 @@ async def nodriver_kham_captcha(tab, config_dict, ocr, model_name):
 async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_name):
     """
     Performance page processing - integrate area selection, captcha, and ticket number
-    Reference: chrome_tixcraft.py kham_performance (line 9307-9356)
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -1530,7 +1938,7 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
         # Wait AFTER the reload: a DOM read before the new document parses sees
         # zero area rows and reloads forever. The same wait throttles the refresh
         # rate (#322); the settle floor applies even when the interval is 0.
-        reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0.0)
+        reload_interval = util.get_reload_interval(config_dict)
         await tab.sleep(max(reload_interval, CONST_KHAM_RELOAD_SETTLE))
         # The page is reloading and the current DOM is stale, so skip the
         # captcha/submit attempt this round. Returning is_captcha_sent=False
@@ -1552,8 +1960,9 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
                 return is_price_assign_by_bot, False
             await tab.sleep(0.5)
 
-    # udn uses reCaptcha, skip for now
-    if 'udnfunlife' not in domain_name:
+    # udn uses reCaptcha, skip for now. An RWD area page has no order captcha
+    # (it sits on the seat/amount page); its #MASTER_CHK belongs to the login popup.
+    if 'udnfunlife' not in domain_name and not is_utk_rwd_url(domain_name):
         is_captcha_sent = await nodriver_kham_captcha(tab, config_dict, ocr, model_name)
 
     return is_price_assign_by_bot, is_captcha_sent
@@ -1561,7 +1970,6 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
 async def nodriver_kham_main(tab, url, config_dict, ocr):
     """
     Main control flow for Kham platform with URL routing
-    Reference: chrome_tixcraft.py kham_main (line 9644-9900)
     """
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
@@ -1574,8 +1982,16 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             "udn_quick_buy_submitted": False,
         })
 
+    # 中職 RWD sites: every page-type check below reads the kham-layout URL;
+    # raw_url stays the address to show or open.
+    raw_url = url
+    is_rwd = is_utk_rwd_url(url)
+    url = normalize_utk_rwd_url(url)
     domain_name = url.split('/')[2]
     debug = util.create_debug_logger(config_dict)
+
+    if is_rwd and await nodriver_utk_rwd_ensure_login(tab, url, config_dict, ocr):
+        return tab
 
     # Home page handling
     home_url_list = [
@@ -1585,6 +2001,8 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
         'https://ticket.com.tw/application/utk01/utk0101_.aspx',
         'https://tickets.udnfunlife.com/application/utk01/utk0101_.aspx'
     ]
+    if is_rwd:
+        home_url_list.append(normalize_utk_rwd_url(f"https://{domain_name}/").lower())
 
     for each_url in home_url_list:
         if each_url == url.lower():
@@ -1721,8 +2139,10 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             # Redirect to target page after login
             config_homepage = config_dict["homepage"]
 
-            # Check if config_homepage is also a home page URL (skip redirect to avoid loop)
-            config_homepage_normalized = config_homepage.lower().rstrip('/') if config_homepage else ""
+            # Check if config_homepage is also a home page URL (skip redirect to avoid loop).
+            # An RWD homepage is compared in the kham layout, as url is.
+            config_homepage_layout = normalize_utk_rwd_url(config_homepage) if config_homepage else ""
+            config_homepage_normalized = config_homepage_layout.lower().rstrip('/')
             is_config_homepage_also_home = any(
                 config_homepage_normalized == each.rstrip('/')
                 for each in home_url_list
@@ -1733,7 +2153,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             ]
 
             # Redirect only if homepage is different AND not a home page URL
-            if config_homepage and not is_config_homepage_also_home and config_homepage.lower() != url.lower():
+            if config_homepage and not is_config_homepage_also_home and config_homepage_layout.lower() != url.lower():
                 debug.log(f"[KHAM LOGIN] Redirecting to target: {config_homepage}")
                 try:
                     await tab.get(config_homepage)
@@ -1746,8 +2166,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
     await nodriver_kham_check_realname_dialog(tab, config_dict)
 
     # KHAM UTK0205 seat selection page (graphical seat map with ticket type buttons)
-    # Reference: ticket.com.tw logic (line 13561) adapted for KHAM
-    if "kham.com.tw" in url and 'utk0205' in url.lower():
+    if ("kham.com.tw" in url or is_rwd) and 'utk0205' in url.lower():
         debug.log("Detected KHAM UTK0205 seat selection page")
 
         is_seat_selection_success = await nodriver_kham_seat_main(tab, config_dict, ocr, domain_name)
@@ -1803,8 +2222,16 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
         # Stage 4: select the correct performance row (keyword_exclude + mode aware)
         await nodriver_kham_date_auto_select(tab, domain_name, config_dict)
 
+    # RWD product page: the performance list itself, filled in by XHR after load.
+    # It has no buy button or captcha of its own, so the kham branch below is skipped.
+    if is_rwd and 'utk0201_.aspx?product_id=' in url.lower():
+        list_ready = await _utk_rwd_wait_for(
+            tab, "(() => !!document.querySelector('#PerformanceListTable table.ss'))()", 3.0)
+        if list_ready and config_dict["date_auto_select"]["enable"]:
+            await nodriver_kham_product(tab, domain_name, config_dict)
+
     # Product page (UTK0201_.aspx?product_id=)
-    if 'utk0201_.aspx?product_id=' in url.lower():
+    if 'utk0201_.aspx?product_id=' in url.lower() and not is_rwd:
         is_event_page = len(url.split('/')) == 6
 
         if is_event_page:
@@ -2460,6 +2887,12 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                     except:
                         pass
 
+                # An RWD area row only forwards its click to the seat-map <area>,
+                # which arrives by XHR; a click before that goes nowhere.
+                if is_rwd:
+                    await _utk_rwd_wait_for(
+                        tab, "(() => document.querySelectorAll('#mapdata area').length > 0)()", 2.0)
+
                 # Area selection and captcha
                 is_price_assign_by_bot, is_captcha_sent = await nodriver_kham_performance(
                     tab, config_dict, ocr, domain_name, model_name
@@ -2565,7 +2998,6 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                         debug.log(f"[SUBMIT] Click chkCart/addShoppingCart button fail: {exc}")
 
         # Ticket.com.tw UTK0205 seat selection page (graphical seat map)
-        # Reference: chrome_tixcraft.py line 9884-9892
         if "ticket.com.tw" in url and 'utk0205' in url.lower():
             debug.log("Detected ticket.com.tw UTK0205 seat selection page")
 
@@ -2660,13 +3092,26 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
         # UTK0202/UTK0205 page - Ticket number selection page
         # URL: UTK0202_.aspx?PERFORMANCE_ID=xxx&PERFORMANCE_PRICE_AREA_ID=xxx
-        # Reference: chrome_tixcraft.py line 9895-9941
-        if '.aspx?performance_id=' in url.lower() and 'performance_price_area_id=' in url.lower():
+        # RWD UTK0202 also comes without PERFORMANCE_PRICE_AREA_ID: 中信's date
+        # list opens it with every area of the performance on one page.
+        is_rwd_amount_page = is_rwd and '/utk0202_.aspx?performance_id=' in url.lower()
+        if ('.aspx?performance_id=' in url.lower() and 'performance_price_area_id=' in url.lower()) or is_rwd_amount_page:
             model_name = url.split('/')[5] if len(url.split('/')) > 5 else "UTK0202"
             if len(model_name) > 7:
                 model_name = model_name[:7]
 
             debug.log(f"Detected UTK0202/UTK0205 ticket number selection page, model: {model_name}")
+
+            # RWD: pick the row before any OCR. Nothing to buy (sold out, no
+            # keyword match) reloads at the area-page pace instead of submitting.
+            if is_rwd_amount_page and not await nodriver_utk_rwd_assign_ticket_number(tab, url, config_dict):
+                try:
+                    await tab.reload()
+                except Exception as exc:
+                    debug.log(f"[CPBL AMOUNT] Reload exception: {exc}")
+                reload_interval = util.get_reload_interval(config_dict)
+                await tab.sleep(max(reload_interval, CONST_KHAM_RELOAD_SETTLE))
+                return tab
 
             is_captcha_sent = False
 
@@ -2721,7 +3166,9 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             # Set ticket number
             # For Kham UTK0202 page, there may be multiple ticket types (原價, 身心障礙票, etc.)
             # We need to select the correct input based on ticket type name
-            if "ticket.com.tw" in url:
+            if is_rwd_amount_page:
+                pass  # assigned at the top of this branch
+            elif "ticket.com.tw" in url:
                 select_query = 'div.qty-select input[type="text"]'
                 try:
                     await tab.evaluate(f'''
@@ -3004,16 +3451,19 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                         debug.log(f"[UDN LOGIN] Attempting login with account: {udn_account[:3]}***")
                         await nodriver_kham_login(tab, udn_account, udn_password, ocr, config_dict=config_dict)
 
+                # Each account is filled only on its own site: the RWD team sites
+                # are normalized onto this same login URL, and must never receive
+                # KHAM or ticket.com.tw credentials.
                 # Kham login
                 kham_account = config_dict["accounts"]["kham_account"]
                 kham_password = config_dict["accounts"]["kham_password"].strip()
-                if len(kham_account) > 4:
+                if len(kham_account) > 4 and domain_name.endswith('kham.com.tw'):
                     await nodriver_kham_login(tab, kham_account, kham_password, ocr, config_dict=config_dict)
 
                 # Ticket.com.tw login
                 ticket_account = config_dict["accounts"]["ticket_account"]
                 ticket_password = config_dict["accounts"]["ticket_password"].strip()
-                if len(ticket_account) > 4:
+                if len(ticket_account) > 4 and domain_name.endswith('ticket.com.tw'):
                     # Use dedicated ticket login function (different selectors)
                     await nodriver_ticket_login(tab, ticket_account, ticket_password, config_dict)
 
@@ -3040,7 +3490,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
         if config_dict["advanced"]["headless"]:
             if not _state["is_popup_checkout"]:
                 import webbrowser
-                checkout_url = url
+                checkout_url = raw_url
                 print(f"搶票成功，請前往該帳號訂單查看: {checkout_url}")
                 webbrowser.open_new(checkout_url)
                 _state["is_popup_checkout"] = True
@@ -3058,7 +3508,6 @@ async def nodriver_ticket_login(tab, account, password, config_dict):
     [TESTED] 已完整測試 - T004 暫停機制補完
     [TESTED] 已完整測試 - 登入邏輯驗證
 
-    Reference: chrome_tixcraft.py ticket_login (Line 5553-5612)
     URL: https://ticket.com.tw/application/utk13/utk1306_.aspx
     """
     # 函數開始檢查暫停 [T004修正]
@@ -3359,7 +3808,8 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
             matched_button = enabled_buttons[0]
             debug.log(f"[KHAM SEAT TYPE] No keyword match, using first button: {matched_button.get('text', '')}")
 
-        # Step 6: Click matched button using CDP Input.dispatchMouseEvent (per nodriver API guide Example 3)
+        # Step 6: Click the matched button with JavaScript (btn.click()); the CDP steps below
+        # only locate and scroll the element, no mouse event is dispatched
         if matched_button is not None:
             button_text = matched_button.get('text', '')
             backend_node_id = matched_button.get('backend_node_id')
@@ -3404,8 +3854,8 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
 
                                     debug.log(f"[KHAM SEAT TYPE] Box model center: ({center_x:.1f}, {center_y:.1f})")
 
-                                    # Step 6.4: Use JavaScript to click (CDP input module not available)
-                                    # Since JavaScript fallback already works, skip CDP mouse event
+                                    # Step 6.4: The click itself is done by the JavaScript click below;
+                                    # the box model center is only logged
                                     debug.log(f"[KHAM SEAT TYPE] Using JavaScript click (CDP input unavailable)")
                                 else:
                                     debug.log(f"[KHAM SEAT TYPE] Failed to get box model content: {box_model}")
@@ -3421,7 +3871,7 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
                 else:
                     debug.log(f"[KHAM SEAT TYPE] backend_node_id is None, using JavaScript fallback")
 
-                # Fallback: If CDP click failed, try JavaScript click
+                # Click the matched button with JavaScript (the only click path)
                 if not is_seat_type_assigned:
                     try:
                         debug.log(f"[KHAM SEAT TYPE] Attempting JavaScript fallback click")
@@ -3463,8 +3913,11 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
 
     return is_seat_type_assigned
 
-async def nodriver_kham_seat_auto_select(tab, config_dict):
+async def nodriver_kham_seat_auto_select(tab, config_dict, rwd=False):
     """
+    rwd=True: a 中職 RWD seat map, whose free seats carry no 'empty' class
+    (see CONST_UTK_RWD_EMPTY_SEAT_IMG); everything else is shared.
+
     寬宏售票 - 自動選擇座位，優化策略：舞台方向智慧選座
     HTML structure:
     - Stage direction: <div class="stageDirection topright/topleft/downright/downleft/top/down/left/right">
@@ -3472,8 +3925,8 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
     - Sold seats: <td class="people up/down/left/right">
 
     舞台方向邏輯：
-    - up: 排數越小越前，每排選中間座位
-    - down: 排數越大越前，每排選中間座位
+    - up: 座位圖上越上方的排越前，每排選中間座位
+    - down: 座位圖上越下方的排越前，每排選中間座位（依畫面位置，不看排號：中信特攻的排號由球場往上遞增）
     - left: 座位號越小越前，每列選中間排
     - right: 座位號越大越前，每列選中間排
     - topright/topleft/downright/downleft: 組合方向，優先處理主要方向
@@ -3492,6 +3945,14 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
                 const ticketNumber = {ticket_number};
                 const allowNonAdjacent = {json.dumps(allow_non_adjacent)};
                 const showDebug = {json.dumps(show_debug)};
+                const rwdSeat = {json.dumps(bool(rwd))};
+                const rwdEmptyImg = {json.dumps(CONST_UTK_RWD_EMPTY_SEAT_IMG)};
+
+                function isEmptySeat(td) {{
+                    if (td.classList.contains('empty')) return true;
+                    return rwdSeat && td.hasAttribute('title') &&
+                        (td.style.backgroundImage || '').indexOf(rwdEmptyImg) >= 0;
+                }}
 
                 // Step 0: Detect stage direction
                 const stageDiv = document.querySelector('.stageDirection');
@@ -3536,7 +3997,7 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
                 Array.from(allTableRows).forEach(tr => {{
                     const allTds = tr.children;
                     for (let colIndex = 0; colIndex < allTds.length; colIndex++) {{
-                        if (allTds[colIndex].classList.contains('empty')) {{
+                        if (isEmptySeat(allTds[colIndex])) {{
                             totalAvailableSeats++;
                         }}
                     }}
@@ -3557,13 +4018,17 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
                 if (stageDirection === 'up' || stageDirection === 'down') {{
                     // GROUP BY ROW: For top/bottom stages
                     const rows = {{}};
+                    // Map position (table row index) of each row label: the
+                    // labels can run either way (中信特攻: I排 drawn above E排
+                    // with the court below), so front/back follows the map.
+                    const rowPos = {{}};
 
                     // Second pass: collect seats with REAL DOM column index
-                    Array.from(allTableRows).forEach(tr => {{
+                    Array.from(allTableRows).forEach((tr, trIndex) => {{
                         const allTds = tr.children;
                         for (let colIndex = 0; colIndex < allTds.length; colIndex++) {{
                             const seat = allTds[colIndex];
-                            if (seat.classList.contains('empty')) {{
+                            if (isEmptySeat(seat)) {{
                                 const title = seat.getAttribute('title');
                                 if (title && title.includes('排') && title.includes('號')) {{
                                     const parts = title.split('-');
@@ -3572,6 +4037,7 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
                                         const seatNum = parseInt(parts[2].replace('號', ''));
                                         if (!isNaN(rowNum) && !isNaN(seatNum)) {{
                                             if (!rows[rowNum]) rows[rowNum] = [];
+                                            if (!(rowNum in rowPos)) rowPos[rowNum] = trIndex;
                                             // CRITICAL: Use REAL colIndex as domIndex, not filtered array index
                                             rows[rowNum].push({{ elem: seat, num: seatNum, title: title, domIndex: colIndex }});
                                         }}
@@ -3621,15 +4087,10 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
                         }};
                     }}
 
-                    // Sort rows by stage direction
-                    let sortedRows;
-                    if (stageDirection === 'up') {{
-                        // Stage at top: smaller row number = closer to stage
-                        sortedRows = Object.entries(rows).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
-                    }} else {{
-                        // Stage at bottom: larger row number = closer to stage
-                        sortedRows = Object.entries(rows).sort((a, b) => parseInt(b[0]) - parseInt(a[0]));
-                    }}
+                    // Sort rows by stage direction: rows drawn nearest the stage first
+                    const sortedRows = Object.entries(rows).sort((a, b) => stageDirection === 'up'
+                        ? rowPos[a[0]] - rowPos[b[0]]    // stage at top: topmost row first
+                        : rowPos[b[0]] - rowPos[a[0]]);  // stage at bottom: lowest row first
 
                     // Select seats from front rows
                     for (const [rowNum, rowSeats] of sortedRows) {{
@@ -3700,7 +4161,7 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
                         const allTds = tr.children;
                         for (let colIndex = 0; colIndex < allTds.length; colIndex++) {{
                             const seat = allTds[colIndex];
-                            if (seat.classList.contains('empty')) {{
+                            if (isEmptySeat(seat)) {{
                                 const title = seat.getAttribute('title');
                                 if (title && title.includes('排') && title.includes('號')) {{
                                     const parts = title.split('-');
@@ -3936,7 +4397,7 @@ async def nodriver_kham_handle_seat_unavailable(tab, config_dict):
 
         # Floor the wait as the area page does: a seat map read before the
         # reload finishes is empty and would abandon an area that has seats.
-        reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0.1)
+        reload_interval = util.get_reload_interval(config_dict, default=0.1)
         wait_sec = max(reload_interval, CONST_KHAM_RELOAD_SETTLE)
         await asyncio_sleep_with_pause_check(wait_sec)
         return True
@@ -4031,7 +4492,8 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
         # Step 2: Select seats
         is_seat_assigned = False
         if is_seat_type_assigned:
-            is_seat_assigned = await nodriver_kham_seat_auto_select(tab, config_dict)
+            is_seat_assigned = await nodriver_kham_seat_auto_select(
+                tab, config_dict, rwd=is_utk_rwd_url(domain_name))
 
         if not is_seat_assigned:
             # Refresh-then-switch-area only for a loaded page whose area cannot
@@ -4508,7 +4970,6 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
     [TESTED] 已完整測試 - 排除關鍵字支援 (FR-022)
     [TESTED] 已完整測試 - 三層關鍵字匹配邏輯
 
-    Reference: chrome_tixcraft.py Line 8957-9048
     使用 CDP DOMSnapshot 穿透 DOM 結構，避免 JavaScript 載入時機問題
     """
     # 函數開始檢查暫停 [T004修正]
@@ -4779,11 +5240,12 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
 
 async def _analyze_seat_quality(tab, config_dict):
     """
-    分析座位品質並篩選候選排/列
-    職責: 偵測舞台方向、分析座位品質、排優先度排序
-    行數: ~32 行
+    偵測舞台方向並收集可用座位
+    職責: 讀取舞台方向圖示、列出可選座位的 title（評分與排序由 _find_best_seats_in_row 負責）
 
-    Returns: dict 包含舞台方向、座位資訊、品質評分
+    Returns: dict {'direction': 'up'|'down'|'left'|'right',
+                   'availableSeats': 可用座位 title 列表,
+                   'totalSeats': 可用座位數}；JS 結果非 dict 時回傳 {}
     """
     ticket_number = config_dict["ticket_number"]
     allow_non_adjacent = config_dict["advanced"]["disable_adjacent_seat"]
@@ -4863,7 +5325,6 @@ async def _find_best_seats_in_row(tab, seat_analysis, config_dict):
     """
     在候選排/列中尋找最佳座位組合
     職責: 分組座位、分析品質、排優先度排序、搜尋最佳組合
-    行數: ~35 行
 
     Args: seat_analysis 來自 _analyze_seat_quality 的結果
     Returns: dict 包含選定的座位集合
@@ -5321,7 +5782,6 @@ async def _execute_seat_selection(tab, seats_to_click, config_dict):
     """
     執行座位點擊操作
     職責: 驗證座位、點擊座位、回報結果
-    行數: ~48 行
 
     【修復 BUG-001】使用演算法選定的座位 title 列表而非簡單取前 N 個
     問題：原邏輯忽略 seats_to_click 參數，導致選到不連續座位
@@ -5544,7 +6004,7 @@ async def nodriver_ticket_seat_auto_select(tab, config_dict):
     Reference: docs/02-development/ticket_seat_selection_algorithm.md
 
     [T005 重構] 分解為 3 個子函數協調器
-    - _analyze_seat_quality(): 分析座位品質
+    - _analyze_seat_quality(): 偵測舞台方向、收集可用座位
     - _find_best_seats_in_row(): 尋找最佳座位
     - _execute_seat_selection(): 執行座位點擊
     """
@@ -5587,7 +6047,6 @@ async def nodriver_ticket_seat_main(tab, config_dict, ocr, domain_name):
     [TESTED] 已完整測試 - 主流程協調驗證
     [TESTED] 已完整測試 - 票別->座位->驗證碼->提交
 
-    Reference: chrome_tixcraft.py Line 9156-9206
     """
     # 函數開始檢查暫停 [T004修正]
     if await check_and_handle_pause(config_dict):
@@ -5911,8 +6370,7 @@ async def nodriver_ticket_allow_not_adjacent_seat(tab, config_dict):
 
     [TESTED] 已完整測試 - 非連續座位許可
 
-    Reference: chrome_tixcraft.py Line 9209-9228
-    Similar to: nodriver_check_checkbox_enhanced (Line 302)
+    Similar to: nodriver_check_checkbox_enhanced in nodriver_common.py
     """
     # 函數開始檢查暫停 [T004修正]
     if await check_and_handle_pause(config_dict):
@@ -5948,12 +6406,11 @@ async def nodriver_ticket_allow_not_adjacent_seat(tab, config_dict):
 async def nodriver_ticket_switch_to_auto_seat(tab):
     """
     切換到自動選座模式
-    Reference: chrome_tixcraft.py Line 9268-9304
     """
     is_switch_to_auto_seat = False
 
     try:
-        # Find switch button (same selector as Chrome version)
+        # Find switch button (input with value BUY_TYPE_2)
         btn = await tab.query_selector('input[value="BUY_TYPE_2"]')
 
         if btn:

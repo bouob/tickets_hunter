@@ -1,7 +1,7 @@
 # 搶票自動化標準功能定義
 
 **文件說明**：定義完整搶票程式的 12 階段標準架構、功能模組拆分規範與開發評估標準
-**最後更新**：2026-10-19
+**最後更新**：2026-11-04
 
 ---
 
@@ -128,6 +128,7 @@ config_dict["accounts"]["{platform}_password"]          # 密碼
 config_dict["accounts"]["tixcraft_sid"]                # Cookie SID（拓元專用）
 config_dict["accounts"]["ibonqware"]                   # Cookie qware（ibon專用）
 config_dict["accounts"]["funone_session_cookie"]       # Cookie（FunOne 專用）
+config_dict["accounts"]["cpbl_cookie"]                 # Cookie（中職售票，只注入目前站台的 Cookie）
 ```
 
 **函式拆分**：
@@ -879,7 +880,7 @@ state_manager
 | {platform}_account | `config_dict["accounts"]["{platform}_account"]` | str | 平台帳號 |
 | {platform}_password | `config_dict["accounts"]["{platform}_password"]` | str | 密碼 |
 
-**支援平台**：facebook, kktix, fami, cityline, urbtix, hkticketing, kham, ticket, udn, ticketplus, fansigo
+**支援平台**：facebook, kktix, fami, cityline, urbtix, hkticketing, kham, ticket, udn, cpbl, ticketplus, fansigo
 
 #### Cookie 設定
 
@@ -889,6 +890,7 @@ state_manager
 | ibonqware | `config_dict["accounts"]["ibonqware"]` | str | ibon Cookie qware |
 | funone_session_cookie | `config_dict["accounts"]["funone_session_cookie"]` | str | FunOne Cookie |
 | fansigo_cookie | `config_dict["accounts"]["fansigo_cookie"]` | str | FANSI GO Cookie |
+| cpbl_cookie | `config_dict["accounts"]["cpbl_cookie"]` | str | 中職售票 Cookie（中信兄弟、味全龍、富邦悍將，以及籃球中信特攻、富邦勇士；依名稱開頭只注入目前站台） |
 
 #### 瀏覽器設定
 
@@ -904,7 +906,9 @@ state_manager
 
 | 設定項目 | 設定路徑 | 型別 | 預設值 | 說明 |
 |---------|---------|------|--------|------|
-| auto_reload_page_interval | `config_dict["advanced"]["auto_reload_page_interval"]` | float | 3.0 | 自動重載間隔（秒） |
+| auto_reload_page_interval | `config_dict["advanced"]["auto_reload_page_interval"]` | float | 3.0 | 自動重載間隔（秒）；等待時用 `util.get_reload_interval(config_dict)` 取值 |
+| auto_reload_page_interval_range | `config_dict["advanced"]["auto_reload_page_interval_range"]` | bool | False | 區間刷新開關，開啟時上一列為下限 |
+| auto_reload_page_interval_max | `config_dict["advanced"]["auto_reload_page_interval_max"]` | float | 0 | 區間刷新上限（秒），必須大於下限 |
 | reset_browser_interval | `config_dict["advanced"]["reset_browser_interval"]` | int | 0 | 重置瀏覽器間隔（分鐘，0=不重置） |
 
 #### 除錯設定
@@ -1117,7 +1121,7 @@ def select_item(items):
 ### 選擇性功能 (Nice to Have)
 - [ ] 表單填寫：`{platform}_form_auto_fill()`
 - [ ] 排隊處理：`{platform}_handle_queue()`
-- [ ] 座點陣圖選座：`{platform}_seat_auto_select()`
+- [ ] 座位圖選座：`{platform}_seat_auto_select()`
 - [ ] 問卷調查：`{platform}_auto_survey()`
 
 ### 平台特定功能 (Platform Specific)

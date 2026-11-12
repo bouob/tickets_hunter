@@ -1,7 +1,7 @@
 # 機制 02：身份認證 (Stage 2)
 
 **文件說明**：說明搶票系統各平台的登入機制，包含 Cookie 注入、帳密登入與 OAuth 流程
-**最後更新**：2026-09-08
+**最後更新**：2026-10-30
 
 ---
 
@@ -21,8 +21,8 @@
 
 | 認證方式 | 適用平台 | 優勢 | 限制 |
 |---------|---------|------|------|
-| CDP Cookie 注入 | TixCraft 系、iBon、FunOne | 最快，無需互動 | Cookie 會過期 |
-| 帳號密碼自動填寫 | KKTIX、FamiTicket、KHAM、Cityline | 無需手動取得 Cookie | 部分需人工處理驗證碼 |
+| CDP Cookie 注入 | TixCraft 系、iBon、FunOne、中職售票 | 最快，無需互動 | Cookie 會過期 |
+| 帳號密碼自動填寫 | KKTIX、FamiTicket、KHAM、Cityline、中職售票 | 無需手動取得 Cookie | 部分需人工處理驗證碼 |
 | Facebook OAuth | Cityline | 支援第三方登入 | 需 FB 帳密 |
 
 ---
@@ -31,7 +31,7 @@
 
 ### TixCraft 系列
 
-`nodriver_goto_homepage()` 處理 TixCraft 家族（tixcraft.com、indievox.com、ticketmaster.sg/com）的 Cookie 注入。
+`nodriver_goto_homepage()` 處理 TixCraft 家族（tixcraft.com、indievox.com、ticketmaster.sg/ph/com）的 Cookie 注入。
 
 **Cookie 名稱依網域不同**：
 
@@ -40,15 +40,18 @@
 | tixcraft.com | `TIXUISID` | `.tixcraft.com` |
 | indievox.com | `IVUISID` | `www.indievox.com` |
 | ticketmaster.sg | `TIXPUISID` | `ticketmaster.sg` |
+| ticketmaster.ph | `TIXPUISID` | `ticketmaster.ph` |
 | ticketmaster.com | `TIXUISID` | `.ticketmaster.com` |
 
 **注入步驟**：
-1. 刪除舊的 SID 與 Session Cookie（避免衝突）
+1. 刪除舊的 SID 與 Session Cookie（避免衝突）；indievox、ticketmaster.sg、ticketmaster.ph 另刪除點開頭網域（如 `.ticketmaster.ph`）上的同名 Cookie
 2. 透過 `cdp.network.set_cookie()` 設定新 Cookie（`secure=True`, `http_only=True`）
 3. 驗證 Cookie 是否設定成功（讀取所有 Cookie 比對）
 4. 若 CDP 方式失敗，回退至 `driver.cookies.set_all()` 方法
 
 **設定來源**：`config_dict["accounts"]["tixcraft_sid"]`
+
+ticketmaster.ph 與 ticketmaster.sg 同為拓元引擎、同用 `TIXPUISID`；未分流前會落到 `.tixcraft.com` / `TIXUISID` 而注入無效（#337）。菲律賓站的選張數頁尚未驗證。
 
 **實作位置**：`src/nodriver_tixcraft.py`（nodriver_goto_homepage）
 
@@ -73,6 +76,23 @@ Secure: True, HttpOnly: True
 `nodriver_goto_homepage()` 注入 `ticket_session` Cookie 至 `tickets.funone.io` 網域，注入後自動重新載入頁面以套用。
 
 **設定來源**：`config_dict["accounts"]["funone_session_cookie"]`
+
+### 中職售票（中信兄弟／味全龍／富邦悍將）
+
+同系統的籃球隊售票網也適用：新北中信特攻（`tix.ctbcsports.com/DEA`，與中信兄弟同網域）、臺北富邦勇士（`tix.fubonbraves.com`）。
+
+`nodriver_utk_rwd_cookie_login()` 把「中職售票 Cookie」注入目前站台（#437）。與上面幾個平台不同，它不在 `nodriver_goto_homepage()` 執行，而是 `nodriver_kham_main()` 進場時由 `nodriver_utk_rwd_ensure_login()` 判斷頁面變數 `_ul` 為 `'0'`（訪客）後觸發，每個站台只試一次：
+
+1. `parse_cookie_string()` 解析貼上的整串 Cookie（`name=value; ...`，可帶開頭的 `Cookie:`）
+2. `filter_utk_rwd_cookies()` 只留名稱開頭屬於目前站台的 Cookie：中信 `CTBC_`、味全 `WDRAGONS|`、富邦悍將 `FBGUARDIANS|`、富邦勇士 `FUBONBRAVES|`（對照表為 `CONST_UTK_RWD_TENANTS`），一串 Cookie 不會跨站混用
+3. 刪除同名舊 Cookie，以 host-only 寫入目前網域（`secure=True`、`http_only=True`、`SameSite=Lax`）
+4. 重新載入頁面，以 `_ul` 確認是否已登入；log 只記 Cookie 數量，不記值
+
+Cookie 有填時優先於帳密；注入後仍是訪客，才改走下方的登入彈窗。
+
+**設定來源**：`config_dict["accounts"]["cpbl_cookie"]`
+
+**實作位置**：`src/platforms/kham.py`（nodriver_utk_rwd_ensure_login、nodriver_utk_rwd_cookie_login）
 
 ---
 
@@ -202,6 +222,22 @@ UDN 為半自動登入：程式填寫帳密，但 reCAPTCHA 圖片驗證需使�
 
 **實作位置**：`src/platforms/kham.py`（nodriver_kham_login）
 
+### 中職售票（登入彈窗）
+
+中職三隊售票網是寬宏 UTK 系統的 RWD 新版，每一頁都帶登入彈窗（`#MASTER_ACCOUNT`、`#MASTER_PASSWORD`、`#MASTER_CHK`），不走 `nodriver_kham_login()`。Cookie 沒填或注入後仍是訪客時，`nodriver_utk_rwd_ensure_login()` 改用 `nodriver_utk_rwd_login()`：
+
+1. 關閉前一次驗證碼錯誤的對話方塊，點 `#userbutton` 開啟彈窗並載入驗證碼圖 `#master_chk_pic`
+2. OCR 辨識驗證碼；讀到的不是 4 碼就換一張圖，本次不送出、不計次
+3. 填入帳號、密碼、驗證碼，呼叫站方的 `doMasterLogin()`
+4. 每個站台最多送出 5 次、間隔 3 秒（`CONST_UTK_RWD_LOGIN_MAX_TRIES`、`CONST_UTK_RWD_LOGIN_RETRY_SEC`），避免密碼錯誤時鎖帳號
+
+沒開 OCR 時只填帳號密碼，驗證碼與登入由使用者完成，之後不再覆寫彈窗。自動登入停止後訪客仍可瀏覽，但下單頁（UTK0205、UTK0202、UTK0201_001）會停住等手動登入。帳號是身分證或護照號碼，log 不記任何片段。
+
+> 尚未真站實測（開發時季後無賽事）。
+
+**設定來源**：`config_dict["accounts"]["cpbl_account"]` / `cpbl_password`
+**實作位置**：`src/platforms/kham.py`（nodriver_utk_rwd_ensure_login、nodriver_utk_rwd_login）
+
 ### Cityline
 
 `nodriver_cityline_login()` 採用半自動策略：
@@ -255,6 +291,8 @@ UDN 為半自動登入：程式填寫帳密，但 reCAPTCHA 圖片驗證需使�
 | HKTicketing | `hkticketing.com` + 有帳號 | Type01/Type02 兩種 |
 | TicketPlus | `ticketplus.com.tw` + 有帳號 | 導向首頁 `ticketplus.com.tw/` |
 
+中職售票不在此表：不另導向登入頁，Cookie 與登入彈窗都在 `nodriver_kham_main()` 進場時處理（見上方兩節）。
+
 ---
 
 ## 相關檔案
@@ -273,6 +311,11 @@ UDN 為半自動登入：程式填寫帳密，但 reCAPTCHA 圖片驗證需使�
 **症狀**：Cookie 注入後仍被要求登入
 **原因**：Cookie 過期、格式錯誤、或平台更新了 Cookie 名稱
 **解法**：重新從瀏覽器取得最新 Cookie 值，確認 Cookie 名稱與網域正確
+
+### 中職售票填了 Cookie 仍未登入
+**症狀**：log 出現 `[CPBL COOKIE] 中職售票 Cookie has no cookie for <網域>`，或 `Logged in after cookie: False`
+**原因**：貼上的 Cookie 不屬於目前站台（例如開中信兄弟網站卻貼了味全龍 Cookie），或已過期
+**解法**：在要搶票的那一站登入後，從 Request Headers 重新複製整串 Cookie
 
 ### 帳號密碼登入失敗
 **症狀**：帳密填寫後頁面無反應或提示錯誤

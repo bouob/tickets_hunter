@@ -64,7 +64,7 @@ echo [1.1] Checking Python installation...
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] Python is not installed or not in PATH
-    echo Please install Python 3.10+ from https://www.python.org/
+    echo Please install Python 3.11 from https://www.python.org/
     goto :error_exit
 )
 for /f "tokens=2" %%v in ('python --version 2^>^&1') do set PYTHON_VERSION=%%v

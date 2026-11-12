@@ -204,9 +204,8 @@ def is_text_match_keyword(keyword_string, text, config_dict=None):
     Check if text matches any keyword in keyword_string.
 
     Args:
-        keyword_string: Keyword string or array
-            - String: Use semicolon (;) as delimiter
-            - Array: Use directly
+        keyword_string: Keyword string, semicolon (;) delimited.
+            Lists are not supported.
         text: Text to match
         config_dict: Optional config dictionary (reserved for future use)
 
@@ -1292,6 +1291,37 @@ def create_debug_logger(config_dict=None, enabled=None):
     return DebugLogger(config_dict, enabled)
 
 
+def get_reload_interval(config_dict, default=0):
+    """Return the seconds to wait before the next auto reload.
+
+    With the range setting on, auto_reload_page_interval is the lower bound
+    and auto_reload_page_interval_max the upper bound, and each call draws a
+    new value. Anything that is not a valid range returns the interval as is,
+    so 0 still means reload disabled and a hand-edited value behaves as before.
+
+    Args:
+        config_dict: Configuration dictionary
+        default: Value used when auto_reload_page_interval is missing
+
+    Returns:
+        The wait in seconds, or the configured value unchanged
+    """
+    advanced = config_dict.get("advanced", {})
+    interval = advanced.get("auto_reload_page_interval", default)
+    if not advanced.get("auto_reload_page_interval_range", False):
+        return interval
+
+    upper = advanced.get("auto_reload_page_interval_max", 0)
+    for value in (interval, upper):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return interval
+    if not 0 < interval < upper:
+        return interval
+
+    # Clamp because rounding can step outside a very narrow range.
+    return max(interval, min(upper, round(random.uniform(interval, upper), 2)))
+
+
 def parse_keyword_string_to_array(keyword_string):
     """
     Parse keyword string to array using JSON format.
@@ -1481,7 +1511,8 @@ def get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLI
         except Exception as exc:
             online_array = []
 
-    return local_array + online_array
+    # An unquoted number parses to int; callers strip() and compare strings.
+    return [str(item) for item in local_array + online_array]
 
 def extract_answer_by_question_pattern(answer_list, question_text):
     """
@@ -2134,7 +2165,7 @@ def parse_nodriver_result(result):
     將 [['key', {'type': 'type', 'value': value}], ...] 轉換為標準 dict
     """
     # DEBUG 訊息
-    debug_enabled = False  # 暫時啟用除錯來找出問題
+    debug_enabled = False  # set True to print the raw and parsed values
 
     if debug_enabled:
         print(f"DEBUG parse_nodriver_result: 輸入類型 {type(result)}, 長度: {len(result) if isinstance(result, (list, dict)) else 'N/A'}")
@@ -2533,7 +2564,7 @@ async def verify_cf_with_templates(tab, templates: list = None, show_debug: bool
 
 # ============================================================
 # ibon live.map - skip area selection page (fast-path)
-# Ref: docs/13-platform-research/ibon-livemap-optimization.md
+# Ref: docs/internal/platform-research/ibon-livemap-optimization.md
 # ============================================================
 
 IBON_LIVEMAP_CDN_BASE = "https://qwareticket-asysimg.azureedge.net/QWARE_TICKET/images/Temp"

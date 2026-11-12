@@ -2,7 +2,7 @@
 
 **文件說明**：介紹 Tickets Hunter 專案的整體架構、核心程式模組與檔案組織結構
 **目標受眾**：開發者。一般使用者請改看 [guide/](../../guide/README.md)
-**最後更新**：2026-06-10
+**最後更新**：2026-11-11
 
 ---
 
@@ -71,11 +71,12 @@ debug.log("[TAG] message")
 | **FamiTicket** | 80% | 全家網票務 |
 | **FunOne** | 92% | 台灣平台 |
 
-### 部分支援（2 個平台）⚠️
+### 部分支援（3 個平台）⚠️
 | 平台 | 完成度 | 說明 |
 |------|--------|------|
 | **Cityline** | 85% | 香港平台，進行中 |
 | **FANSI GO** | 58% | 台灣平台，基本功能 |
+| **中職售票** | 未實測 | 中信兄弟／味全龍／富邦悍將，以及同系統的籃球隊中信特攻／富邦勇士，寬宏 UTK 系統 RWD 版，併入 `kham.py`；尚未真站實測（中信特攻頁面選擇器已於 2026-10-30 未登入比對） |
 
 ### 未實作（1 個平台）❌
 | 平台 | 完成度 | 說明 |
@@ -91,7 +92,7 @@ debug.log("[TAG] message")
 ### 優先順序 1：ZenDriver（推薦）
 - **特色**：最強反偵測，進階規避能力
 - **適用**：所有票務網站（推薦預設選擇）
-- **要求**：Python 3.10+，async/await
+- **要求**：Python 3.11（建議 3.11.9），async/await
 - **維護狀態**：✅ 積極開發，接受新功能與 Bug 修復
 - **備注**：zendriver 是 nodriver 的活躍 fork，設定值 `webdriver_type: "nodriver"` 保持不變
 
@@ -150,7 +151,7 @@ tickets_hunter/
 │   │   ├── kktix.py              # KKTIX
 │   │   ├── ticketplus.py         # TicketPlus
 │   │   ├── ibon.py               # iBon
-│   │   ├── kham.py               # KHAM / 年代 / UDN
+│   │   ├── kham.py               # KHAM / 年代 / UDN / 中職售票
 │   │   ├── famiticket.py         # FamiTicket
 │   │   ├── funone.py             # FunOne
 │   │   ├── cityline.py           # Cityline
@@ -190,7 +191,7 @@ tickets_hunter/
 ### Python 版本
 | 版本 | 狀態 | 說明 |
 |------|------|------|
-| **Python 3.10** | ✅ 推薦 | 完整支援 |
+| Python 3.10 | ❌ 不支援 | Pillow 13、tornado 6.6 需要 3.11 以上 |
 | **Python 3.11** | ✅ 推薦 | 完整支援 |
 | **Python 3.12** | ⚠️ 可能支援 | 部分套件相容性待驗證 |
 | Python 3.13+ | ❌ 不支援 | ddddocr 不相容 |
