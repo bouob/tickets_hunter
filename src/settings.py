@@ -854,7 +854,12 @@ class SendkeyHandler(tornado.web.RequestHandler):
         if is_pass_check:
             app_root = util.get_app_root()
             if "token" in _body:
-                tmp_file = _body["token"] + ".tmp"
+                token = _body["token"]
+                if not (isinstance(token, str) and re.match(r"^[A-Za-z0-9_-]{1,64}$", token)):
+                    self.set_status(400)
+                    self.write({"return": False, "error": "invalid token"})
+                    return
+                tmp_file = token + ".tmp"
                 config_filepath = os.path.join(app_root, tmp_file)
                 util.save_json(_body, config_filepath)
 
