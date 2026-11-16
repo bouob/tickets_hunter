@@ -1830,7 +1830,8 @@ async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
 
         result = await tab.evaluate(f'''
             (function() {{
-                const keywords = ['\u5e8f\u865f', '\u52a0\u8cfc', '\u512a\u60e0'];
+                // \u5e8f\u865f / \u52a0\u8cfc / \u512a\u60e0 / \u4ee3\u78bc (site default label: \u8acb\u8f38\u5165\u5c08\u5c6c\u4ee3\u78bc) / \u512a\u5148\u8cfc
+                const keywords = ['\u5e8f\u865f', '\u52a0\u8cfc', '\u512a\u60e0', '\u4ee3\u78bc', '\u512a\u5148\u8cfc'];
                 const discountCode = '{escaped_discount_code}';
                 let filledCount = 0;
 
